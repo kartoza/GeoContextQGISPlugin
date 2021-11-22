@@ -172,7 +172,17 @@ class GeoContextQGISPlugin:
             icon_path,
             text=self.tr(u'GeoContext'),
             callback=self.run,
-            parent=self.iface.mainWindow())
+            parent=self.iface.mainWindow(),
+            add_to_menu=False,
+            add_to_toolbar=False)
+
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Options'),
+            callback=self.run,
+            parent=self.iface.mainWindow(),
+            add_to_menu=True,
+            add_to_toolbar=False)
 
     #--------------------------------------------------------------------------
 
