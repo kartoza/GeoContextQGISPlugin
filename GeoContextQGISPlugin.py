@@ -31,6 +31,8 @@ from .resources import *
 from .GeoContextQGISPlugin_dockwidget import GeoContextQGISPluginDockWidget
 import os.path
 
+from .GeoContextQGISPlugin_options_dialog_base import OptionsDialog
+
 
 class GeoContextQGISPlugin:
     """QGIS Plugin Implementation."""
@@ -174,12 +176,12 @@ class GeoContextQGISPlugin:
             callback=self.run,
             parent=self.iface.mainWindow(),
             add_to_menu=False,
-            add_to_toolbar=False)
+            add_to_toolbar=True)
 
         self.add_action(
             icon_path,
             text=self.tr(u'Options'),
-            callback=self.run,
+            callback=self.show_options,
             parent=self.iface.mainWindow(),
             add_to_menu=True,
             add_to_toolbar=False)
@@ -240,3 +242,13 @@ class GeoContextQGISPlugin:
             # TODO: fix to allow choice of dock location
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
+
+
+    def show_options(self):
+        dialog = OptionsDialog()
+        result = dialog.exec_()
+        # See if OK was pressed
+        if result:
+            pass
+        else:
+            pass
