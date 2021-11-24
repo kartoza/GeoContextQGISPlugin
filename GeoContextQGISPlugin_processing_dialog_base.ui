@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>340</y>
+     <y>350</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -65,11 +65,11 @@
     <string>Selected features only</string>
    </property>
   </widget>
-  <widget class="QgsFileWidget" name="fwOutputTable">
+  <widget class="QgsFileWidget" name="fwOutputPoints">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>260</y>
+     <y>300</y>
      <width>301</width>
      <height>27</height>
     </rect>
@@ -78,24 +78,24 @@
     <enum>QgsFileWidget::SaveFile</enum>
    </property>
   </widget>
-  <widget class="QLabel" name="lblOutputTable">
+  <widget class="QLabel" name="lblOutputPoints">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>240</y>
-     <width>81</width>
+     <y>280</y>
+     <width>101</width>
      <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string>Output Table</string>
+    <string>Output point file</string>
    </property>
   </widget>
   <widget class="QCheckBox" name="cbOpenTable">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>290</y>
+     <y>330</y>
      <width>241</width>
      <height>21</height>
     </rect>
@@ -108,7 +108,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>160</y>
+     <y>150</y>
      <width>211</width>
      <height>22</height>
     </rect>
@@ -146,7 +146,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>190</y>
+     <y>180</y>
      <width>47</width>
      <height>13</height>
     </rect>
@@ -159,7 +159,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>210</y>
+     <y>200</y>
      <width>211</width>
      <height>22</height>
     </rect>
@@ -192,6 +192,29 @@
    </property>
    <property name="text">
     <string>URL (can be changed in options)</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEditFieldName">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>250</y>
+     <width>241</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lblFieldName">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>230</y>
+     <width>71</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Field name</string>
    </property>
   </widget>
  </widget>

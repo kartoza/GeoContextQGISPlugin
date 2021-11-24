@@ -58,6 +58,7 @@ class ProcessingDialog(QDialog, FORM_CLASS):
             list_key_names.append(key)
 
         self.cbKey.addItems(list_key_names)
+        self.lineEditFieldName.setText(self.cbKey.currentText() + "_value")
 
     def set_point_layer(self):
         input_points = self.cbInputPoints.currentLayer()
@@ -83,11 +84,17 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         settings = QgsSettings()
         settings.setValue('geocontext-qgis-plugin/key', key)
 
-    def set_output_table(self):
-        output_dir = self.fwOutputTable.filePath()
+    def set_field_name(self):
+        field_name = self.lineEditFieldName.text()
 
         settings = QgsSettings()
-        settings.setValue('geocontext-qgis-plugin/table_output', output_dir)
+        settings.setValue('geocontext-qgis-plugin/field_name', field_name)
+
+    def set_output_points(self):
+        output_dir = self.fwOutputPoints.filePath()
+
+        settings = QgsSettings()
+        settings.setValue('geocontext-qgis-plugin/output_points', output_dir)
 
     def set_open_file(self):
         open_file = self.cbOpenTable.isChecked()
@@ -107,8 +114,8 @@ class ProcessingDialog(QDialog, FORM_CLASS):
 
         return key
 
-    def get_output_table(self):
+    def get_output_points(self):
         settings = QgsSettings()
-        output_dir = settings.value('geocontext-qgis-plugin/table_output')
+        output_dir = settings.value('geocontext-qgis-plugin/output_points')
 
         return output_dir
