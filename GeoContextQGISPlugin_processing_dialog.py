@@ -55,9 +55,60 @@ class ProcessingDialog(QDialog, FORM_CLASS):
             key = context['key']
             name = context['name']
 
-            list_key_names.append(name)
+            list_key_names.append(key)
 
         self.cbKey.addItems(list_key_names)
 
-        #get_request = client.get('https://staging.geocontext.kartoza.com/api/v2/query?registry=group&key=actual_vapour_pressure_group&x=22.67578125&y=-30.690925624683604&outformat=json')
+    def set_point_layer(self):
+        input_points = self.cbInputPoints.currentLayer()
 
+        settings = QgsSettings()
+        settings.setValue('geocontext-qgis-plugin/input_points', input_points)
+
+    def set_selected_features(self):
+        selected_features = self.cbSelection.isChecked()
+
+        settings = QgsSettings()
+        settings.setValue('geocontext-qgis-plugin/selected_features', selected_features)
+
+    def set_registry(self):
+        registry = self.cbRegistry.currentText()
+
+        settings = QgsSettings()
+        settings.setValue('geocontext-qgis-plugin/registry', registry.lower())
+
+    def set_key(self):
+        key = self.cbKey.currentText()
+
+        settings = QgsSettings()
+        settings.setValue('geocontext-qgis-plugin/key', key)
+
+    def set_output_table(self):
+        output_dir = self.fwOutputTable.filePath()
+
+        settings = QgsSettings()
+        settings.setValue('geocontext-qgis-plugin/table_output', output_dir)
+
+    def set_open_file(self):
+        open_file = self.cbOpenTable.isChecked()
+
+        settings = QgsSettings()
+        settings.setValue('geocontext-qgis-plugin/open_file', open_file)
+
+    def get_point_layer(self):
+        settings = QgsSettings()
+        input_points = settings.value('geocontext-qgis-plugin/input_points')
+
+        return input_points
+
+    def get_key(self):
+        settings = QgsSettings()
+        key = settings.value('geocontext-qgis-plugin/key')
+
+        return key
+
+    def get_output_table(self):
+        settings = QgsSettings()
+        output_dir = settings.value('geocontext-qgis-plugin/table_output')
+
+        return output_dir

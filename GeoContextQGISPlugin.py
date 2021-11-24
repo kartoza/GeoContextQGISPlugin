@@ -270,6 +270,57 @@ class GeoContextQGISPlugin:
 
         # See if OK was pressed
         if result:
-            pass
+            dialog.set_point_layer()
+            dialog.set_selected_features()
+            dialog.set_registry()
+            dialog.set_key()
+            dialog.set_output_table()
+            dialog.set_open_file()
+
+            self.process_points_layer()
+
         else:
             pass
+
+    def process_points_layer(self):
+        settings = QgsSettings()
+
+        input_points = settings.value('geocontext-qgis-plugin/input_points')
+        key = settings.value('geocontext-qgis-plugin/key')
+        output_table = settings.value('geocontext-qgis-plugin/table_output')
+
+        #print("POINTS: " + str(input_points))
+
+        for input_feat in input_points.getFeatures():
+            #print("FEAT: " + str(input_feat))
+
+            feat_geom = input_feat.geometry()
+            if not feat_geom.isNull():
+                #print("GEOMS: " + str(feat_geom))
+
+                point = feat_geom.asPoint()
+                x = point.x()
+                y = point.y()
+
+                self.point_request(x, y)
+
+    def point_request(self, x, y):
+        settings = QgsSettings()
+        query_url = 'https://staging.geocontext.kartoza.com/api/v2/query?'  # This should be retrieved using a better manner
+        registry = settings.value('geocontext-qgis-plugin/registry')
+        key = settings.value('geocontext-qgis-plugin/key')
+
+        print("REGISTRY: " + str(registry))
+        print("KEY: " + str(key))
+
+        client = Client()
+        url_request = query_url + 'registry=' + registry + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+
+        print("URL: " + str(url_request))
+
+        data = client.get(url_request)
+
+        print("DATA: " + str(data))
+
+        # get_request = client.get('https://staging.geocontext.kartoza.com/api/v2/query?registry=group&key=actual_vapour_pressure_group&x=22.67578125&y=-30.690925624683604&outformat=json')
+

@@ -115,17 +115,17 @@
    </property>
    <item>
     <property name="text">
-     <string>Services</string>
+     <string>Service</string>
     </property>
    </item>
    <item>
     <property name="text">
-     <string>Groups</string>
+     <string>Group</string>
     </property>
    </item>
    <item>
     <property name="text">
-     <string>Collections</string>
+     <string>Collection</string>
     </property>
    </item>
   </widget>
