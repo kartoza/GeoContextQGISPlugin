@@ -13,6 +13,11 @@ import os
 from PyQt5.QtWidgets import QDialog
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QSettings
+from qgis.core import QgsSettings
+
+from coreapi import Client
+
+import subprocess
 
 # Import the PyQt and QGIS libraries
 # this import required to enable PyQt API v2
@@ -33,3 +38,26 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         QDialog.__init__(self, parent)
         self.setupUi(self)
+
+        settings = QgsSettings()
+        url = settings.value('geocontext-qgis-plugin/url', '', type=str)
+
+        client = Client()
+        document = client.get(url)  # Retrieve the API schema
+
+        self.lineUrl.setValue(url)
+        registry = self.cbRegistry.currentText()
+
+        list_context = client.action(document=document, keys=["csr", "list"])  # Get the list of context layers
+
+        list_key_names = []
+        for context in list_context:
+            key = context['key']
+            name = context['name']
+
+            list_key_names.append(name)
+
+        self.cbKey.addItems(list_key_names)
+
+        #get_request = client.get('https://staging.geocontext.kartoza.com/api/v2/query?registry=group&key=actual_vapour_pressure_group&x=22.67578125&y=-30.690925624683604&outformat=json')
+

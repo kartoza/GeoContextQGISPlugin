@@ -24,6 +24,7 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
+from qgis.core import QgsSettings
 # Initialize Qt resources from file resources.py
 from .resources import *
 
@@ -31,8 +32,10 @@ from .resources import *
 from .GeoContextQGISPlugin_dockwidget import GeoContextQGISPluginDockWidget
 import os.path
 
-from .GeoContextQGISPlugin_options_dialog_base import OptionsDialog
+from .GeoContextQGISPlugin_options_dialog import OptionsDialog
+from .GeoContextQGISPlugin_processing_dialog import ProcessingDialog
 
+from coreapi import Client
 
 class GeoContextQGISPlugin:
     """QGIS Plugin Implementation."""
@@ -186,6 +189,14 @@ class GeoContextQGISPlugin:
             add_to_menu=True,
             add_to_toolbar=False)
 
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Process'),
+            callback=self.show_processing,
+            parent=self.iface.mainWindow(),
+            add_to_menu=True,
+            add_to_toolbar=False)
+
     #--------------------------------------------------------------------------
 
     def onClosePlugin(self):
@@ -243,10 +254,20 @@ class GeoContextQGISPlugin:
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
 
-
     def show_options(self):
         dialog = OptionsDialog()
         result = dialog.exec_()
+
+        # See if OK was pressed
+        if result:
+            dialog.set_url()
+        else:
+            pass
+
+    def show_processing(self):
+        dialog = ProcessingDialog()
+        result = dialog.exec_()
+
         # See if OK was pressed
         if result:
             pass
