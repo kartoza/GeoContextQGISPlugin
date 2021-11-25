@@ -288,13 +288,23 @@ class GeoContextQGISPlugin:
         input_points = settings.value('geocontext-qgis-plugin/input_points')
         key = settings.value('geocontext-qgis-plugin/key')
         output_file = settings.value('geocontext-qgis-plugin/output_points')
+        field_name = settings.value('geocontext-qgis-plugin/field_name')
 
         input_new = input_points.clone()
+
         input_new.startEditing()
-        new_field = QgsField("Requested_value", QVariant.String)
+        new_field = QgsField(field_name, QVariant.String)
         input_new.addAttribute(new_field)
 
-        for input_feat in input_points.getFeatures():
+        input_new.updateFields()
+
+        input_new.commitChanges()
+
+        input_new.startEditing()
+        for input_feat in input_new.getFeatures():
+
+            new_field_index = input_feat.fieldNameIndex(field_name)
+
             feat_geom = input_feat.geometry()
             if not feat_geom.isNull():
                 point = feat_geom.asPoint()
@@ -302,11 +312,16 @@ class GeoContextQGISPlugin:
                 y = point.y()
 
                 point_value = self.point_request(x, y)
+                point_value_str = str(point_value)
+
+                input_new.changeAttributeValue(input_feat.id(), new_field_index, point_value_str)
 
         input_new.commitChanges()
 
         QgsVectorFileWriter.writeAsVectorFormat(input_new, output_file, 'UTF-8', input_new.crs())  # gpkg format
         #QgsVectorFileWriter.writeAsVectorFormat(input_new, output_file, 'UTF-8', input_new.crs(), "ESRI Shapefile")  # shp format
+
+        print("END")
 
 
     def point_request(self, x, y):
