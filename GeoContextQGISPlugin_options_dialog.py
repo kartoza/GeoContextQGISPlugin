@@ -37,13 +37,24 @@ class OptionsDialog(QDialog, FORM_CLASS):
 
         settings = QgsSettings()
         self.lineUrl.setValue(settings.value('geocontext-qgis-plugin/url', '', type=str))
+        self.lineSchema.setValue(settings.value('geocontext-qgis-plugin/schema', '', type=str))
 
-    def get_url(self):
+    def get_schema(self):
         url = self.lineUrl.value()
         return url
+
+    def get_url(self):
+        schema = self.lineSchema.value()
+        return schema
 
     def set_url(self):
         settings = QgsSettings()
         url = self.lineUrl.value()
 
         settings.setValue('geocontext-qgis-plugin/url', url)
+
+    def set_schema(self):
+        settings = QgsSettings()
+        schema = self.lineSchema.value()
+
+        settings.setValue('geocontext-qgis-plugin/schema', schema)

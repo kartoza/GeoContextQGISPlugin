@@ -40,11 +40,13 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         self.setupUi(self)
 
         settings = QgsSettings()
+        schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
         url = settings.value('geocontext-qgis-plugin/url', '', type=str)
 
         client = Client()
-        document = client.get(url)  # Retrieve the API schema
+        document = client.get(schema)  # Retrieve the API schema
 
+        self.lineSchema.setValue(schema)
         self.lineUrl.setValue(url)
         registry = self.cbRegistry.currentText()
 
@@ -59,6 +61,44 @@ class ProcessingDialog(QDialog, FORM_CLASS):
 
         self.cbKey.addItems(list_key_names)
         self.lineEditFieldName.setText(self.cbKey.currentText() + "_value")
+
+        self.cbRegistry.currentTextChanged.connect(self.registry_changed)
+        self.cbKey.currentTextChanged.connect(self.key_changed)
+
+    def registry_changed(self):
+        registry = self.cbRegistry.currentText()
+        self.update_key_list(registry)
+
+    def key_changed(self):
+        self.lineEditFieldName.setText(self.cbKey.currentText() + "_value")
+
+    def update_key_list(self, registry_type="service"):
+        num_of_items = self.cbKey.count()
+        while num_of_items >= 0:  # Clears the combobox list
+            self.cbKey.removeItem(num_of_items)
+            num_of_items = num_of_items - 1
+
+        if registry_type.lower() == "service":
+            settings = QgsSettings()
+            schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
+
+            client = Client()
+            document = client.get(schema)  # Retrieve the API schema
+
+            list_context = client.action(document=document, keys=["csr", "list"])  # Get the list of context layers
+
+            list_key_names = []
+            for context in list_context:
+                key = context['key']
+                name = context['name']
+
+                list_key_names.append(key)
+
+            self.cbKey.addItems(list_key_names)
+        elif registry_type.lower() == "group":  # UPDATE
+            list_groups = []
+        elif registry_type.lower() == "collection":  # UPDATE
+            list_collections = []
 
     def set_point_layer(self):
         input_points = self.cbInputPoints.currentLayer()

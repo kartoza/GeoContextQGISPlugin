@@ -24,7 +24,8 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
-from qgis.core import QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext
+from qgis.core import QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext
+from qgis.gui import QgsMapToolEmitPoint
 # Initialize Qt resources from file resources.py
 from .resources import *
 
@@ -261,6 +262,7 @@ class GeoContextQGISPlugin:
         # See if OK was pressed
         if result:
             dialog.set_url()
+            dialog.set_schema()
         else:
             pass
 
@@ -321,17 +323,17 @@ class GeoContextQGISPlugin:
         QgsVectorFileWriter.writeAsVectorFormat(input_new, output_file, 'UTF-8', input_new.crs())  # gpkg format
         #QgsVectorFileWriter.writeAsVectorFormat(input_new, output_file, 'UTF-8', input_new.crs(), "ESRI Shapefile")  # shp format
 
-        print("END")
-
-
     def point_request(self, x, y):
         settings = QgsSettings()
-        query_url = 'https://staging.geocontext.kartoza.com/api/v2/query?'  # This should be retrieved using a better manner
+
+        api_url = settings.value('geocontext-qgis-plugin/url')
         registry = settings.value('geocontext-qgis-plugin/registry')
         key = settings.value('geocontext-qgis-plugin/key')
 
         client = Client()
-        url_request = query_url + 'registry=' + registry + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+        url_request = api_url + "query?" + 'registry=' + registry + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+
+        print("TEST: " + str(url_request))
 
         data = client.get(url_request)
         return data['value']
