@@ -23,7 +23,7 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
 from qgis.core import QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext
 from qgis.gui import QgsMapToolEmitPoint
 # Initialize Qt resources from file resources.py
@@ -79,6 +79,8 @@ class GeoContextQGISPlugin:
         self.pluginIsActive = False
         self.dockwidget = None
 
+        self.canvas = self.iface.mapCanvas()
+        self.point_tool = QgsMapToolEmitPoint(self.canvas)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -94,7 +96,6 @@ class GeoContextQGISPlugin:
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('GeoContextQGISPlugin', message)
-
 
     def add_action(
         self,
@@ -169,7 +170,6 @@ class GeoContextQGISPlugin:
 
         return action
 
-
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
@@ -198,6 +198,8 @@ class GeoContextQGISPlugin:
             add_to_menu=True,
             add_to_toolbar=False)
 
+        self.point_tool.canvasClicked.connect(self.canvas_click)
+
     #--------------------------------------------------------------------------
 
     def onClosePlugin(self):
@@ -215,6 +217,7 @@ class GeoContextQGISPlugin:
         # self.dockwidget = None
 
         self.pluginIsActive = False
+        self.canvas.unsetMapTool(self.point_tool)
 
 
     def unload(self):
@@ -255,6 +258,8 @@ class GeoContextQGISPlugin:
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
 
+            self.canvas.setMapTool(self.point_tool)
+
     def show_options(self):
         dialog = OptionsDialog()
         result = dialog.exec_()
@@ -263,6 +268,7 @@ class GeoContextQGISPlugin:
         if result:
             dialog.set_url()
             dialog.set_schema()
+            dialog.set_auto_clear()
         else:
             pass
 
@@ -327,13 +333,40 @@ class GeoContextQGISPlugin:
         settings = QgsSettings()
 
         api_url = settings.value('geocontext-qgis-plugin/url')
-        registry = settings.value('geocontext-qgis-plugin/registry')
-        key = settings.value('geocontext-qgis-plugin/key')
+        registry = (self.dockwidget.cbRegistry.currentText()).lower()
+        key_name = self.dockwidget.cbKey.currentText()
+
+        dict_key = self.dockwidget.find_name_info(key_name)
+        key = dict_key['key']
 
         client = Client()
         url_request = api_url + "query?" + 'registry=' + registry + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
 
-        print("TEST: " + str(url_request))
-
         data = client.get(url_request)
         return data['value']
+
+    def canvas_click(self, point_tool):
+        x = point_tool[0]
+        y = point_tool[1]
+
+        self.dockwidget.lineLong.setText(str(x))
+        self.dockwidget.lineLat.setText(str(y))
+
+        current_key_name = self.dockwidget.cbKey.currentText()
+        data = self.point_request(x, y)
+
+        registry = self.dockwidget.cbRegistry.currentText()
+
+        if registry.lower() == 'service':
+            settings = QgsSettings()
+            auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
+            if auto_clear_table:
+                self.dockwidget.clear_results_table()
+
+            self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
+            self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))
+            self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(data)))
+        elif registry_type.lower() == "group":  # UPDATE
+            list_groups = []
+        elif registry_type.lower() == "collection":  # UPDATE
+            list_collections = []

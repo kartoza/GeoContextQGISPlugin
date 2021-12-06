@@ -38,6 +38,7 @@ class OptionsDialog(QDialog, FORM_CLASS):
         settings = QgsSettings()
         self.lineUrl.setValue(settings.value('geocontext-qgis-plugin/url', '', type=str))
         self.lineSchema.setValue(settings.value('geocontext-qgis-plugin/schema', '', type=str))
+        self.checkAutoClear.setChecked(settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool))
 
     def get_schema(self):
         url = self.lineUrl.value()
@@ -58,3 +59,9 @@ class OptionsDialog(QDialog, FORM_CLASS):
         schema = self.lineSchema.value()
 
         settings.setValue('geocontext-qgis-plugin/schema', schema)
+
+    def set_auto_clear(self):
+        settings = QgsSettings()
+        auto_clear = self.checkAutoClear.checkState()
+
+        settings.setValue('geocontext-qgis-plugin/auto_clear_table', auto_clear)

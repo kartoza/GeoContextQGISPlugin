@@ -50,17 +50,16 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         self.lineUrl.setValue(url)
         registry = self.cbRegistry.currentText()
 
-        list_context = client.action(document=document, keys=["csr", "list"])  # Get the list of context layers
+        self.list_context = client.action(document=document, keys=["csr", "list"])  # Get the list of context layers
 
         list_key_names = []
-        for context in list_context:
-            key = context['key']
+        for context in self.list_context:
             name = context['name']
-
-            list_key_names.append(key)
+            list_key_names.append(name)
+        list_key_names = sorted(list_key_names)
 
         self.cbKey.addItems(list_key_names)
-        self.lineEditFieldName.setText(self.cbKey.currentText() + "_value")
+        self.lineEditFieldName.setText(self.cbKey.currentText().replace(' ', '_') + "_value")
 
         self.cbRegistry.currentTextChanged.connect(self.registry_changed)
         self.cbKey.currentTextChanged.connect(self.key_changed)
@@ -70,7 +69,7 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         self.update_key_list(registry)
 
     def key_changed(self):
-        self.lineEditFieldName.setText(self.cbKey.currentText() + "_value")
+        self.lineEditFieldName.setText(self.cbKey.currentText().replace(' ', '_') + "_value")
 
     def update_key_list(self, registry_type="service"):
         num_of_items = self.cbKey.count()
@@ -85,14 +84,12 @@ class ProcessingDialog(QDialog, FORM_CLASS):
             client = Client()
             document = client.get(schema)  # Retrieve the API schema
 
-            list_context = client.action(document=document, keys=["csr", "list"])  # Get the list of context layers
+            self.list_context = client.action(document=document, keys=["csr", "list"])  # Get the list of context layers
 
             list_key_names = []
-            for context in list_context:
-                key = context['key']
+            for context in self.list_context:
                 name = context['name']
-
-                list_key_names.append(key)
+                list_key_names.append(name)
 
             self.cbKey.addItems(list_key_names)
         elif registry_type.lower() == "group":  # UPDATE

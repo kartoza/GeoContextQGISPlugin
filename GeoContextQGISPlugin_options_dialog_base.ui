@@ -81,6 +81,19 @@
     <string notr="true"/>
    </property>
   </widget>
+  <widget class="QCheckBox" name="checkAutoClear">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>130</y>
+     <width>301</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Automatically clear table (only valid for service registry)</string>
+   </property>
+  </widget>
  </widget>
  <customwidgets>
   <customwidget>

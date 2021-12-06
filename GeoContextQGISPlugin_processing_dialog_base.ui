@@ -232,6 +232,9 @@
      <height>21</height>
     </rect>
    </property>
+   <property name="readOnly">
+    <bool>true</bool>
+   </property>
    <property name="qgisRelation" stdset="0">
     <string notr="true"/>
    </property>
