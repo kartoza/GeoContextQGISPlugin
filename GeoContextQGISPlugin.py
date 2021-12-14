@@ -24,7 +24,7 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
-from qgis.core import QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext
+from qgis.core import QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext, QgsMapLayer
 from qgis.gui import QgsMapToolEmitPoint
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -286,26 +286,34 @@ class GeoContextQGISPlugin:
             dialog.set_field_name()
             dialog.set_open_file()
 
-            self.process_points_layer()
-
+            self.process_points_layer(dialog)
         else:
             pass
 
-    def process_points_layer(self):
+    def process_points_layer(self, dialog):
         settings = QgsSettings()
         input_points = settings.value('geocontext-qgis-plugin/input_points')
         key = settings.value('geocontext-qgis-plugin/key')
         output_file = settings.value('geocontext-qgis-plugin/output_points')
         field_name = settings.value('geocontext-qgis-plugin/field_name')
+        load_output_file = settings.value('geocontext-qgis-plugin/open_file')
+        selected_features = settings.value('geocontext-qgis-plugin/selected_features')
 
-        input_new = input_points.clone()
+        output_file_name = os.path.basename(output_file)
+        if selected_features and input_points.selectedFeatureCount() > 0:
+            # QgsVectorFileWriter.writeAsVectorFormat(input_new, output_file, 'UTF-8', input_new.crs(), "ESRI Shapefile")  # shp format
+            QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs(),
+                                                    onlySelected=True)
+            input_new = QgsVectorLayer(output_file, output_file_name)
+        else:
+            # QgsVectorFileWriter.writeAsVectorFormat(input_new, output_file, 'UTF-8', input_new.crs(), "ESRI Shapefile")  # shp format
+            QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs())
+            input_new = QgsVectorLayer(output_file, output_file_name)
 
         input_new.startEditing()
         new_field = QgsField(field_name, QVariant.String)
         input_new.addAttribute(new_field)
-
         input_new.updateFields()
-
         input_new.commitChanges()
 
         input_new.startEditing()
@@ -319,15 +327,14 @@ class GeoContextQGISPlugin:
                 x = point.x()
                 y = point.y()
 
-                point_value = self.point_request(x, y)
+                point_value = self.point_request_2(x, y, dialog)
                 point_value_str = str(point_value)
 
                 input_new.changeAttributeValue(input_feat.id(), new_field_index, point_value_str)
-
         input_new.commitChanges()
 
-        QgsVectorFileWriter.writeAsVectorFormat(input_new, output_file, 'UTF-8', input_new.crs())  # gpkg format
-        #QgsVectorFileWriter.writeAsVectorFormat(input_new, output_file, 'UTF-8', input_new.crs(), "ESRI Shapefile")  # shp format
+        if load_output_file:
+            QgsProject.instance().addMapLayer(input_new)
 
     def point_request(self, x, y):
         settings = QgsSettings()
@@ -337,6 +344,22 @@ class GeoContextQGISPlugin:
         key_name = self.dockwidget.cbKey.currentText()
 
         dict_key = self.dockwidget.find_name_info(key_name)
+        key = dict_key['key']
+
+        client = Client()
+        url_request = api_url + "query?" + 'registry=' + registry + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+
+        data = client.get(url_request)
+        return data['value']
+
+    def point_request_2(self, x, y, dialog):
+        settings = QgsSettings()
+
+        api_url = settings.value('geocontext-qgis-plugin/url')
+        registry = settings.value('geocontext-qgis-plugin/registry')
+        key_name = settings.value('geocontext-qgis-plugin/key')
+
+        dict_key = dialog.find_name_info(key_name)
         key = dict_key['key']
 
         client = Client()
@@ -366,7 +389,7 @@ class GeoContextQGISPlugin:
             self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
             self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))
             self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(data)))
-        elif registry_type.lower() == "group":  # UPDATE
+        elif registry.lower() == "group":  # UPDATE
             list_groups = []
-        elif registry_type.lower() == "collection":  # UPDATE
+        elif registry.lower() == "collection":  # UPDATE
             list_collections = []

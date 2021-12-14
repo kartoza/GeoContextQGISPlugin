@@ -64,6 +64,13 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         self.cbRegistry.currentTextChanged.connect(self.registry_changed)
         self.cbKey.currentTextChanged.connect(self.key_changed)
 
+    def find_name_info(self, search_name):
+        for context in self.list_context:
+            current_name = context['name']
+            if current_name == search_name:
+                return context
+        return None
+
     def registry_changed(self):
         registry = self.cbRegistry.currentText()
         self.update_key_list(registry)
@@ -134,7 +141,7 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         settings.setValue('geocontext-qgis-plugin/output_points', output_dir)
 
     def set_open_file(self):
-        open_file = self.cbOpenTable.isChecked()
+        open_file = self.cbOpenResult.isChecked()
 
         settings = QgsSettings()
         settings.setValue('geocontext-qgis-plugin/open_file', open_file)

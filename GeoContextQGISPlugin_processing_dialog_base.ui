@@ -91,7 +91,7 @@
     <string>Output point file</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="cbOpenTable">
+  <widget class="QCheckBox" name="cbOpenResult">
    <property name="geometry">
     <rect>
      <x>10</x>
