@@ -26,6 +26,9 @@ import os
 
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
+from qgis.core import QgsSettings
+
+from coreapi import Client
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'GeoContextQGISPlugin_dockwidget_base.ui'))
@@ -45,6 +48,87 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
 
+        settings = QgsSettings()
+        schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
+        url = settings.value('geocontext-qgis-plugin/url', '', type=str)
+
+        client = Client()
+        self.document = client.get(schema)  # Retrieve the API schema
+
+        self.list_context = client.action(document=self.document, keys=["csr", "list"])  # Get the list of context layers
+
+        list_key_names = []
+        for context in self.list_context:
+            name = context['name']
+            list_key_names.append(name)
+        list_key_names = sorted(list_key_names)
+
+        self.cbKey.addItems(list_key_names)
+        current_name = self.cbKey.currentText()
+
+        dict_current = self.find_name_info(current_name)
+
+        self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
+        self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
+        self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
+
+        self.cbRegistry.currentTextChanged.connect(self.registry_changed)
+        self.cbKey.currentTextChanged.connect(self.key_changed)
+        self.btnClear.clicked.connect(self.clear_results_table)
+
     def closeEvent(self, event):
         self.closingPlugin.emit()
         event.accept()
+
+    def registry_changed(self):
+        registry = self.cbRegistry.currentText()
+        self.update_key_list(registry)
+
+    def key_changed(self):
+        key_name = self.cbKey.currentText()
+
+        dict_current = self.find_name_info(key_name)
+
+        self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
+        self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
+        self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
+
+    def clear_results_table(self):
+        row_count = self.tblResult.rowCount()
+        while row_count >= 0:
+            self.tblResult.removeRow(row_count)
+            row_count = row_count - 1
+
+    def find_name_info(self, search_name):
+        for context in self.list_context:
+            current_name = context['name']
+            if current_name == search_name:
+                return context
+        return None
+
+    def update_key_list(self, registry_type="service"):
+        num_of_items = self.cbKey.count()
+        while num_of_items >= 0:  # Clears the combobox list
+            self.cbKey.removeItem(num_of_items)
+            num_of_items = num_of_items - 1
+
+        if registry_type.lower() == "service":
+            settings = QgsSettings()
+            schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
+
+            client = Client()
+            self.document = client.get(schema)  # Retrieve the API schema
+
+            self.list_context = client.action(document=self.document, keys=["csr", "list"])  # Get the list of context layers
+
+            list_key_names = []
+            for context in self.list_context:
+                name = context['name']
+                list_key_names.append(name)
+            list_key_names = sorted(list_key_names)
+
+            self.cbKey.addItems(list_key_names)
+        elif registry_type.lower() == "group":  # UPDATE
+            list_groups = []
+        elif registry_type.lower() == "collection":  # UPDATE
+            list_collections = []

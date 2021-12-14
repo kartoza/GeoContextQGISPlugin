@@ -23,8 +23,9 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
-from qgis.core import QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext
+from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
+from qgis.core import QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext, QgsMapLayer
+from qgis.gui import QgsMapToolEmitPoint
 # Initialize Qt resources from file resources.py
 from .resources import *
 
@@ -36,6 +37,7 @@ from .GeoContextQGISPlugin_options_dialog import OptionsDialog
 from .GeoContextQGISPlugin_processing_dialog import ProcessingDialog
 
 from coreapi import Client
+
 
 class GeoContextQGISPlugin:
     """QGIS Plugin Implementation."""
@@ -69,15 +71,15 @@ class GeoContextQGISPlugin:
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&GeoContext')
-        # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'GeoContextQGISPlugin')
         self.toolbar.setObjectName(u'GeoContextQGISPlugin')
 
-        #print "** INITIALIZING GeoContextQGISPlugin"
-
+        # INITIALIZING GeoContextQGISPlugin
         self.pluginIsActive = False
         self.dockwidget = None
 
+        self.canvas = self.iface.mapCanvas()
+        self.point_tool = QgsMapToolEmitPoint(self.canvas)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -93,7 +95,6 @@ class GeoContextQGISPlugin:
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('GeoContextQGISPlugin', message)
-
 
     def add_action(
         self,
@@ -168,7 +169,6 @@ class GeoContextQGISPlugin:
 
         return action
 
-
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
@@ -197,7 +197,7 @@ class GeoContextQGISPlugin:
             add_to_menu=True,
             add_to_toolbar=False)
 
-    #--------------------------------------------------------------------------
+        self.point_tool.canvasClicked.connect(self.canvas_click)
 
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed"""
@@ -214,13 +214,12 @@ class GeoContextQGISPlugin:
         # self.dockwidget = None
 
         self.pluginIsActive = False
-
+        self.canvas.unsetMapTool(self.point_tool)
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
 
-        #print "** UNLOAD GeoContextQGISPlugin"
-
+        # UNLOAD GeoContextQGISPlugin
         for action in self.actions:
             self.iface.removePluginMenu(
                 self.tr(u'&GeoContext'),
@@ -228,8 +227,6 @@ class GeoContextQGISPlugin:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
-
-    #--------------------------------------------------------------------------
 
     def run(self):
         """Run method that loads and starts the plugin"""
@@ -254,6 +251,8 @@ class GeoContextQGISPlugin:
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
 
+            self.canvas.setMapTool(self.point_tool)
+
     def show_options(self):
         dialog = OptionsDialog()
         result = dialog.exec_()
@@ -261,6 +260,8 @@ class GeoContextQGISPlugin:
         # See if OK was pressed
         if result:
             dialog.set_url()
+            dialog.set_schema()
+            dialog.set_auto_clear()
         else:
             pass
 
@@ -278,45 +279,137 @@ class GeoContextQGISPlugin:
             dialog.set_field_name()
             dialog.set_open_file()
 
-            self.process_points_layer()
-
+            self.process_points_layer(dialog)
         else:
             pass
 
-    def process_points_layer(self):
+    def process_points_layer(self, dialog):
         settings = QgsSettings()
         input_points = settings.value('geocontext-qgis-plugin/input_points')
         key = settings.value('geocontext-qgis-plugin/key')
         output_file = settings.value('geocontext-qgis-plugin/output_points')
-
-        input_new = input_points.clone()
-        input_new.startEditing()
-        new_field = QgsField("Requested_value", QVariant.String)
-        input_new.addAttribute(new_field)
-
-        for input_feat in input_points.getFeatures():
-            feat_geom = input_feat.geometry()
-            if not feat_geom.isNull():
-                point = feat_geom.asPoint()
-                x = point.x()
-                y = point.y()
-
-                point_value = self.point_request(x, y)
-
-        input_new.commitChanges()
-
-        QgsVectorFileWriter.writeAsVectorFormat(input_new, output_file, 'UTF-8', input_new.crs())  # gpkg format
-        #QgsVectorFileWriter.writeAsVectorFormat(input_new, output_file, 'UTF-8', input_new.crs(), "ESRI Shapefile")  # shp format
-
-
-    def point_request(self, x, y):
-        settings = QgsSettings()
-        query_url = 'https://staging.geocontext.kartoza.com/api/v2/query?'  # This should be retrieved using a better manner
+        field_name = settings.value('geocontext-qgis-plugin/field_name')
+        load_output_file = settings.value('geocontext-qgis-plugin/open_file')
+        selected_features = settings.value('geocontext-qgis-plugin/selected_features')
         registry = settings.value('geocontext-qgis-plugin/registry')
-        key = settings.value('geocontext-qgis-plugin/key')
+
+        output_file_name = os.path.basename(output_file)
+        if selected_features and input_points.selectedFeatureCount() > 0:
+            # QgsVectorFileWriter.writeAsVectorFormat(input_new, output_file, 'UTF-8', input_new.crs(), "ESRI Shapefile")  # shp format
+            QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs(),
+                                                    onlySelected=True)
+            input_new = QgsVectorLayer(output_file, output_file_name)
+        else:
+            # QgsVectorFileWriter.writeAsVectorFormat(input_new, output_file, 'UTF-8', input_new.crs(), "ESRI Shapefile")  # shp format
+            QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs())
+            input_new = QgsVectorLayer(output_file, output_file_name)
+
+        if registry == 'service':
+            input_new.startEditing()
+            new_field = QgsField(field_name, QVariant.String)
+            input_new.addAttribute(new_field)
+            input_new.updateFields()
+            input_new.commitChanges()
+
+            input_new.startEditing()
+            for input_feat in input_new.getFeatures():
+                new_field_index = input_feat.fieldNameIndex(field_name)
+
+                feat_geom = input_feat.geometry()
+                if not feat_geom.isNull():
+                    point = feat_geom.asPoint()
+                    x = point.x()
+                    y = point.y()
+
+                    point_data = self.point_request_dialog(x, y, dialog)
+                    point_value_str = str(point_data['value'])
+
+                    input_new.changeAttributeValue(input_feat.id(), new_field_index, point_value_str)
+            input_new.commitChanges()
+        elif registry == 'group':
+            print("group")
+        elif registry == 'collection':
+            input_new.startEditing()
+            for input_feat in input_new.getFeatures():
+                feat_geom = input_feat.geometry()
+                if not feat_geom.isNull():
+                    point = feat_geom.asPoint()
+                    x = point.x()
+                    y = point.y()
+
+                    point_data = self.point_request_dialog(x, y, dialog)
+                    collection_name = point_data['name']
+                    print(collection_name)
+
+                    list_dict_groups = point_data["groups"]
+                    for dict_group in list_dict_groups:
+                        group_name = dict_group['name']
+                        print(group_name)
+
+                        list_dict_services = dict_group["services"]
+                        for dict_service in list_dict_services:
+                            key = dict_service['key']
+                            point_value_str = dict_service['value']
+                            print(str(dict_service))
+            input_new.commitChanges()
+        if load_output_file:
+            QgsProject.instance().addMapLayer(input_new)
+
+    def point_request_panel(self, x, y):
+        settings = QgsSettings()
+
+        api_url = settings.value('geocontext-qgis-plugin/url')
+        registry = (self.dockwidget.cbRegistry.currentText()).lower()
+        key_name = self.dockwidget.cbKey.currentText()
+
+        dict_key = self.dockwidget.find_name_info(key_name)
+        key = dict_key['key']
 
         client = Client()
-        url_request = query_url + 'registry=' + registry + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+        url_request = api_url + "query?" + 'registry=' + registry + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
 
         data = client.get(url_request)
         return data['value']
+
+    def point_request_dialog(self, x, y, dialog):
+        settings = QgsSettings()
+
+        api_url = settings.value('geocontext-qgis-plugin/url')
+        registry = settings.value('geocontext-qgis-plugin/registry')
+        key_name = settings.value('geocontext-qgis-plugin/key')
+
+        dict_key = dialog.find_name_info(key_name, registry)
+        key = dict_key['key']
+
+        client = Client()
+        url_request = api_url + "query?" + 'registry=' + registry + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+
+        data = client.get(url_request)
+
+        return data
+
+    def canvas_click(self, point_tool):
+        x = point_tool[0]
+        y = point_tool[1]
+
+        self.dockwidget.lineLong.setText(str(x))
+        self.dockwidget.lineLat.setText(str(y))
+
+        current_key_name = self.dockwidget.cbKey.currentText()
+        data = self.point_request_panel(x, y)
+
+        registry = self.dockwidget.cbRegistry.currentText()
+
+        if registry.lower() == 'service':
+            settings = QgsSettings()
+            auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
+            if auto_clear_table:
+                self.dockwidget.clear_results_table()
+
+            self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
+            self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))
+            self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(data)))
+        elif registry.lower() == "group":  # UPDATE
+            list_groups = []
+        elif registry.lower() == "collection":  # UPDATE
+            list_collections = []

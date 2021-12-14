@@ -29,36 +29,69 @@
     <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
    </property>
   </widget>
+  <widget class="QLabel" name="lblEndpointUrl">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>71</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Endpoint URL</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lblSchema">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>70</y>
+     <width>91</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Schema config</string>
+   </property>
+  </widget>
   <widget class="QgsFilterLineEdit" name="lineUrl">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>30</y>
-     <width>291</width>
+     <y>40</y>
+     <width>301</width>
      <height>21</height>
     </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="value">
-    <string/>
    </property>
    <property name="qgisRelation" stdset="0">
     <string notr="true"/>
    </property>
   </widget>
-  <widget class="QLabel" name="lblUrl">
+  <widget class="QgsFilterLineEdit" name="lineSchema">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>10</y>
-     <width>47</width>
-     <height>13</height>
+     <y>100</y>
+     <width>301</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="qgisRelation" stdset="0">
+    <string notr="true"/>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkAutoClear">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>130</y>
+     <width>301</width>
+     <height>17</height>
     </rect>
    </property>
    <property name="text">
-    <string>URL</string>
+    <string>Automatically clear table (only valid for service registry)</string>
    </property>
   </widget>
  </widget>
