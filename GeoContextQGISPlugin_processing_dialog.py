@@ -48,9 +48,18 @@ class ProcessingDialog(QDialog, FORM_CLASS):
 
         self.lineSchema.setValue(schema)
         self.lineUrl.setValue(url)
-        registry = self.cbRegistry.currentText()
 
         self.list_context = client.action(document=document, keys=["csr", "list"])  # Get the list of context layers
+        self.list_collection = [{'key': 'global_climate_collection', 'name': 'Global climate collection'},
+                                {'key': 'healthy_rivers_collection', 'name': 'Healthy rivers collection'},
+                                {'key': 'healthy_rivers_spatial_collection', 'name': 'Healthy rivers spatial filters'},
+                                {'key': 'hydrological_regions', 'name': 'Hydrological regions'},
+                                {'key': 'ledet_collection', 'name': 'LEDET collection'},
+                                {'key': 'sa_boundary_collection', 'name': 'South African boundary collection'},
+                                {'key': 'sa_climate_collection', 'name': 'South African climate collection'},
+                                {'key': 'sa_land_cover_land_use_collection', 'name': 'South African land use collection'},
+                                {'key': 'sa_river_ecosystem_collection', 'name': 'South African river collection'},
+                                {'key': 'sedac_collection', 'name': 'Socioeconomic data and application center collection'}]
 
         list_key_names = []
         for context in self.list_context:
@@ -64,11 +73,19 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         self.cbRegistry.currentTextChanged.connect(self.registry_changed)
         self.cbKey.currentTextChanged.connect(self.key_changed)
 
-    def find_name_info(self, search_name):
-        for context in self.list_context:
-            current_name = context['name']
-            if current_name == search_name:
-                return context
+    def find_name_info(self, search_name, registry):
+        if registry == "service":
+            for context in self.list_context:
+                current_name = context['name']
+                if current_name == search_name:
+                    return context
+        elif registry == "group":
+            print("group")
+        elif registry == "collection":
+            for collection in self.list_collection:
+                current_name = collection['name']
+                if current_name == search_name:
+                    return collection
         return None
 
     def registry_changed(self):
@@ -97,12 +114,18 @@ class ProcessingDialog(QDialog, FORM_CLASS):
             for context in self.list_context:
                 name = context['name']
                 list_key_names.append(name)
+            list_key_names = sorted(list_key_names)
 
             self.cbKey.addItems(list_key_names)
         elif registry_type.lower() == "group":  # UPDATE
             list_groups = []
-        elif registry_type.lower() == "collection":  # UPDATE
-            list_collections = []
+        elif registry_type.lower() == "collection":
+            list_key_names = []
+            for collection in self.list_collection:
+                name = collection['name']
+                list_key_names.append(name)
+
+            self.cbKey.addItems(list_key_names)
 
     def set_point_layer(self):
         input_points = self.cbInputPoints.currentLayer()
