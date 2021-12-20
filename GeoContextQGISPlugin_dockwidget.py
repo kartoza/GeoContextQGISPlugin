@@ -26,6 +26,7 @@ import os
 
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
+from qgis.PyQt.QtWidgets import QTableWidgetItem
 from qgis.core import QgsSettings
 
 from coreapi import Client
@@ -38,7 +39,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     closingPlugin = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, canvas, point_tool, parent=None):
         """Constructor."""
         super(GeoContextQGISPluginDockWidget, self).__init__(parent)
         # Set up the user interface from Designer.
@@ -52,9 +53,12 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
         url = settings.value('geocontext-qgis-plugin/url', '', type=str)
 
+        self.canvas = canvas
+        self.point_tool = point_tool
+        self.cursor_active = True
+
         client = Client()
         self.document = client.get(schema)  # Retrieve the API schema
-
         self.list_context = client.action(document=self.document, keys=["csr", "list"])  # Get the list of context layers
 
         list_key_names = []
@@ -75,6 +79,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.cbRegistry.currentTextChanged.connect(self.registry_changed)
         self.cbKey.currentTextChanged.connect(self.key_changed)
         self.btnClear.clicked.connect(self.clear_results_table)
+        self.btnFetch.clicked.connect(self.fetch_btn_click)
+        self.btnCursor.clicked.connect(self.cursor_btn_click)
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -92,6 +98,53 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
         self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
         self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
+
+    def fetch_btn_click(self):
+        x = self.lineLong.value()
+        y = self.lineLat.value()
+
+        current_key_name = self.cbKey.currentText()
+        data = self.point_request_panel(x, y)
+
+        registry = self.cbRegistry.currentText()
+
+        if registry.lower() == 'service':
+            settings = QgsSettings()
+            auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
+            if auto_clear_table:
+                self.clear_results_table()
+
+            self.tblResult.insertRow(0)  # Always add at the top of the table
+            self.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))
+            self.tblResult.setItem(0, 1, QTableWidgetItem(str(data)))
+        elif registry.lower() == "group":  # UPDATE
+            list_groups = []
+        elif registry.lower() == "collection":  # UPDATE
+            list_collections = []
+
+    def cursor_btn_click(self):
+        if self.cursor_active:
+            self.canvas.unsetMapTool(self.point_tool)
+            self.cursor_active = False
+        else:
+            self.canvas.setMapTool(self.point_tool)
+            self.cursor_active = True
+
+    def point_request_panel(self, x, y):
+        settings = QgsSettings()
+
+        api_url = settings.value('geocontext-qgis-plugin/url')
+        registry = (self.cbRegistry.currentText()).lower()
+        key_name = self.cbKey.currentText()
+
+        dict_key = self.find_name_info(key_name)
+        key = dict_key['key']
+
+        client = Client()
+        url_request = api_url + "query?" + 'registry=' + registry + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+
+        data = client.get(url_request)
+        return data['value']
 
     def clear_results_table(self):
         row_count = self.tblResult.rowCount()
