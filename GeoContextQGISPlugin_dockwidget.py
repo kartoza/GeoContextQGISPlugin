@@ -39,7 +39,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     closingPlugin = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, canvas, point_tool, parent=None):
         """Constructor."""
         super(GeoContextQGISPluginDockWidget, self).__init__(parent)
         # Set up the user interface from Designer.
@@ -53,9 +53,12 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
         url = settings.value('geocontext-qgis-plugin/url', '', type=str)
 
+        self.canvas = canvas
+        self.point_tool = point_tool
+        self.cursor_active = True
+
         client = Client()
         self.document = client.get(schema)  # Retrieve the API schema
-
         self.list_context = client.action(document=self.document, keys=["csr", "list"])  # Get the list of context layers
 
         list_key_names = []
@@ -76,8 +79,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.cbRegistry.currentTextChanged.connect(self.registry_changed)
         self.cbKey.currentTextChanged.connect(self.key_changed)
         self.btnClear.clicked.connect(self.clear_results_table)
-        self.btnFetch.clicked.connect(self.fetch_click)
-        self.btnCursor.clicked.connect(self.cursor_click)
+        self.btnFetch.clicked.connect(self.fetch_btn_click)
+        self.btnCursor.clicked.connect(self.cursor_btn_click)
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -96,7 +99,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
         self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
 
-    def fetch_click(self):
+    def fetch_btn_click(self):
         x = self.lineLong.value()
         y = self.lineLat.value()
 
@@ -119,14 +122,13 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         elif registry.lower() == "collection":  # UPDATE
             list_collections = []
 
-    def cursor_click(self):
-        print("cursor")
-
-
-
-
-
-        
+    def cursor_btn_click(self):
+        if self.cursor_active:
+            self.canvas.unsetMapTool(self.point_tool)
+            self.cursor_active = False
+        else:
+            self.canvas.setMapTool(self.point_tool)
+            self.cursor_active = True
 
     def point_request_panel(self, x, y):
         settings = QgsSettings()
