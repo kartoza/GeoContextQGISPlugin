@@ -13,7 +13,7 @@ import os
 from PyQt5.QtWidgets import QDialog
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QSettings
-from qgis.core import QgsSettings
+from qgis.core import QgsSettings, QgsMapLayer
 
 from coreapi import Client
 
@@ -68,20 +68,20 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         list_key_names = sorted(list_key_names)
 
         self.cbKey.addItems(list_key_names)
-        self.lineEditFieldName.setText(self.cbKey.currentText().replace(' ', '_') + "_value")
+        self.lineEditFieldName.setText(self.cbKey.currentText().replace(' ', '_').replace(",", "") + "_value")
 
         self.cbRegistry.currentTextChanged.connect(self.registry_changed)
         self.cbKey.currentTextChanged.connect(self.key_changed)
 
     def find_name_info(self, search_name, registry):
-        if registry == "service":
+        if registry == "Service":
             for context in self.list_context:
                 current_name = context['name']
                 if current_name == search_name:
                     return context
-        elif registry == "group":
+        elif registry == "Group":
             print("group")
-        elif registry == "collection":
+        elif registry == "Collection":
             for collection in self.list_collection:
                 current_name = collection['name']
                 if current_name == search_name:
@@ -93,7 +93,17 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         self.update_key_list(registry)
 
     def key_changed(self):
-        self.lineEditFieldName.setText(self.cbKey.currentText().replace(' ', '_') + "_value")
+        registry = self.cbRegistry.currentText()
+
+        if registry.lower() == 'service':
+            self.lblFieldName.setText("Field name")
+            self.lineEditFieldName.setText(self.cbKey.currentText().replace(' ', '_').replace(",", "") + "_value")
+        elif registry.lower() == 'group':
+            self.lblFieldName.setText("Field prefix")
+            self.lineEditFieldName.setText(self.cbKey.currentText().replace(' ', '_').replace(",", "") + "_")
+        elif registry.lower() == 'collection':
+            self.lblFieldName.setText("Field prefix")
+            self.lineEditFieldName.setText(self.cbKey.currentText().replace(' ', '_').replace(",", "") + "_")
 
     def update_key_list(self, registry_type="service"):
         num_of_items = self.cbKey.count()
@@ -127,62 +137,80 @@ class ProcessingDialog(QDialog, FORM_CLASS):
 
             self.cbKey.addItems(list_key_names)
 
-    def set_point_layer(self):
+    def check_parameters_for_errors(self):
+        input_points = self.get_input_layer()
+        if input_points.type() == QgsMapLayer.VectorLayer:
+            if not input_points.hasFeatures():
+                print("ERROR: Input file is empty.")
+                return True
+            input_type = input_points.wkbType()
+            if not (input_type == 1 or input_type == 4):
+                print("ERROR: Vector type can only be point.")
+                return True
+        else:
+            print("ERROR: Not a vector layer.")
+            return True
+
+        registry = self.get_registry()
+        if not (registry == "Service" or registry == "Group" or registry == "Collection"):
+            print("ERROR: Registry can only be 'Service', 'Group' or 'Collection'.")
+            return True
+
+        key = self.get_key()
+
+        field_name = self.get_fieldname()
+        field_name_test = field_name.replace(" ", "").replace("_", "")
+        if len(field_name_test) > 0:
+            if not field_name_test.isalnum():
+                print("ERROR: Fieldname is not alphanumberic.")
+                return True
+        else:
+            print("ERROR: Fieldname is empty.")
+            return True
+
+        output_file = self.get_output_points()
+        output_dir = os.path.dirname(output_file)
+        output_file_name = os.path.basename(output_file)
+        if not os.path.isdir(output_dir):
+            print("ERROR: Directory does not exist.")
+            return True
+        if not (output_file_name.endswith(".gpkg") or output_file_name.endswith(".shp")):
+            print("ERROR: Format can only be geopackage (gpkg) or shapefile (shp).")
+            return True
+
+        return False
+
+    def get_input_layer(self):
         input_points = self.cbInputPoints.currentLayer()
-
-        settings = QgsSettings()
-        settings.setValue('geocontext-qgis-plugin/input_points', input_points)
-
-    def set_selected_features(self):
-        selected_features = self.cbSelection.isChecked()
-
-        settings = QgsSettings()
-        settings.setValue('geocontext-qgis-plugin/selected_features', selected_features)
-
-    def set_registry(self):
-        registry = self.cbRegistry.currentText()
-
-        settings = QgsSettings()
-        settings.setValue('geocontext-qgis-plugin/registry', registry.lower())
-
-    def set_key(self):
-        key = self.cbKey.currentText()
-
-        settings = QgsSettings()
-        settings.setValue('geocontext-qgis-plugin/key', key)
-
-    def set_field_name(self):
-        field_name = self.lineEditFieldName.text()
-
-        settings = QgsSettings()
-        settings.setValue('geocontext-qgis-plugin/field_name', field_name)
-
-    def set_output_points(self):
-        output_dir = self.fwOutputPoints.filePath()
-
-        settings = QgsSettings()
-        settings.setValue('geocontext-qgis-plugin/output_points', output_dir)
-
-    def set_open_file(self):
-        open_file = self.cbOpenResult.isChecked()
-
-        settings = QgsSettings()
-        settings.setValue('geocontext-qgis-plugin/open_file', open_file)
-
-    def get_point_layer(self):
-        settings = QgsSettings()
-        input_points = settings.value('geocontext-qgis-plugin/input_points')
 
         return input_points
 
+    def get_selected_option(self):
+        selected_features = self.cbSelection.isChecked()
+
+        return selected_features
+
+    def get_registry(self):
+        registry = self.cbRegistry.currentText()
+
+        return registry
+
     def get_key(self):
-        settings = QgsSettings()
-        key = settings.value('geocontext-qgis-plugin/key')
+        key = self.cbKey.currentText()
 
         return key
 
-    def get_output_points(self):
-        settings = QgsSettings()
-        output_dir = settings.value('geocontext-qgis-plugin/output_points')
+    def get_fieldname(self):
+        field_name = self.lineEditFieldName.text()
 
-        return output_dir
+        return field_name
+
+    def get_output_points(self):
+        output_layer = self.fwOutputPoints.filePath()
+
+        return output_layer
+
+    def get_layer_load_option(self):
+        load_output_file = self.cbOpenResult.isChecked()
+
+        return load_output_file

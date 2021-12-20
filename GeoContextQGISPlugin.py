@@ -79,7 +79,7 @@ class GeoContextQGISPlugin:
         self.dockwidget = None
 
         self.canvas = self.iface.mapCanvas()
-        self.point_tool = QgsMapToolEmitPoint(self.canvas)
+        self.point_tool = QgsMapToolEmitPoint(self.canvas)  # Enables the cursor tool for selecting locations
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -197,7 +197,7 @@ class GeoContextQGISPlugin:
             add_to_menu=True,
             add_to_toolbar=False)
 
-        self.point_tool.canvasClicked.connect(self.canvas_click)
+        self.point_tool.canvasClicked.connect(self.canvas_click)  # Enables the cursor tool
 
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed"""
@@ -214,7 +214,7 @@ class GeoContextQGISPlugin:
         # self.dockwidget = None
 
         self.pluginIsActive = False
-        self.canvas.unsetMapTool(self.point_tool)
+        self.canvas.unsetMapTool(self.point_tool)  # Disables the cursor tool
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -271,40 +271,36 @@ class GeoContextQGISPlugin:
 
         # See if OK was pressed
         if result:
-            dialog.set_point_layer()
-            dialog.set_selected_features()
-            dialog.set_registry()
-            dialog.set_key()
-            dialog.set_output_points()
-            dialog.set_field_name()
-            dialog.set_open_file()
-
-            self.process_points_layer(dialog)
+            error_found = dialog.check_parameters_for_errors()
+            if not error_found:
+                self.process_points_layer(dialog)
         else:
             pass
 
     def process_points_layer(self, dialog):
-        settings = QgsSettings()
-        input_points = settings.value('geocontext-qgis-plugin/input_points')
-        key = settings.value('geocontext-qgis-plugin/key')
-        output_file = settings.value('geocontext-qgis-plugin/output_points')
-        field_name = settings.value('geocontext-qgis-plugin/field_name')
-        load_output_file = settings.value('geocontext-qgis-plugin/open_file')
-        selected_features = settings.value('geocontext-qgis-plugin/selected_features')
-        registry = settings.value('geocontext-qgis-plugin/registry')
+        input_points = dialog.get_input_layer()  # QgsVectorLayer. Input point layer from canvas
+        selected_features = dialog.get_selected_option()  # Selected feature will only be taken into account if True
+        registry = dialog.get_registry()  # Service, group or collection
+        key = dialog.get_key()  # The data which will be requested
+        field_name = dialog.get_fieldname().replace(" ", "_")  # Fieldname or suffix. All spaces is replaced with '_'
+        output_file = dialog.get_output_points()  # Output point file. Shapefile (shp) or geopackage (gpkg)
+        load_output_file = dialog.get_layer_load_option()  # Loads the newly created file if True
 
         output_file_name = os.path.basename(output_file)
         if selected_features and input_points.selectedFeatureCount() > 0:
-            # QgsVectorFileWriter.writeAsVectorFormat(input_new, output_file, 'UTF-8', input_new.crs(), "ESRI Shapefile")  # shp format
-            QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs(),
-                                                    onlySelected=True)
+            if output_file.endswith(".gpkg"):
+                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs(), onlySelected=True)
+            elif output_file.endswith(".shp"):
+                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs(), "ESRI Shapefile", onlySelected=True)  # shp format
             input_new = QgsVectorLayer(output_file, output_file_name)
-        else:
-            # QgsVectorFileWriter.writeAsVectorFormat(input_new, output_file, 'UTF-8', input_new.crs(), "ESRI Shapefile")  # shp format
-            QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs())
+        else:  # If the only selection option is disabled or there is no features selected
+            if output_file.endswith(".gpkg"):
+                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs())
+            elif output_file.endswith(".shp"):
+                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs(), "ESRI Shapefile")  # shp format
             input_new = QgsVectorLayer(output_file, output_file_name)
 
-        if registry == 'service':
+        if registry == 'Service':
             input_new.startEditing()
             new_field = QgsField(field_name, QVariant.String)
             input_new.addAttribute(new_field)
@@ -326,10 +322,10 @@ class GeoContextQGISPlugin:
 
                     input_new.changeAttributeValue(input_feat.id(), new_field_index, point_value_str)
             input_new.commitChanges()
-        elif registry == 'group':
+        elif registry == 'Group':
             print("group")
-        elif registry == 'collection':
-            input_new.startEditing()
+        elif registry == 'Collection':
+            # Adds all of the fields to the layer
             for input_feat in input_new.getFeatures():
                 feat_geom = input_feat.geometry()
                 if not feat_geom.isNull():
@@ -338,20 +334,45 @@ class GeoContextQGISPlugin:
                     y = point.y()
 
                     point_data = self.point_request_dialog(x, y, dialog)
-                    collection_name = point_data['name']
-                    print(collection_name)
 
                     list_dict_groups = point_data["groups"]
                     for dict_group in list_dict_groups:
+                        list_dict_services = dict_group["services"]
+                        for dict_service in list_dict_services:
+                            key = dict_service['key']
+                            coll_field_name = field_name + key
+
+                            self.create_new_field(input_new, input_feat, coll_field_name)
+                break  # Fields only need to be added once for a layer
+
+            # Requests values for all features
+            for input_feat in input_new.getFeatures():
+                feat_geom = input_feat.geometry()
+                if not feat_geom.isNull():
+                    point = feat_geom.asPoint()
+                    x = point.x()
+                    y = point.y()
+
+                    point_data = self.point_request_dialog(x, y, dialog)
+
+                    collection_name = point_data['name']
+                    list_dict_groups = point_data["groups"]
+                    for dict_group in list_dict_groups:
                         group_name = dict_group['name']
-                        print(group_name)
 
                         list_dict_services = dict_group["services"]
                         for dict_service in list_dict_services:
                             key = dict_service['key']
                             point_value_str = dict_service['value']
-                            print(str(dict_service))
-            input_new.commitChanges()
+                            coll_field_name = field_name + key
+
+                            input_new.startEditing()
+                            field_index = input_feat.fieldNameIndex(coll_field_name)
+                            input_new.startEditing()
+                            input_new.changeAttributeValue(input_feat.id(), field_index, point_value_str)
+                            input_new.commitChanges()
+
+        # Loads the newly created file into QGIS
         if load_output_file:
             QgsProject.instance().addMapLayer(input_new)
 
@@ -375,14 +396,14 @@ class GeoContextQGISPlugin:
         settings = QgsSettings()
 
         api_url = settings.value('geocontext-qgis-plugin/url')
-        registry = settings.value('geocontext-qgis-plugin/registry')
-        key_name = settings.value('geocontext-qgis-plugin/key')
+        registry = dialog.get_registry()
+        key_name = dialog.get_key()
 
         dict_key = dialog.find_name_info(key_name, registry)
         key = dict_key['key']
 
         client = Client()
-        url_request = api_url + "query?" + 'registry=' + registry + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+        url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
 
         data = client.get(url_request)
 
@@ -413,3 +434,14 @@ class GeoContextQGISPlugin:
             list_groups = []
         elif registry.lower() == "collection":  # UPDATE
             list_collections = []
+
+    def create_new_field(self, input_layer, input_feat, field_name):
+        field_index = input_feat.fieldNameIndex(field_name)
+        if field_index == -1:  # Checks if the field does not exist in the attribute table
+            input_layer.startEditing()
+            new_field = QgsField(field_name, QVariant.String)
+            input_layer.addAttribute(new_field)
+            input_layer.updateFields()
+            input_layer.commitChanges()
+            field_index = input_feat.fieldNameIndex(field_name)
+        return field_index
