@@ -41,28 +41,6 @@ class OptionsDialog(QDialog, FORM_CLASS):
         self.lineSchema.setValue(settings.value('geocontext-qgis-plugin/schema', '', type=str))
         self.checkAutoClear.setChecked(settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool))
 
-    def get_schema(self):
-        """Gets the already-set schema URL. This is set using this
-        dialog
-
-        :returns: A URL for the docs used to retrieve the schema
-        :rtype: String
-        """
-
-        url = self.lineUrl.value()
-        return url
-
-    def get_url(self):
-        """Gets the base URL on which requests will be performed. This is set
-        by this dialog
-
-        :returns: A vector point layer that contains nodes as attributes.
-        :rtype: QgsVectorLayer
-        """
-
-        schema = self.lineSchema.value()
-        return schema
-
     def set_url(self):
         """Sets the base URL which will be used to request data/values.
         This can be set using this dialog.
