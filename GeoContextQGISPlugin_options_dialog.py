@@ -35,32 +35,62 @@ class OptionsDialog(QDialog, FORM_CLASS):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
+        # Sets the options according what the user has it previously set/saved using the options dialog
         settings = QgsSettings()
         self.lineUrl.setValue(settings.value('geocontext-qgis-plugin/url', '', type=str))
         self.lineSchema.setValue(settings.value('geocontext-qgis-plugin/schema', '', type=str))
         self.checkAutoClear.setChecked(settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool))
 
     def get_schema(self):
+        """Gets the already-set schema URL. This is set using this
+        dialog
+
+        :returns: A URL for the docs used to retrieve the schema
+        :rtype: String
+        """
+
         url = self.lineUrl.value()
         return url
 
     def get_url(self):
+        """Gets the base URL on which requests will be performed. This is set
+        by this dialog
+
+        :returns: A vector point layer that contains nodes as attributes.
+        :rtype: QgsVectorLayer
+        """
+
         schema = self.lineSchema.value()
         return schema
 
     def set_url(self):
+        """Sets the base URL which will be used to request data/values.
+        This can be set using this dialog.
+        """
+
         settings = QgsSettings()
         url = self.lineUrl.value()
 
         settings.setValue('geocontext-qgis-plugin/url', url)
 
     def set_schema(self):
+        """Sets the schema docs provided by the user. This can be set using
+        this dialog
+        """
+
         settings = QgsSettings()
         schema = self.lineSchema.value()
 
         settings.setValue('geocontext-qgis-plugin/schema', schema)
 
     def set_auto_clear(self):
+        """Gets the base URL on which requests will be performed. This is set
+        by this dialog
+
+        :returns: A vector point layer that contains nodes as attributes.
+        :rtype: QgsVectorLayer
+        """
+
         settings = QgsSettings()
         auto_clear = self.checkAutoClear.checkState()
 

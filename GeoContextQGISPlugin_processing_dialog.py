@@ -39,17 +39,23 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
+        # Retrives the schema and request base URLs
         settings = QgsSettings()
         schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
         url = settings.value('geocontext-qgis-plugin/url', '', type=str)
 
+        # Requests the schema
         client = Client()
         document = client.get(schema)  # Retrieve the API schema
 
+        # Sets the URLs for the processing dialog
         self.lineSchema.setValue(schema)
         self.lineUrl.setValue(url)
 
-        self.list_context = client.action(document=document, keys=["csr", "list"])  # Get the list of context layers
+        # Retrieves the list of context layers
+        self.list_context = client.action(document=document, keys=["csr", "list"])
+
+        # Collections
         self.list_collection = [{'key': 'global_climate_collection', 'name': 'Global climate collection'},
                                 {'key': 'healthy_rivers_collection', 'name': 'Healthy rivers collection'},
                                 {'key': 'healthy_rivers_spatial_collection', 'name': 'Healthy rivers spatial filters'},
@@ -61,19 +67,33 @@ class ProcessingDialog(QDialog, FORM_CLASS):
                                 {'key': 'sa_river_ecosystem_collection', 'name': 'South African river collection'},
                                 {'key': 'sedac_collection', 'name': 'Socioeconomic data and application center collection'}]
 
+        # Creates a list of key names and sorts it
         list_key_names = []
         for context in self.list_context:
             name = context['name']
             list_key_names.append(name)
         list_key_names = sorted(list_key_names)
 
+        # Applies the list to the processing dialog
         self.cbKey.addItems(list_key_names)
+
+        # Sets the field name to a default value, based on the current selected key name
         self.lineEditFieldName.setText(self.cbKey.currentText().replace(' ', '_').replace(",", "") + "_value")
 
-        self.cbRegistry.currentTextChanged.connect(self.registry_changed)
-        self.cbKey.currentTextChanged.connect(self.key_changed)
+        self.cbRegistry.currentTextChanged.connect(self.registry_changed)  # Triggers when the user changes the registry type
+        self.cbKey.currentTextChanged.connect(self.key_changed)  # Triggers when the user changes the key name
 
     def find_name_info(self, search_name, registry):
+        """The method finds the key ID of a provided key name. It checks each case until
+        the correct case is found.
+
+        :param search_name: The search name to retrieve
+        :type search_name: str
+
+        :returns: The key ID of the searched key name; or None if the key could not be found
+        :rtype: String
+        """
+
         if registry == "Service":
             for context in self.list_context:
                 current_name = context['name']
@@ -89,10 +109,19 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         return None
 
     def registry_changed(self):
+        """This method is called when the registry option is changed.
+        The list in the dialog which contains the key names will be updated.
+        """
+
         registry = self.cbRegistry.currentText()
         self.update_key_list(registry)
 
     def key_changed(self):
+        """This method is called when the key option in the panel window is changed.
+        The information in the table which provides a description on the selected
+        key will be update.
+        """
+
         registry = self.cbRegistry.currentText()
 
         if registry.lower() == 'service':
@@ -106,51 +135,74 @@ class ProcessingDialog(QDialog, FORM_CLASS):
             self.lineEditFieldName.setText(self.cbKey.currentText().replace(' ', '_').replace(",", "") + "_")
 
     def update_key_list(self, registry_type="service"):
+        """This method updates the key name list shown in the panel. It will be called when
+        the user changes the registry type
+        """
+
+        # Clears the combobox list
         num_of_items = self.cbKey.count()
-        while num_of_items >= 0:  # Clears the combobox list
+        while num_of_items >= 0:
             self.cbKey.removeItem(num_of_items)
             num_of_items = num_of_items - 1
 
+        # The registry option has been changed to Service
         if registry_type.lower() == "service":
             settings = QgsSettings()
+
+            # Retrieves the schema URL. This can be set in the options dialog
             schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
 
+            # Requests the schema from the server
             client = Client()
             document = client.get(schema)  # Retrieve the API schema
 
+            # Requests the list of context layer/data
             self.list_context = client.action(document=document, keys=["csr", "list"])  # Get the list of context layers
 
+            # Lists all of the key names and sorts it alphabetically
             list_key_names = []
             for context in self.list_context:
                 name = context['name']
                 list_key_names.append(name)
             list_key_names = sorted(list_key_names)
 
+            # Updates the keys in the processing dialog
             self.cbKey.addItems(list_key_names)
         elif registry_type.lower() == "group":  # UPDATE
             list_groups = []
         elif registry_type.lower() == "collection":
+            # Creates a list of the collection layers
             list_key_names = []
             for collection in self.list_collection:
                 name = collection['name']
                 list_key_names.append(name)
 
+            # Updates the keys in the processing dialog
             self.cbKey.addItems(list_key_names)
 
     def check_parameters_for_errors(self):
+        """Checks each of the parameters provided by the user for errors.
+
+        :returns: True if an error has been found, otherwise False if no error.
+        has been found
+        :rtype: Boolean
+        """
+
+        # Checks whether the input layer provided by the user is valid
         input_points = self.get_input_layer()
-        if input_points.type() == QgsMapLayer.VectorLayer:
-            if not input_points.hasFeatures():
+        if input_points.type() == QgsMapLayer.VectorLayer:  # The layer can only be a vector layer
+            if not input_points.hasFeatures():  # The layer needs to contain features to be processed
                 print("ERROR: Input file is empty.")
                 return True
-            input_type = input_points.wkbType()
-            if not (input_type == 1 or input_type == 4):
+            input_type = input_points.wkbType()  # Vector type
+            if not (input_type == 1 or input_type == 4):  # Can only be point or multipoint
                 print("ERROR: Vector type can only be point.")
                 return True
         else:
             print("ERROR: Not a vector layer.")
             return True
 
+        # Checks whether the registry type is valid. An invalid case should not be possible
         registry = self.get_registry()
         if not (registry == "Service" or registry == "Group" or registry == "Collection"):
             print("ERROR: Registry can only be 'Service', 'Group' or 'Collection'.")
@@ -158,59 +210,107 @@ class ProcessingDialog(QDialog, FORM_CLASS):
 
         key = self.get_key()
 
+        # Checks if the field name or field prefix is valid
         field_name = self.get_fieldname()
-        field_name_test = field_name.replace(" ", "").replace("_", "")
-        if len(field_name_test) > 0:
-            if not field_name_test.isalnum():
+        field_name_test = field_name.replace(" ", "").replace("_", "")  # Comma and spaces will be automatically replaced when the field is created
+        if len(field_name_test) > 0:  # Field name should contain at least one character
+            if not field_name_test.isalnum():  # Field name should be alphanumeric, and therfore contain no other characters
                 print("ERROR: Fieldname is not alphanumberic.")
                 return True
         else:
             print("ERROR: Fieldname is empty.")
             return True
 
+        # Checks if the output directory and file is valid
         output_file = self.get_output_points()
         output_dir = os.path.dirname(output_file)
         output_file_name = os.path.basename(output_file)
-        if not os.path.isdir(output_dir):
+        if not os.path.isdir(output_dir):  # Checks if the output directory exists
             print("ERROR: Directory does not exist.")
             return True
-        if not (output_file_name.endswith(".gpkg") or output_file_name.endswith(".shp")):
+        if not (output_file_name.endswith(".gpkg") or output_file_name.endswith(".shp")):  # File format can only be shp or gpkg
             print("ERROR: Format can only be geopackage (gpkg) or shapefile (shp).")
             return True
 
         return False
 
     def get_input_layer(self):
+        """Get the input point layer selected by the user, and
+        returns it.
+
+        :returns: A vector point layer which contains the all of the points.
+        :rtype: QgsVectorLayer
+        """
+
         input_points = self.cbInputPoints.currentLayer()
 
         return input_points
 
     def get_selected_option(self):
+        """Gets the value set for the selection option in processing dialog.
+
+        :returns: True if selection only is enabled, otherwise False.
+        :rtype: Boolean
+        """
+
         selected_features = self.cbSelection.isChecked()
 
         return selected_features
 
     def get_registry(self):
+        """Returns the registry type, service, group or collection, selected
+        by the user.
+
+        :returns: The registry type selected
+        :rtype: String
+        """
+
         registry = self.cbRegistry.currentText()
 
         return registry
 
     def get_key(self):
+        """Returns the key name selected by the user.
+
+        :returns: The key name
+        :rtype: String
+        """
+
         key = self.cbKey.currentText()
 
         return key
 
     def get_fieldname(self):
+        """Returns the field name or prefix provided by the user.
+
+        :returns: The field name/prefix
+        :rtype: String
+        """
+
         field_name = self.lineEditFieldName.text()
 
         return field_name
 
     def get_output_points(self):
+        """Returns the output file directory from the dialog. Is either
+        shapefile or geopackage.
+
+        :returns: Output file directory.
+        :rtype: String
+        """
+
         output_layer = self.fwOutputPoints.filePath()
 
         return output_layer
 
     def get_layer_load_option(self):
+        """Return whether the user has selected the option to automatically load
+        the newly created point layer.
+
+        :returns: True if the layer should be loaded, otherwise False
+        :rtype: Boolean
+        """
+
         load_output_file = self.cbOpenResult.isChecked()
 
         return load_output_file
