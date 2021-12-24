@@ -11,8 +11,7 @@
 import os
 
 from PyQt5.QtWidgets import QDialog
-from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt import QtWidgets, uic
 from qgis.core import QgsSettings, QgsMapLayer
 
 from coreapi import Client
@@ -55,17 +54,23 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         # Retrieves the list of context layers
         self.list_context = client.action(document=document, keys=["csr", "list"])
 
+        # Groups
+        self.list_group = [{'key': 'bioclimatic_variables_group', 'name': 'Bioclimatic layers', 'description': 'N/A'},
+                           {'key': 'monthly_precipitation_group', 'name': 'Monthly Precipitation', 'description': 'N/A'},
+                           {'key': 'monthly_solar_radiation_group', 'name': 'Monthly Solar Radiation', 'description': 'N/A'},
+                           {'key': 'monthly_max_temperature_group', 'name': 'Monthly Maximum Temperature', 'description': 'N/A'}]
+
         # Collections
-        self.list_collection = [{'key': 'global_climate_collection', 'name': 'Global climate collection'},
-                                {'key': 'healthy_rivers_collection', 'name': 'Healthy rivers collection'},
-                                {'key': 'healthy_rivers_spatial_collection', 'name': 'Healthy rivers spatial filters'},
-                                {'key': 'hydrological_regions', 'name': 'Hydrological regions'},
-                                {'key': 'ledet_collection', 'name': 'LEDET collection'},
-                                {'key': 'sa_boundary_collection', 'name': 'South African boundary collection'},
-                                {'key': 'sa_climate_collection', 'name': 'South African climate collection'},
-                                {'key': 'sa_land_cover_land_use_collection', 'name': 'South African land use collection'},
-                                {'key': 'sa_river_ecosystem_collection', 'name': 'South African river collection'},
-                                {'key': 'sedac_collection', 'name': 'Socioeconomic data and application center collection'}]
+        self.list_collection = [{'key': 'global_climate_collection', 'name': 'Global climate collection', 'description': 'N/A'},
+                                {'key': 'healthy_rivers_collection', 'name': 'Healthy rivers collection', 'description': 'N/A'},
+                                {'key': 'healthy_rivers_spatial_collection', 'name': 'Healthy rivers spatial filters', 'description': 'N/A'},
+                                {'key': 'hydrological_regions', 'name': 'Hydrological regions', 'description': 'N/A'},
+                                {'key': 'ledet_collection', 'name': 'LEDET collection', 'description': 'N/A'},
+                                {'key': 'sa_boundary_collection', 'name': 'South African boundary collection', 'description': 'N/A'},
+                                {'key': 'sa_climate_collection', 'name': 'South African climate collection', 'description': 'N/A'},
+                                {'key': 'sa_land_cover_land_use_collection', 'name': 'South African land use collection', 'description': 'N/A'},
+                                {'key': 'sa_river_ecosystem_collection', 'name': 'South African river collection', 'description': 'N/A'},
+                                {'key': 'sedac_collection', 'name': 'Socioeconomic data and application center collection', 'description': 'N/A'}]
 
         # Creates a list of key names and sorts it
         list_key_names = []
@@ -77,8 +82,17 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         # Applies the list to the processing dialog
         self.cbKey.addItems(list_key_names)
 
+        key_name = self.cbKey.currentText()
+        registry = self.cbRegistry.currentText()
+
         # Sets the field name to a default value, based on the current selected key name
-        self.lineEditFieldName.setText(self.cbKey.currentText().replace(' ', '_').replace(",", "") + "_value")
+        self.lineEditFieldName.setText(key_name.replace(' ', '_').replace(",", "") + "_value")
+
+        # Retrieves the set information and updates the description table with it
+        dict_current = self.find_name_info(key_name, registry)
+        self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
+        self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
+        self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
 
         self.cbRegistry.currentTextChanged.connect(self.registry_changed)  # Triggers when the user changes the registry type
         self.cbKey.currentTextChanged.connect(self.key_changed)  # Triggers when the user changes the key name
@@ -100,7 +114,10 @@ class ProcessingDialog(QDialog, FORM_CLASS):
                 if current_name == search_name:
                     return context
         elif registry == "Group":
-            print("group")
+            for group in self.list_group:
+                current_name = group['name']
+                if current_name == search_name:
+                    return group
         elif registry == "Collection":
             for collection in self.list_collection:
                 current_name = collection['name']
@@ -119,31 +136,40 @@ class ProcessingDialog(QDialog, FORM_CLASS):
     def key_changed(self):
         """This method is called when the key option in the panel window is changed.
         The information in the table which provides a description on the selected
-        key will be update.
+        key will be updated.
         """
 
         registry = self.cbRegistry.currentText()
+        key_name = self.cbKey.currentText()
 
-        if registry.lower() == 'service':
-            self.lblFieldName.setText("Field name")
-            self.lineEditFieldName.setText(self.cbKey.currentText().replace(' ', '_').replace(",", "") + "_value")
-        elif registry.lower() == 'group':
-            self.lblFieldName.setText("Field prefix")
-            self.lineEditFieldName.setText(self.cbKey.currentText().replace(' ', '_').replace(",", "") + "_")
-        elif registry.lower() == 'collection':
-            self.lblFieldName.setText("Field prefix")
-            self.lineEditFieldName.setText(self.cbKey.currentText().replace(' ', '_').replace(",", "") + "_")
+        # If the key name is empty, this step is skipped
+        # This happens when the key list is cleared, which then triggers prior to the updating the list
+        if len(key_name) > 0:
+            if registry.lower() == 'service':
+                self.lblFieldName.setText("Field name")
+                self.lineEditFieldName.setText(key_name.replace(' ', '_').replace(",", "") + "_value")
+            elif registry.lower() == 'group':
+                self.lblFieldName.setText("Field prefix")
+                self.lineEditFieldName.setText(key_name.replace(' ', '_').replace(",", "") + "_")
+            elif registry.lower() == 'collection':
+                self.lblFieldName.setText("Field prefix")
+                self.lineEditFieldName.setText(key_name.replace(' ', '_').replace(",", "") + "_")
+
+            dict_current = self.find_name_info(key_name, registry)
+
+            # Updates the table
+            self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
+            self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
+            self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
 
     def update_key_list(self, registry_type="service"):
         """This method updates the key name list shown in the panel. It will be called when
-        the user changes the registry type
+        the user changes the registry type. Defaults to 'service' if no registry type has
+        been provided.
         """
 
         # Clears the combobox list
-        num_of_items = self.cbKey.count()
-        while num_of_items >= 0:
-            self.cbKey.removeItem(num_of_items)
-            num_of_items = num_of_items - 1
+        self.cbKey.clear()
 
         # The registry option has been changed to Service
         if registry_type.lower() == "service":
@@ -168,8 +194,15 @@ class ProcessingDialog(QDialog, FORM_CLASS):
 
             # Updates the keys in the processing dialog
             self.cbKey.addItems(list_key_names)
-        elif registry_type.lower() == "group":  # UPDATE
-            list_groups = []
+        elif registry_type.lower() == "group":
+            # Creates a list of the group layers
+            list_key_names = []
+            for group in self.list_group:
+                name = group['name']
+                list_key_names.append(name)
+
+            # Updates the keys in the processing dialog
+            self.cbKey.addItems(list_key_names)
         elif registry_type.lower() == "collection":
             # Creates a list of the collection layers
             list_key_names = []
