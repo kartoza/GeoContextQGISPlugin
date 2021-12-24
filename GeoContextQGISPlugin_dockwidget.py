@@ -63,6 +63,24 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.document = client.get(schema)  # Retrieve the API schema
         self.list_context = client.action(document=self.document, keys=["csr", "list"])
 
+        # Groups
+        self.list_group = [{'key': 'bioclimatic_variables_group', 'name': 'Bioclimatic layers', 'description': 'N/A'},
+                           {'key': 'monthly_precipitation_group', 'name': 'Monthly Precipitation', 'description': 'N/A'},
+                           {'key': 'monthly_solar_radiation_group', 'name': 'Monthly Solar Radiation', 'description': 'N/A'},
+                           {'key': 'monthly_max_temperature_group', 'name': 'Monthly Maximum Temperature', 'description': 'N/A'}]
+
+        # Collections
+        self.list_collection = [{'key': 'global_climate_collection', 'name': 'Global climate collection', 'description': 'N/A'},
+                                {'key': 'healthy_rivers_collection', 'name': 'Healthy rivers collection', 'description': 'N/A'},
+                                {'key': 'healthy_rivers_spatial_collection', 'name': 'Healthy rivers spatial filters', 'description': 'N/A'},
+                                {'key': 'hydrological_regions', 'name': 'Hydrological regions', 'description': 'N/A'},
+                                {'key': 'ledet_collection', 'name': 'LEDET collection', 'description': 'N/A'},
+                                {'key': 'sa_boundary_collection', 'name': 'South African boundary collection', 'description': 'N/A'},
+                                {'key': 'sa_climate_collection', 'name': 'South African climate collection', 'description': 'N/A'},
+                                {'key': 'sa_land_cover_land_use_collection', 'name': 'South African land use collection', 'description': 'N/A'},
+                                {'key': 'sa_river_ecosystem_collection', 'name': 'South African river collection', 'description': 'N/A'},
+                                {'key': 'sedac_collection', 'name': 'Socioeconomic data and application center collection', 'description': 'N/A'}]
+
         # Creates a list of the key names and sorts it alphabetically
         list_key_names = []
         for context in self.list_context:
@@ -72,16 +90,20 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Adds the keys to the panel
         self.cbKey.addItems(list_key_names)
+
+        # Retrieves panel parameters
+        registry = self.cbRegistry.currentText()
         current_name = self.cbKey.currentText()
 
         # Retrieves the set information and updates the description table with it
-        dict_current = self.find_name_info(current_name)
+        dict_current = self.find_name_info(current_name, registry)
         self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
         self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
         self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
 
         self.cbRegistry.currentTextChanged.connect(self.registry_changed)  # Triggered when the registry changes
         self.cbKey.currentTextChanged.connect(self.key_changed)  # Triggers when the key value changes
+
         self.btnClear.clicked.connect(self.clear_results_table)  # Triggers when the Clear button is clicked
         self.btnFetch.clicked.connect(self.fetch_btn_click)  # Triggers when the Fetch button is pressed
         self.btnCursor.clicked.connect(self.cursor_btn_click)  # Triggers when the Cursor button is pressed
@@ -104,14 +126,19 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         key will be update.
         """
 
-        # Retrieved the newly selected key ID
+        # Retrieved registry and newly selected key ID
+        registry = self.cbRegistry.currentText()
         key_name = self.cbKey.currentText()
-        dict_current = self.find_name_info(key_name)
 
-        # Updates the table
-        self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
-        self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
-        self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
+        # If the key name is empty, this step is skipped
+        # This happens when the key list is cleared, which then triggers prior to the updating the list
+        if len(key_name) > 0:
+            dict_current = self.find_name_info(key_name, registry)
+
+            # Updates the table
+            self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
+            self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
+            self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
 
     def fetch_btn_click(self):
         """This method is called when the Fetch button on the panel window is pressed.
@@ -183,7 +210,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         key_name = self.cbKey.currentText()  # Key name
 
         # Retrieves the key ID
-        dict_key = self.find_name_info(key_name)
+        dict_key = self.find_name_info(key_name, registry)
         key = dict_key['key']
 
         # Performs the request
@@ -203,36 +230,48 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.tblResult.removeRow(row_count)
             row_count = row_count - 1
 
-    def find_name_info(self, search_name):
+    def find_name_info(self, search_name, registry):
         """The method finds the key ID of a provided key name. It checks each case until
         the correct case is found.
 
         :param search_name: The search name to retrieve
         :type search_name: str
 
+        :param registry: The registry type selected by the user in the panel
+        :type registry: String
+
         :returns: The key ID of the searched key name; or None if the key could not be found
         :rtype: String
         """
 
-        for context in self.list_context:
-            current_name = context['name']
-            if current_name == search_name:  # Key has been found
-                return context
-        return None  # Key has not been found
+        if registry == "Service":
+            for context in self.list_context:
+                current_name = context['name']
+                if current_name == search_name:
+                    return context
+        elif registry == "Group":
+            for group in self.list_group:
+                current_name = group['name']
+                if current_name == search_name:
+                    return group
+        elif registry == "Collection":
+            for collection in self.list_collection:
+                current_name = collection['name']
+                if current_name == search_name:
+                    return collection
 
-    def update_key_list(self, registry_type="service"):
+        return None
+
+    def update_key_list(self, registry_type="Service"):
         """This method updates the key name list shown in the panel. It will be called when
         the user changes the registry type
         """
 
         # Clears the combobox list prior to adding the updated list
-        num_of_items = self.cbKey.count()
-        while num_of_items >= 0:
-            self.cbKey.removeItem(num_of_items)
-            num_of_items = num_of_items - 1
+        self.cbKey.clear()
 
         # Service type is the new selection
-        if registry_type.lower() == "service":
+        if registry_type == "Service":
             settings = QgsSettings()
 
             # Docs which contains the schema of geocontext. Link can be changed in the options dialog
@@ -254,7 +293,21 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             # Applies the updated list
             self.cbKey.addItems(list_key_names)
-        elif registry_type.lower() == "group":  # UPDATE
-            list_groups = []
-        elif registry_type.lower() == "collection":  # UPDATE
-            list_collections = []
+        elif registry_type == "Group":
+            # Creates a list of the group layers
+            list_key_names = []
+            for group in self.list_group:
+                name = group['name']
+                list_key_names.append(name)
+
+            # Updates the keys in the processing dialog
+            self.cbKey.addItems(list_key_names)
+        elif registry_type == "Collection":
+            # Creates a list of the collection layers
+            list_key_names = []
+            for collection in self.list_collection:
+                name = collection['name']
+                list_key_names.append(name)
+
+            # Updates the keys in the processing dialog
+            self.cbKey.addItems(list_key_names)

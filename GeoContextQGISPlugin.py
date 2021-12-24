@@ -340,7 +340,49 @@ class GeoContextQGISPlugin:
             input_new.commitChanges()
         # The user selected the 'Group' registry option
         elif registry == 'Group':
-            print("group")
+            # Adds all of the fields to the layer
+            for input_feat in input_new.getFeatures():  # Processes each of the features contained by the vector file
+                feat_geom = input_feat.geometry()
+                if not feat_geom.isNull():  # If a point does not contain geometry, it is skipped
+                    point = feat_geom.asPoint()
+                    x = point.x()
+                    y = point.y()
+
+                    # The data is requested from the server
+                    point_data = self.point_request_dialog(x, y, dialog)
+
+                    list_dict_services = point_data["services"]
+                    for dict_service in list_dict_services:  # A field is added for each of the group service files
+                        key = dict_service['key']
+                        coll_field_name = field_name + key
+
+                        # Adds a new field to the attribute table
+                        self.create_new_field(input_new, input_feat, coll_field_name)
+                break  # Fields only need to be added once for a layer
+
+            # Requests values for all features
+            for input_feat in input_new.getFeatures():
+                feat_geom = input_feat.geometry()
+                if not feat_geom.isNull():  # If a point does not contain geometry, it is skipped
+                    point = feat_geom.asPoint()
+                    x = point.x()
+                    y = point.y()
+
+                    # The data is requested from the server
+                    point_data = self.point_request_dialog(x, y, dialog)
+
+                    group_name = point_data['name']
+                    list_dict_services = point_data["services"]  # Service files for a group
+                    for dict_service in list_dict_services:
+                        key = dict_service['key']
+                        point_value_str = dict_service['value']
+                        coll_field_name = field_name + key
+
+                        input_new.startEditing()
+                        field_index = input_feat.fieldNameIndex(coll_field_name)  # Gets the index of the newly added field
+                        input_new.startEditing()
+                        input_new.changeAttributeValue(input_feat.id(), field_index, point_value_str)
+                        input_new.commitChanges()
         # The user selected the 'Collection' registry option
         elif registry == 'Collection':
             # Adds all of the fields to the layer
@@ -417,15 +459,15 @@ class GeoContextQGISPlugin:
         settings = QgsSettings()
 
         api_url = settings.value('geocontext-qgis-plugin/url')  # Base URL. This will/should be set in  the options dialog
-        registry = (self.dockwidget.cbRegistry.currentText()).lower()  # Service, group or collection
+        registry = self.dockwidget.cbRegistry.currentText()  # Service, group or collection
         key_name = self.dockwidget.cbKey.currentText()  # Key name, e.g. Elevation
 
-        dict_key = self.dockwidget.find_name_info(key_name)  # Retrieves the request key using the selected key name
+        dict_key = self.dockwidget.find_name_info(key_name, registry)  # Retrieves the request key using the selected key name
         key = dict_key['key']
 
         # Performs the request
         client = Client()
-        url_request = api_url + "query?" + 'registry=' + registry + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+        url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
         data = client.get(url_request)
 
         return data['value']
