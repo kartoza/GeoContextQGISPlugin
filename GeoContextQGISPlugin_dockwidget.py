@@ -24,6 +24,7 @@
 
 import os
 import sys
+import time
 
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
@@ -152,16 +153,26 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         in the canvas using the cursor.
         """
 
+        settings = QgsSettings()
+
         # Gets the longitude and latitude
         x = self.lineLong.value()
         y = self.lineLat.value()
+
+        # Request starts
+        start = time.time()
 
         # Requests the data
         current_key_name = self.cbKey.currentText()
         data = self.point_request_panel(x, y)
 
-        registry = self.cbRegistry.currentText()  # Registry: Service, group or collection
+        # Request ends
+        end = time.time()
+        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+        request_time_ms = round((end - start) * 1000, rounding_factor)
+        self.lblRequestTime.setText("Request time (ms): " + str(request_time_ms))
 
+        registry = self.cbRegistry.currentText()  # Registry: Service, group or collection
         # The user has Service selected
         if registry.lower() == 'service':
             settings = QgsSettings()
@@ -174,11 +185,33 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # Updates the table
             self.tblResult.insertRow(0)  # Always add at the top of the table
             self.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))
-            self.tblResult.setItem(0, 1, QTableWidgetItem(str(data)))
+            self.tblResult.setItem(0, 1, QTableWidgetItem(str(data['value'])))
+        # The user has Group selected
         elif registry.lower() == "group":  # UPDATE
-            list_groups = []
-        elif registry.lower() == "collection":  # UPDATE
-            list_collections = []
+            group_name = data['name']
+            list_dict_services = data["services"]  # Service files for a group
+            for dict_service in list_dict_services:
+                key = dict_service['key']
+                point_value = dict_service['value']
+                service_key_name = dict_service['name']
+
+                self.tblResult.insertRow(0)  # Always add at the top of the table
+                self.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
+                self.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
+        # The user has Collection selected
+        elif registry.lower() == "collection":
+            list_dict_groups = data["groups"]  # Each group contains a list of the 'Service' data associated with the group
+            for dict_group in list_dict_groups:
+                group_name = dict_group['name']
+                list_dict_services = dict_group["services"]  # Service files for a group
+                for dict_service in list_dict_services:
+                    key = dict_service['key']
+                    point_value = dict_service['value']
+                    service_key_name = dict_service['name']
+
+                    self.tblResult.insertRow(0)  # Always add at the top of the table
+                    self.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
+                    self.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
 
     def cursor_btn_click(self):
         """This method is called when the Cursor button on the panel is clicked.
@@ -212,7 +245,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         settings = QgsSettings()
 
         api_url = settings.value('geocontext-qgis-plugin/url')  # Base request URL
-        registry = (self.cbRegistry.currentText()).lower()  # Registry type
+        registry = (self.cbRegistry.currentText())  # Registry type
         key_name = self.cbKey.currentText()  # Key name
 
         # Retrieves the key ID
@@ -221,10 +254,10 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Performs the request
         client = Client()
-        url_request = api_url + "query?" + 'registry=' + registry + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+        url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
 
         data = client.get(url_request)
-        return data['value']
+        return data
 
     def clear_results_table(self):
         """Clears the table in the panel. This can be called when the user clicks the
