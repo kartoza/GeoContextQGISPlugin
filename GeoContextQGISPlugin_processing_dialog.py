@@ -9,14 +9,18 @@
 
 
 import os
+import sys
 
 from PyQt5.QtWidgets import QDialog
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import QgsSettings, QgsMapLayer
 
-from coreapi import Client
+# Directory for third party modules
+third_party_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'third_party'))
+if third_party_path not in sys.path:
+    sys.path.append(third_party_path)
 
-import subprocess
+from coreapi.client import Client
 
 # Import the PyQt and QGIS libraries
 # this import required to enable PyQt API v2
@@ -38,7 +42,7 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
-        # Retrives the schema and request base URLs
+        # Retrieves the schema and request base URLs
         settings = QgsSettings()
         schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
         url = settings.value('geocontext-qgis-plugin/url', '', type=str)

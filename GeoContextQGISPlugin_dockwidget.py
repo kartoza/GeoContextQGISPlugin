@@ -23,13 +23,19 @@
 """
 
 import os
+import sys
 
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
 from qgis.PyQt.QtWidgets import QTableWidgetItem
 from qgis.core import QgsSettings
 
-from coreapi import Client
+# Directory for third party modules
+third_party_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'third_party'))
+if third_party_path not in sys.path:
+    sys.path.append(third_party_path)
+
+from coreapi.client import Client
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'GeoContextQGISPlugin_dockwidget_base.ui'))
