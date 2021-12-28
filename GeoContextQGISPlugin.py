@@ -32,11 +32,17 @@ from .resources import *
 # Import the code for the DockWidget
 from .GeoContextQGISPlugin_dockwidget import GeoContextQGISPluginDockWidget
 import os.path
+import sys
 
 from .GeoContextQGISPlugin_options_dialog import OptionsDialog
 from .GeoContextQGISPlugin_processing_dialog import ProcessingDialog
 
-from coreapi import Client
+# Directory for third party modules
+third_party_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'third_party'))
+if third_party_path not in sys.path:
+    sys.path.append(third_party_path)
+
+from coreapi.client import Client
 
 
 class GeoContextQGISPlugin:
