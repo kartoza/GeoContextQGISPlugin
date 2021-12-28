@@ -16,7 +16,7 @@
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>150</x>
+     <x>490</x>
      <y>300</y>
      <width>161</width>
      <height>32</height>
@@ -34,7 +34,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>71</width>
+     <width>201</width>
      <height>16</height>
     </rect>
    </property>
@@ -57,7 +57,7 @@
     <rect>
      <x>10</x>
      <y>60</y>
-     <width>151</width>
+     <width>241</width>
      <height>17</height>
     </rect>
    </property>
@@ -83,7 +83,7 @@
     <rect>
      <x>10</x>
      <y>230</y>
-     <width>101</width>
+     <width>271</width>
      <height>16</height>
     </rect>
    </property>
@@ -96,7 +96,7 @@
     <rect>
      <x>10</x>
      <y>280</y>
-     <width>241</width>
+     <width>291</width>
      <height>21</height>
     </rect>
    </property>
@@ -134,8 +134,8 @@
     <rect>
      <x>10</x>
      <y>80</y>
-     <width>47</width>
-     <height>13</height>
+     <width>261</width>
+     <height>16</height>
     </rect>
    </property>
    <property name="text">
@@ -147,8 +147,8 @@
     <rect>
      <x>10</x>
      <y>130</y>
-     <width>47</width>
-     <height>13</height>
+     <width>271</width>
+     <height>16</height>
     </rect>
    </property>
    <property name="text">
@@ -194,7 +194,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Request URL</string>
+    <string>Endpoint URL</string>
    </property>
   </widget>
   <widget class="QLineEdit" name="lineEditFieldName">
@@ -212,7 +212,7 @@
     <rect>
      <x>10</x>
      <y>180</y>
-     <width>91</width>
+     <width>291</width>
      <height>16</height>
     </rect>
    </property>
@@ -244,12 +244,12 @@
     <rect>
      <x>350</x>
      <y>10</y>
-     <width>71</width>
+     <width>241</width>
      <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string>Schema link</string>
+    <string>Schema/key configuration</string>
    </property>
   </widget>
   <widget class="QTableWidget" name="tblDetails">
@@ -319,6 +319,19 @@
      </font>
     </property>
    </item>
+  </widget>
+  <widget class="QProgressBar" name="pbProcessing">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>250</y>
+     <width>301</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="value">
+    <number>0</number>
+   </property>
   </widget>
  </widget>
  <customwidgets>

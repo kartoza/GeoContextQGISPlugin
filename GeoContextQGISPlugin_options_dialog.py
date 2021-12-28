@@ -12,7 +12,6 @@ import os
 
 from PyQt5.QtWidgets import QDialog
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QSettings
 from qgis.core import QgsSettings
 
 # Import the PyQt and QGIS libraries
@@ -37,9 +36,34 @@ class OptionsDialog(QDialog, FORM_CLASS):
 
         # Sets the options according what the user has it previously set/saved using the options dialog
         settings = QgsSettings()
+
+        # API configuration
         self.lineUrl.setValue(settings.value('geocontext-qgis-plugin/url', '', type=str))
         self.lineSchema.setValue(settings.value('geocontext-qgis-plugin/schema', '', type=str))
+
+        # Panel settings
         self.checkAutoClear.setChecked(settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool))
+        self.sldDecPlacesPanel.setValue(settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int))
+        self.lblDecPlacePanel.setText(str(self.sldDecPlacesPanel.value()))
+
+        # Processing tool settings
+        self.sldDecPlacesTool.setValue(settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int))
+        self.lblDecPlaceTool.setText(str(self.sldDecPlacesTool.value()))
+
+        self.sldDecPlacesPanel.valueChanged.connect(self.dec_places_value_changed_panel)
+        self.sldDecPlacesTool.valueChanged.connect(self.dec_places_value_changed_tool)
+
+    def dec_places_value_changed_panel(self):
+        """This method is called when the user moves the decimal place slider for the panel.
+        """
+
+        self.lblDecPlacePanel.setText(str(self.sldDecPlacesPanel.value()))
+
+    def dec_places_value_changed_tool(self):
+        """This method is called when the user moves the decimal place slider for the processing tool.
+        """
+
+        self.lblDecPlaceTool.setText(str(self.sldDecPlacesTool.value()))
 
     def set_url(self):
         """Sets the base URL which will be used to request data/values.
@@ -62,14 +86,31 @@ class OptionsDialog(QDialog, FORM_CLASS):
         settings.setValue('geocontext-qgis-plugin/schema', schema)
 
     def set_auto_clear(self):
-        """Gets the base URL on which requests will be performed. This is set
-        by this dialog
-
-        :returns: A vector point layer that contains nodes as attributes.
-        :rtype: QgsVectorLayer
+        """Sets whether the panel table should be cleared when the user clicks in the canvas. This can be set using
+        this dialog
         """
 
         settings = QgsSettings()
         auto_clear = self.checkAutoClear.checkState()
 
         settings.setValue('geocontext-qgis-plugin/auto_clear_table', auto_clear)
+
+    def set_dec_places_panel(self):
+        """Sets the decimal places for the panel value requests. This can be set using
+        this dialog
+        """
+
+        settings = QgsSettings()
+        tick_pos = self.sldDecPlacesPanel.value()
+
+        settings.setValue('geocontext-qgis-plugin/dec_places_panel', tick_pos)
+
+    def set_dec_places_tool(self):
+        """Sets the decimal places for the tool value requests. This can be set using
+        this dialog
+        """
+
+        settings = QgsSettings()
+        tick_pos = self.sldDecPlacesTool.value()
+
+        settings.setValue('geocontext-qgis-plugin/dec_places_tool', tick_pos)

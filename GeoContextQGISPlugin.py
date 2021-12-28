@@ -269,6 +269,8 @@ class GeoContextQGISPlugin:
             dialog.set_url()
             dialog.set_schema()
             dialog.set_auto_clear()
+            dialog.set_dec_places_panel()
+            dialog.set_dec_places_tool()
         else:
             pass
 
