@@ -24,9 +24,13 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
+<<<<<<< HEAD
 from qgis.core import (QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, 
                        QgsCoordinateTransformContext, QgsMapLayer,QgsCoordinateTransform,
                        QgsPluginLayerRegistry, QgsLayerTree, QgsMapLayer,QgsCoordinateReferenceSystem)
+=======
+from qgis.core import QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext, QgsMapLayer, QgsTask, QgsTaskManager
+>>>>>>> e0adb0d6a4e851f6feb1377d9772788f36c02f0b
 from qgis.gui import QgsMapToolEmitPoint
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -34,11 +38,18 @@ from .resources import *
 # Import the code for the DockWidget
 from .GeoContextQGISPlugin_dockwidget import GeoContextQGISPluginDockWidget
 import os.path
+import sys
+import time
 
 from .GeoContextQGISPlugin_options_dialog import OptionsDialog
 from .GeoContextQGISPlugin_processing_dialog import ProcessingDialog
 
-from coreapi import Client
+# Directory for third party modules
+third_party_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'third_party'))
+if third_party_path not in sys.path:
+    sys.path.append(third_party_path)
+
+from coreapi.client import Client
 
 
 class GeoContextQGISPlugin:
@@ -284,6 +295,8 @@ class GeoContextQGISPlugin:
             dialog.set_url()
             dialog.set_schema()
             dialog.set_auto_clear()
+            dialog.set_dec_places_panel()
+            dialog.set_dec_places_tool()
         else:
             pass
 
@@ -491,7 +504,7 @@ class GeoContextQGISPlugin:
         url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
         data = client.get(url_request)
 
-        return data['value']
+        return data
 
     def point_request_dialog(self, x, y, dialog):
         """Return the value rettrieved from the ordered dictionary containing the requested data
@@ -533,9 +546,11 @@ class GeoContextQGISPlugin:
         This method is called when the plugin docket panel is open and the user clicks
         in the canvas. The method will then request the selected data at the selected location.
 
-        :param dialog: Stores the dialog which takes the required parameters as input
-        :type dialog: GeoContextQGISPlugin_processing_dialog
+        :param point_tool: The QGIS tool object used to retrieve point coordinates from the canvas
+        :type point_tool: QgsMapToolEmitPoint
         """
+
+        settings = QgsSettings()
 
         # The coordinates from the QGIS canvas point tool
         x = point_tool[0]  # Longitude
@@ -545,12 +560,20 @@ class GeoContextQGISPlugin:
         self.dockwidget.lineLong.setText(str(x))
         self.dockwidget.lineLat.setText(str(y))
 
-        # Perfors a point data request from the server
+        # Request starts
+        start = time.time()
+
+        # Performs a point data request from the server
         current_key_name = self.dockwidget.cbKey.currentText()
         data = self.point_request_panel(x, y)
 
-        registry = self.dockwidget.cbRegistry.currentText()
+        # Request ends
+        end = time.time()
+        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+        request_time_ms = round((end - start)*1000, rounding_factor)
+        self.dockwidget.lblRequestTime.setText("Request time (ms): " + str(request_time_ms))
 
+        registry = self.dockwidget.cbRegistry.currentText()
         # Service option
         if registry.lower() == 'service':
             settings = QgsSettings()
@@ -560,13 +583,36 @@ class GeoContextQGISPlugin:
             if auto_clear_table:
                 self.dockwidget.clear_results_table()
 
+            point_value = data['value']  # Retrieves the value
             self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
             self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))  # Sets the key in the table
-            self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(data)))  # Sets the description
-        elif registry.lower() == "group":  # UPDATE
-            list_groups = []
-        elif registry.lower() == "collection":  # UPDATE
-            list_collections = []
+            self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
+        # Group option
+        elif registry.lower() == "group":
+            group_name = data['name']
+            list_dict_services = data["services"]  # Service files for a group
+            for dict_service in list_dict_services:
+                key = dict_service['key']
+                point_value = dict_service['value']
+                service_key_name = dict_service['name']
+
+                self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
+                self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
+                self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
+        # Collection option
+        elif registry.lower() == "collection":
+            list_dict_groups = data["groups"]  # Each group contains a list of the 'Service' data associated with the group
+            for dict_group in list_dict_groups:
+                group_name = dict_group['name']
+                list_dict_services = dict_group["services"]  # Service files for a group
+                for dict_service in list_dict_services:
+                    key = dict_service['key']
+                    point_value = dict_service['value']
+                    service_key_name = dict_service['name']
+
+                    self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
+                    self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
+                    self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
 
     def create_new_field(self, input_layer, input_feat, field_name):
         """Return index of the field in the input layer attribute table.
