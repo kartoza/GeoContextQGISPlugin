@@ -24,7 +24,9 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
-from qgis.core import QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext, QgsMapLayer
+from qgis.core import (QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, 
+                       QgsCoordinateTransformContext, QgsMapLayer,QgsCoordinateTransform,
+                       QgsPluginLayerRegistry, QgsLayerTree, QgsMapLayer,QgsCoordinateReferenceSystem)
 from qgis.gui import QgsMapToolEmitPoint
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -79,6 +81,19 @@ class GeoContextQGISPlugin:
         self.dockwidget = None
 
         self.canvas = self.iface.mapCanvas()
+
+        # Ensuring that the plugin reads decimal coordinates of longitude and latitude by setting the plugin
+        # crs to EPSG:4326
+        canvasCrs = self.canvasCrs()
+        if canvasCrs != "EPSG:4326":
+            QgsCoordinateTransform(QgsCoordinateReferenceSystem("EPSG:4326"),
+                                   canvasCrs, QgsProject.instance())
+            extMap = self.canvas.extent()
+            
+            self.canvas.setDestinationCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
+            self.canvas.freeze(False)
+            self.canvas.setExtent(extMap)
+
         self.point_tool = QgsMapToolEmitPoint(self.canvas)  # Enables the cursor tool for selecting locations
 
     # noinspection PyMethodMayBeStatic
@@ -95,6 +110,12 @@ class GeoContextQGISPlugin:
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('GeoContextQGISPlugin', message)
+
+    # Getting the canvas crs
+    def canvasCrs(self):
+        mapCanvas = self.iface.mapCanvas()
+        crs = mapCanvas.mapSettings().destinationCrs()
+        return crs
 
     def add_action(
         self,
