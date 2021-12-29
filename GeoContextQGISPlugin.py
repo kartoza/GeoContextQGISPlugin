@@ -24,13 +24,9 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
-<<<<<<< HEAD
 from qgis.core import (QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, 
                        QgsCoordinateTransformContext, QgsMapLayer,QgsCoordinateTransform,
                        QgsPluginLayerRegistry, QgsLayerTree, QgsMapLayer,QgsCoordinateReferenceSystem)
-=======
-from qgis.core import QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext, QgsMapLayer, QgsTask, QgsTaskManager
->>>>>>> e0adb0d6a4e851f6feb1377d9772788f36c02f0b
 from qgis.gui import QgsMapToolEmitPoint
 # Initialize Qt resources from file resources.py
 from .resources import *
