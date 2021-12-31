@@ -376,17 +376,19 @@ class GeoContextQGISPlugin:
         load_output_file = dialog.get_layer_load_option()  # Loads the newly created file if True
 
         output_file_name = os.path.basename(output_file)
+
+        # The output is saved in EPSG:4326 crs
         if selected_features and input_points.selectedFeatureCount() > 0:  # If the selection option is enabled and there is a selection
             if output_file.endswith(".gpkg"):  # Geopackage format
-                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs(), onlySelected=True)
+                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', QgsCoordinateReferenceSystem("EPSG:4326"), onlySelected=True)
             elif output_file.endswith(".shp"):  # Shapefile format
-                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs(), "ESRI Shapefile", onlySelected=True)  # shp format
+                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8',QgsCoordinateReferenceSystem("EPSG:4326"), "ESRI Shapefile", onlySelected=True)  # shp format
             input_new = QgsVectorLayer(output_file, output_file_name)
         else:  # If the only selection option is disabled or there is no features selected
             if output_file.endswith(".gpkg"):  # Geopackage format
-                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs())
+                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', QgsCoordinateReferenceSystem("EPSG:4326"))
             elif output_file.endswith(".shp"):  # Shapefile format
-                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs(), "ESRI Shapefile")  # shp format
+                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', QgsCoordinateReferenceSystem("EPSG:4326"), "ESRI Shapefile")  # shp format
             input_new = QgsVectorLayer(output_file, output_file_name)
 
         # The user selected the 'Service' registry option
