@@ -32,7 +32,6 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 
 class ProcessingDialog(QDialog, FORM_CLASS):
-    error = ""
     def __init__(self, parent=None):
         """Constructor."""
         super(ProcessingDialog, self).__init__(parent)
@@ -228,34 +227,23 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         """
 
         # Checks whether the input layer provided by the user is valid
-        
-        input_points = self.get_input_layer()
-       
         try:
-         if input_points.type() == QgsMapLayer.VectorLayer: # The layer can only be a vector layer
-             if not input_points.hasFeatures():  # The layer needs to contain features to be processed
-                self.error = "Input file is empty."
-                #print(self.error)
-                return True
-             input_type = input_points.wkbType()  # Vector type
-             if not (input_type == 1 or input_type == 4):  # Can only be point or multipoint
-                self.error = "Vector type can only be point."
-                #print(self.error)
-                return True
-         else:
-            self.error = "Not a vector layer."
-            #print(self.error)
-            return True
+            input_points = self.get_input_layer()
+            if input_points.type() == QgsMapLayer.VectorLayer:  # The layer can only be a vector layer
+                if not input_points.hasFeatures():  # The layer needs to contain features to be processed
+                    return True, "Input layer not provided."
+                input_type = input_points.wkbType()  # Vector type
+                if not (input_type == 1 or input_type == 4):  # Can only be point or multipoint
+                    return True, "Vector type can only be point."
+            else:
+                return True, "Layer is not of type vector."
         except:
-         self.error = "Input file is empty."
-         return True
+            return True, "Input layer not provided123."
 
         # Checks whether the registry type is valid. An invalid case should not be possible
         registry = self.get_registry()
         if not (registry == "Service" or registry == "Group" or registry == "Collection"):
-            self.error = "Registry can only be 'Service', 'Group' or 'Collection'."
-            #print(self.error)
-            return True
+            return True, "Registry can only be 'Service', 'Group' or 'Collection'."
 
         key = self.get_key()
 
@@ -264,28 +252,20 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         field_name_test = field_name.replace(" ", "").replace("_", "")  # Comma and spaces will be automatically replaced when the field is created
         if len(field_name_test) > 0:  # Field name should contain at least one character
             if not field_name_test.isalnum():  # Field name should be alphanumeric, and therfore contain no other characters
-                self.error= "Fieldname is not alphanumberic."
-                #print(self.error)
-                return True
+                return True, "Fieldname is not alphanumeric."
         else:
-            self.error = "Fieldname is empty."
-            #print(self.error)
-            return True
+            return True, "Fieldname is empty."
 
         # Checks if the output directory and file is valid
         output_file = self.get_output_points()
         output_dir = os.path.dirname(output_file)
         output_file_name = os.path.basename(output_file)
         if not os.path.isdir(output_dir):  # Checks if the output directory exists
-            self.error = "Directory does not exist."
-            #print(self.error)
-            return True
+            return True, "Output directory does not exist."
         if not (output_file_name.endswith(".gpkg") or output_file_name.endswith(".shp")):  # File format can only be shp or gpkg
-            self.error= "Format can only be geopackage (gpkg) or shapefile (shp)."
-            #print(self.error)
-            return True
+            return True, "Format can only be geopackage (gpkg) or shapefile (shp)."
 
-        return False
+        return False, "No error message."
 
     def get_input_layer(self):
         """Get the input point layer selected by the user, and
@@ -296,10 +276,6 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         """
         input_points = self.cbInputPoints.currentLayer()
         return input_points
-       
-        
-        
-        
 
     def get_selected_option(self):
         """Gets the value set for the selection option in processing dialog.

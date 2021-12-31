@@ -2,7 +2,7 @@
 
 A QGIS plugin
 
-Visit the GeoContext [home page](https://geocontext.kartoza.com/) for more details.
+Visit the GeoContext [home page](https://geocontext.kartoza.com) for more details.
 
 This plugin is Free and Open Source Software and is released under the GPL V2.
 See the LICENSE file included with the plugin (and in this repository) for
