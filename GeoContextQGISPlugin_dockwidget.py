@@ -29,7 +29,7 @@ import time
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
 from qgis.PyQt.QtWidgets import QTableWidgetItem
-from qgis.core import QgsSettings
+from qgis.core import QgsProject, QgsSettings, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsPointXY
 
 # Directory for third party modules
 third_party_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'third_party'))
@@ -156,8 +156,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         settings = QgsSettings()
 
         # Gets the longitude and latitude
-        x = self.lineLong.value()
-        y = self.lineLat.value()
+        x = float(self.lineLong.value())
+        y = float(self.lineLat.value())
 
         # Request starts
         start = time.time()
@@ -226,20 +226,41 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.canvas.setMapTool(self.point_tool)
             self.cursor_active = True
 
+    def transform_xy_coordinates_to_wgs84(self, x, y):
+        """Transforms the XY coordinates to the WGS84 coordinate system (EPSG:4326).
+
+        :returns: The XY coordinates in WGS84.
+        :rtype: Float
+        """
+
+        map_canvas = self.canvas
+
+        crs_src = QgsCoordinateReferenceSystem("EPSG:4326")  # Target coordinate system (WGS84)
+        crs_dest = map_canvas.mapSettings().destinationCrs()  # Canvas coordinate system
+
+        transform_context = QgsProject.instance().transformContext()
+        xform = QgsCoordinateTransform(crs_src, crs_dest, transform_context)
+
+        pt = xform.transform(QgsPointXY(x, y))  # Transformed point
+        x = pt.x()
+        y = pt.y()
+
+        return x, y
+
     def point_request_panel(self, x, y):
-        """Return the value rettrieved from the ordered dictionary containing the requested data
+        """Return the value retrieved from the ordered dictionary containing the requested data
         from the server. This method is used by the docket widget panel of the plugin.
 
         This method requests the data from the server for the given point coordinates.
 
         :param x: Longitude coordinate
-        :type x: Numeric
+        :type x: Float
 
         :param y: Latitude coordinate
-        :type y: Numeric
+        :type y: Float
 
-        :returns: The value retrieved for the request for the provided location
-        :rtype: Numeric
+        :returns: The data retrieved for the request for the provided location
+        :rtype: OrderedDict
         """
 
         settings = QgsSettings()
@@ -254,6 +275,9 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Performs the request
         client = Client()
+
+        x, y = self.transform_xy_coordinates_to_wgs84(x, y)
+
         url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
 
         data = client.get(url_request)
