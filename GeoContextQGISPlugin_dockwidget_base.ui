@@ -6,300 +6,322 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>457</width>
-    <height>724</height>
+    <width>462</width>
+    <height>834</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>GeoContext</string>
   </property>
   <widget class="QWidget" name="dockWidgetContents">
-   <widget class="QComboBox" name="cbRegistry">
+   <widget class="QGroupBox" name="gbResults">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>30</y>
-      <width>431</width>
-      <height>20</height>
+      <y>330</y>
+      <width>441</width>
+      <height>441</height>
      </rect>
     </property>
-    <item>
-     <property name="text">
-      <string>Service</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Group</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Collection</string>
-     </property>
-    </item>
-   </widget>
-   <widget class="QComboBox" name="cbKey">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>80</y>
-      <width>431</width>
-      <height>22</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="lblRegistry">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>151</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Registry</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="lblKey">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>60</y>
-      <width>151</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Key</string>
-    </property>
-   </widget>
-   <widget class="QgsFilterLineEdit" name="lineLong">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>270</y>
-      <width>431</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="readOnly">
-     <bool>true</bool>
-    </property>
-    <property name="qgisRelation" stdset="0">
-     <string notr="true"/>
-    </property>
-   </widget>
-   <widget class="QgsFilterLineEdit" name="lineLat">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>320</y>
-      <width>431</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="readOnly">
-     <bool>true</bool>
-    </property>
-    <property name="qgisRelation" stdset="0">
-     <string notr="true"/>
-    </property>
-   </widget>
-   <widget class="QLabel" name="lblLong">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>250</y>
-      <width>201</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Longitude (x)</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="lblLat">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>300</y>
-      <width>191</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Latitude (y)</string>
-    </property>
-   </widget>
-   <widget class="QTableWidget" name="tblDetails">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>110</y>
-      <width>431</width>
-      <height>121</height>
-     </rect>
-    </property>
-    <attribute name="horizontalHeaderDefaultSectionSize">
-     <number>355</number>
-    </attribute>
-    <row>
-     <property name="text">
-      <string>Key</string>
-     </property>
-    </row>
-    <row>
-     <property name="text">
-      <string>Name</string>
-     </property>
-    </row>
-    <row>
-     <property name="text">
-      <string>Description</string>
-     </property>
-    </row>
-    <column>
-     <property name="text">
-      <string>Information</string>
-     </property>
-    </column>
-    <item row="0" column="0">
-     <property name="text">
-      <string/>
-     </property>
-     <property name="flags">
-      <set>NoItemFlags</set>
-     </property>
-    </item>
-    <item row="1" column="0">
-     <property name="text">
-      <string/>
-     </property>
-     <property name="flags">
-      <set>NoItemFlags</set>
-     </property>
-    </item>
-    <item row="2" column="0">
-     <property name="text">
-      <string/>
-     </property>
-     <property name="flags">
-      <set>NoItemFlags</set>
-     </property>
-    </item>
-   </widget>
-   <widget class="QTableWidget" name="tblResult">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>460</y>
-      <width>431</width>
-      <height>231</height>
-     </rect>
-    </property>
-    <attribute name="horizontalHeaderDefaultSectionSize">
-     <number>212</number>
-    </attribute>
-    <column>
-     <property name="text">
-      <string>Key</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>Value</string>
-     </property>
-    </column>
-   </widget>
-   <widget class="QLabel" name="lblResults">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>420</y>
-      <width>311</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>20</pointsize>
-     </font>
-    </property>
-    <property name="text">
+    <property name="title">
      <string>Results</string>
     </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QLabel" name="lblRequestTime">
+       <property name="font">
+        <font>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Request time (ms):</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QTableWidget" name="tblResult">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <attribute name="horizontalHeaderDefaultSectionSize">
+        <number>209</number>
+       </attribute>
+       <column>
+        <property name="text">
+         <string>Key</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Value</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="hlResults">
+       <item>
+        <widget class="QPushButton" name="btnClear">
+         <property name="text">
+          <string>Clear table</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="hsResults">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>18</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+    </layout>
    </widget>
-   <widget class="QPushButton" name="btnClear">
-    <property name="geometry">
-     <rect>
-      <x>170</x>
-      <y>350</y>
-      <width>75</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Clear table</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btnCursor">
-    <property name="geometry">
-     <rect>
-      <x>90</x>
-      <y>350</y>
-      <width>75</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Cursor</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btnFetch">
+   <widget class="QGroupBox" name="gbPointCoor">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>350</y>
-      <width>75</width>
-      <height>23</height>
+      <y>210</y>
+      <width>441</width>
+      <height>110</height>
      </rect>
     </property>
-    <property name="text">
-     <string>Fetch</string>
+    <property name="title">
+     <string>Point coordinates</string>
     </property>
+    <layout class="QFormLayout" name="formLayout_2">
+     <item row="0" column="0">
+      <widget class="QLabel" name="lblLong">
+       <property name="text">
+        <string>Longitude (x)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QgsFilterLineEdit" name="lineLong">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+       <property name="qgisRelation" stdset="0">
+        <string notr="true"/>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="lblLat">
+       <property name="text">
+        <string>Latitude   (y)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QgsFilterLineEdit" name="lineLat">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+       <property name="qgisRelation" stdset="0">
+        <string notr="true"/>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0" colspan="2">
+      <layout class="QHBoxLayout" name="hlPointCoor">
+       <item>
+        <widget class="QPushButton" name="btnCursor">
+         <property name="text">
+          <string>Cursor</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnFetch">
+         <property name="text">
+          <string>Fetch</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+    </layout>
    </widget>
-   <widget class="QLabel" name="lblRequestTime">
+   <widget class="QGroupBox" name="gbRequest">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>390</y>
-      <width>421</width>
-      <height>21</height>
+      <x>9</x>
+      <y>9</y>
+      <width>441</width>
+      <height>201</height>
      </rect>
     </property>
-    <property name="font">
-     <font>
-      <pointsize>12</pointsize>
-     </font>
+    <property name="title">
+     <string>Request</string>
     </property>
-    <property name="text">
-     <string>Request time (ms):</string>
-    </property>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="lblRegistry">
+       <property name="text">
+        <string>Registry</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="cbRegistry">
+       <item>
+        <property name="text">
+         <string>Service</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Group</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Collection</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="lblKey">
+       <property name="text">
+        <string>Key</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="cbKey"/>
+     </item>
+     <item row="2" column="0" colspan="2">
+      <widget class="QTableWidget" name="tblDetails">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <attribute name="horizontalHeaderDefaultSectionSize">
+        <number>355</number>
+       </attribute>
+       <attribute name="verticalHeaderDefaultSectionSize">
+        <number>27</number>
+       </attribute>
+       <row>
+        <property name="text">
+         <string>Key</string>
+        </property>
+       </row>
+       <row>
+        <property name="text">
+         <string>Name</string>
+        </property>
+       </row>
+       <row>
+        <property name="text">
+         <string>Description</string>
+        </property>
+       </row>
+       <column>
+        <property name="text">
+         <string>Information</string>
+        </property>
+       </column>
+       <item row="0" column="0">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="flags">
+         <set>NoItemFlags</set>
+        </property>
+       </item>
+       <item row="1" column="0">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="flags">
+         <set>NoItemFlags</set>
+        </property>
+       </item>
+       <item row="2" column="0">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="flags">
+         <set>NoItemFlags</set>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
    </widget>
+   <widget class="QWidget" name="horizontalLayoutWidget_3">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>777</y>
+      <width>441</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
+      <widget class="QPushButton" name="btnHelp">
+       <property name="text">
+        <string>Help</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="hsButtons">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>Close</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <zorder>gbRequest</zorder>
+   <zorder>gbPointCoor</zorder>
+   <zorder>gbResults</zorder>
+   <zorder>horizontalLayoutWidget_3</zorder>
   </widget>
  </widget>
  <customwidgets>

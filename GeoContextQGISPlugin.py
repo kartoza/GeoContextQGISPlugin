@@ -84,7 +84,8 @@ class GeoContextQGISPlugin:
         # INITIALIZING GeoContextQGISPlugin
         self.pluginIsActive = False
         self.dockwidget = None
-        self.error = ""
+
+        self.message_bar = self.iface.messageBar()
 
         self.canvas = self.iface.mapCanvas()
         self.point_tool = QgsMapToolEmitPoint(self.canvas)  # Enables the cursor tool for selecting locations
@@ -297,7 +298,7 @@ class GeoContextQGISPlugin:
             if not error_found:  # No errors found with the parameters, points will be processed
                 self.process_points_layer(dialog)
             else:  # Error found with the parameters. Points will not be processed, and an error message is shown
-                self.iface.messageBar().pushMessage("Parameter error: ", error_msg, level=Qgis.Warning)
+                self.iface.messageBar().pushCritical("Parameter error: ", error_msg)
         else:
             pass
 
@@ -397,8 +398,8 @@ class GeoContextQGISPlugin:
             input_new.updateFields()
             input_new.commitChanges()
 
-            input_new.startEditing()
             try:
+                input_new.startEditing()
                 for input_feat in input_new.getFeatures():  # Processes each of the features contained by the vector file
                     new_field_index = input_feat.fieldNameIndex(field_name)
 
@@ -417,8 +418,8 @@ class GeoContextQGISPlugin:
                         input_new.changeAttributeValue(input_feat.id(), new_field_index, point_value_str)
                 input_new.commitChanges()
             except:
-                self.error = "Only Point types are permitted."
-                self.iface.messageBar().pushMessage("Error", self.error, level=Qgis.Warning)
+                self.message_bar.pushCritical("Error: ", "Only Point types are permitted.")
+                return
         # The user selected the 'Group' registry option
         elif registry == 'Group':
             # Adds all of the fields to the layer
@@ -444,8 +445,9 @@ class GeoContextQGISPlugin:
                             self.create_new_field(input_new, input_feat, coll_field_name)
                     break  # Fields only need to be added once for a layer
             except:
-                self.error = "Only Point types are permitted."
-                self.iface.messageBar().pushMessage("Error", self.error, level=Qgis.Warning)
+                #self.message_bar.pushMessage("Error: ", "Only Point types are permitted.", level=Qgis.Warning)
+                self.message_bar.pushCritical("Error: ", "Only Point types are permitted.")
+                return
 
             # Requests values for all features
             try:
@@ -474,8 +476,8 @@ class GeoContextQGISPlugin:
                             input_new.changeAttributeValue(input_feat.id(), field_index, point_value_str)
                             input_new.commitChanges()
             except:
-                self.error = "Only Point types are permitted."
-                self.iface.messageBar().pushMessage("Error", self.error, level=Qgis.Warning)
+                self.message_bar.pushCritical("Error: ", "Only Point types are permitted.")
+                return
         # The user selected the 'Collection' registry option
         elif registry == 'Collection':
             # Adds all of the fields to the layer
@@ -504,8 +506,8 @@ class GeoContextQGISPlugin:
                                 self.create_new_field(input_new, input_feat, coll_field_name)
                     break  # Fields only need to be added once for a layer
             except:
-                self.error = "Only Point types are permitted."
-                self.iface.messageBar().pushMessage("Error", self.error, level=Qgis.Warning)
+                self.message_bar.pushCritical("Error: ", "Only Point types are permitted.")
+                return
 
             # Requests values for all features
             try:
@@ -538,12 +540,14 @@ class GeoContextQGISPlugin:
                                 input_new.changeAttributeValue(input_feat.id(), field_index, point_value_str)
                                 input_new.commitChanges()
             except:
-                self.error = "Only Point types are permitted."
-                self.iface.messageBar().pushMessage("Error", self.error, level=Qgis.Warning)
+                self.message_bar.pushMessage("Error: ", "Only Point types are permitted.", level=Qgis.Warning)
+                return
 
         # Loads the newly created file into QGIS
         if load_output_file:
             QgsProject.instance().addMapLayer(input_new)
+
+        self.message_bar.pushSuccess("Success: ", "Processing has finished.")
 
     def point_request_panel(self, x, y):
         """Return the value rettrieved from the ordered dictionary containing the requested data

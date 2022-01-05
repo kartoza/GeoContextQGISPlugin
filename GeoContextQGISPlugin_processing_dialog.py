@@ -238,7 +238,7 @@ class ProcessingDialog(QDialog, FORM_CLASS):
             else:
                 return True, "Layer is not of type vector."
         except:
-            return True, "Input layer not provided123."
+            return True, "Input layer not provided."
 
         # Checks whether the registry type is valid. An invalid case should not be possible
         registry = self.get_registry()
