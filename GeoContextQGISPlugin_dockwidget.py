@@ -226,20 +226,27 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.canvas.setMapTool(self.point_tool)
             self.cursor_active = True
 
-    def transform_xy_coordinates_to_wgs84(self, x, y):
+    def transform_xy_coordinates(self, x, y, cur_crs, target_crs):
         """Transforms the XY coordinates to the WGS84 coordinate system (EPSG:4326).
+
+        :param x: The longitude coordinate value
+        :type x: Float
+
+        :param y: The latitude coordinate value
+        :type y: Float
+
+        :param cur_crs: The current coordinate system of the coordinates
+        :type cur_crs: QgsCoordinateReferenceSystem
+
+        :param target_crs: The target coordinate system to which the coordinates will be transformed to
+        :type target_crs: QgsCoordinateReferenceSystem
 
         :returns: The XY coordinates in WGS84.
         :rtype: Float
         """
 
-        map_canvas = self.canvas
-
-        crs_src = QgsCoordinateReferenceSystem("EPSG:4326")  # Target coordinate system (WGS84)
-        crs_dest = map_canvas.mapSettings().destinationCrs()  # Canvas coordinate system
-
         transform_context = QgsProject.instance().transformContext()
-        xform = QgsCoordinateTransform(crs_src, crs_dest, transform_context)
+        xform = QgsCoordinateTransform(cur_crs, target_crs, transform_context)
 
         pt = xform.transform(QgsPointXY(x, y))  # Transformed point
         x = pt.x()
@@ -276,7 +283,10 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # Performs the request
         client = Client()
 
-        x, y = self.transform_xy_coordinates_to_wgs84(x, y)
+        canvas_crs = self.get_canvas_crs()  # The coordinate system the QGIS project canvas uses
+        target_crs = QgsCoordinateReferenceSystem("EPSG:4326")  # GeoContext request needs to be in WGS84
+        if canvas_crs != target_crs:  # If the canvas coordinate system is not WGS84
+            x, y = self.transform_xy_coordinates(x, y, canvas_crs, target_crs)
 
         url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
 

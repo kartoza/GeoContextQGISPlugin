@@ -41,6 +41,9 @@ class OptionsDialog(QDialog, FORM_CLASS):
         self.lineUrl.setValue(settings.value('geocontext-qgis-plugin/url', '', type=str))
         self.lineSchema.setValue(settings.value('geocontext-qgis-plugin/schema', '', type=str))
 
+        # Global settings
+        self.cbCrs.setCurrentIndex(self.cbCrs.findText(settings.value('geocontext-qgis-plugin/request_crs', "WGS84 (EPSG:4326)", type=str)))
+
         # Panel settings
         self.checkAutoClear.setChecked(settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool))
         self.sldDecPlacesPanel.setValue(settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int))
@@ -114,3 +117,13 @@ class OptionsDialog(QDialog, FORM_CLASS):
         tick_pos = self.sldDecPlacesTool.value()
 
         settings.setValue('geocontext-qgis-plugin/dec_places_tool', tick_pos)
+
+    def set_request_coordinate_system(self):
+        """Sets the target coordinate system for when requests are performed. This can be set using
+        this dialog
+        """
+
+        settings = QgsSettings()
+        request_crs = self.cbCrs.currentText()
+
+        settings.setValue('geocontext-qgis-plugin/request_crs', request_crs)

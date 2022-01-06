@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>534</width>
-    <height>293</height>
+    <height>347</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -52,6 +52,31 @@
         <property name="qgisRelation" stdset="0">
          <string notr="true"/>
         </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="gbGlobalSettings">
+     <property name="title">
+      <string>Global settings</string>
+     </property>
+     <layout class="QFormLayout" name="formLayout_2">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Request CRS</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="cbCrs">
+        <item>
+         <property name="text">
+          <string>WGS84 (EPSG:4326)</string>
+         </property>
+        </item>
        </widget>
       </item>
      </layout>
@@ -169,6 +194,7 @@
   <zorder>gbPanelSettings</zorder>
   <zorder>gbApiConfig</zorder>
   <zorder>buttonBox</zorder>
+  <zorder>gbGlobalSettings</zorder>
  </widget>
  <customwidgets>
   <customwidget>
