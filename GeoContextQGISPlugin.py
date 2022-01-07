@@ -300,10 +300,27 @@ class GeoContextQGISPlugin:
         :rtype: QgsCoordinateReferenceSystem
         """
 
-        map_canvas = self.iface.mapCanvas()  # QgsMapSettings
+        map_canvas = self.iface.mapCanvas()  # QgsMapCanvas
         crs = map_canvas.mapSettings().destinationCrs()  # QgsCoordinateReferenceSystem
 
         return crs
+
+    def get_request_crs(self):
+        """Transforms the XY coordinates to the WGS84 coordinate system (EPSG:4326).
+
+        :returns: Returns the coordinate system set in the options dialog.
+        :rtype: QgsCoordinateReferenceSystem
+        """
+
+        # Gets the coordinate system set by the user. Defaults to WGS84
+        # NOTE: At the moment only WGS84 is selectable
+        settings = QgsSettings()
+        request_crs = settings.value('geocontext-qgis-plugin/request_crs', "WGS84 (EPSG:4326)", type=str)
+
+        if request_crs == "WGS84 (EPSG:4326)":  # WGS84 coordinate system
+            return QgsCoordinateReferenceSystem("EPSG:4326")
+        else:  # Unknown coordinate system
+            return
 
     def transform_point_coordinates(self, point, cur_crs, target_crs):
         """Transforms point coordinates to the WGS84 coordinate system (EPSG:4326).
@@ -379,20 +396,20 @@ class GeoContextQGISPlugin:
         load_output_file = dialog.get_layer_load_option()  # Loads the newly created file if True
 
         layer_crs = input_points.sourceCrs()  # Retrieves the coordinate system used by the input points
-        target_crs = QgsCoordinateReferenceSystem("EPSG:4326")  # GeoContext request needs to be in WGS84
+        target_crs = self.get_request_crs()  # GeoContext request needs to be in WGS84
 
         output_file_name = os.path.basename(output_file)
         if selected_features and input_points.selectedFeatureCount() > 0:  # If the selection option is enabled and there is a selection
             if output_file.endswith(".gpkg"):  # Geopackage format
-                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs(), onlySelected=True)
+                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs, onlySelected=True)
             elif output_file.endswith(".shp"):  # Shapefile format
-                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs(), "ESRI Shapefile", onlySelected=True)  # shp format
+                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs, "ESRI Shapefile", onlySelected=True)  # shp format
             input_new = QgsVectorLayer(output_file, output_file_name)
         else:  # If the only selection option is disabled or there is no features selected
             if output_file.endswith(".gpkg"):  # Geopackage format
-                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs())
+                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs)
             elif output_file.endswith(".shp"):  # Shapefile format
-                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', input_points.crs(), "ESRI Shapefile")  # shp format
+                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs, "ESRI Shapefile")  # shp format
             input_new = QgsVectorLayer(output_file, output_file_name)
 
         # The user selected the 'Service' registry option
@@ -649,7 +666,7 @@ class GeoContextQGISPlugin:
         y = point_tool[1]  # Latitude
 
         canvas_crs = self.get_canvas_crs()  # The coordinate system the QGIS project canvas uses
-        target_crs = QgsCoordinateReferenceSystem("EPSG:4326")  # GeoContext request needs to be in WGS84
+        target_crs = self.get_request_crs()  # GeoContext request needs to be in WGS84
         if canvas_crs != target_crs:  # If the canvas coordinate system is not WGS84
             # Transforms the canvas point coordinates to WGS84 prior to requesting the data
             x, y = self.transform_xy_coordinates(x, y, canvas_crs, target_crs)
@@ -676,7 +693,7 @@ class GeoContextQGISPlugin:
         if registry.lower() == 'service':
             settings = QgsSettings()
 
-            # If set in the options dialog, the table will automatically be cleared. This option is only available for Services
+            # If set in the options dialog, the table will automatically be cleared
             auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
             if auto_clear_table:
                 self.dockwidget.clear_results_table()

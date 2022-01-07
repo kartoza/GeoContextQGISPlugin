@@ -114,6 +114,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btnClear.clicked.connect(self.clear_results_table)  # Triggers when the Clear button is clicked
         self.btnFetch.clicked.connect(self.fetch_btn_click)  # Triggers when the Fetch button is pressed
         self.btnCursor.clicked.connect(self.cursor_btn_click)  # Triggers when the Cursor button is pressed
+        self.btnClose.clicked.connect(self.close_btn_click)  # Triggers when the Close button is pressed
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -226,6 +227,37 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.canvas.setMapTool(self.point_tool)
             self.cursor_active = True
 
+    def close_btn_click(self):
+        print("close")
+
+    def get_canvas_crs(self):
+        """Returns the coordinate system of the canvas (e.g. EPSG:4326 (WGS84)).
+
+        :returns: The coordinate system of the QGIS canvas.
+        :rtype: QgsCoordinateReferenceSystem
+        """
+
+        crs = self.canvas.mapSettings().destinationCrs()  # QgsCoordinateReferenceSystem
+
+        return crs
+
+    def get_request_crs(self):
+        """Transforms the XY coordinates to the WGS84 coordinate system (EPSG:4326).
+
+        :returns: Returns the coordinate system set in the options dialog.
+        :rtype: QgsCoordinateReferenceSystem
+        """
+
+        # Gets the coordinate system set by the user. Defaults to WGS84
+        # NOTE: At the moment only WGS84 is selectable
+        settings = QgsSettings()
+        request_crs = settings.value('geocontext-qgis-plugin/request_crs', "WGS84 (EPSG:4326)", type=str)
+
+        if request_crs == "WGS84 (EPSG:4326)":  # WGS84 coordinate system
+            return QgsCoordinateReferenceSystem("EPSG:4326")
+        else:  # Unknown coordinate system
+            return
+
     def transform_xy_coordinates(self, x, y, cur_crs, target_crs):
         """Transforms the XY coordinates to the WGS84 coordinate system (EPSG:4326).
 
@@ -282,11 +314,6 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Performs the request
         client = Client()
-
-        canvas_crs = self.get_canvas_crs()  # The coordinate system the QGIS project canvas uses
-        target_crs = QgsCoordinateReferenceSystem("EPSG:4326")  # GeoContext request needs to be in WGS84
-        if canvas_crs != target_crs:  # If the canvas coordinate system is not WGS84
-            x, y = self.transform_xy_coordinates(x, y, canvas_crs, target_crs)
 
         url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
 
