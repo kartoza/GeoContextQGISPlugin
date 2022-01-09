@@ -12,7 +12,10 @@ import os
 
 from PyQt5.QtWidgets import QDialog
 from qgis.PyQt import uic
+from qgis.PyQt.QtCore import pyqtSignal, QUrl
 from qgis.core import QgsSettings
+
+from .geocontext_help_dialog import HelpDialog
 
 # Import the PyQt and QGIS libraries
 # this import required to enable PyQt API v2
@@ -23,7 +26,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 
 class OptionsDialog(QDialog, FORM_CLASS):
-    def __init__(self, parent=None):
+    def __init__(self, iface, parent=None):
         """Constructor."""
         super(OptionsDialog, self).__init__(parent)
         # Set up the user interface from Designer.
@@ -33,6 +36,8 @@ class OptionsDialog(QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         QDialog.__init__(self, parent)
         self.setupUi(self)
+
+        self.iface = iface
 
         # Sets the options according what the user has it previously set/saved using the options dialog
         settings = QgsSettings()
@@ -53,8 +58,34 @@ class OptionsDialog(QDialog, FORM_CLASS):
         self.sldDecPlacesTool.setValue(settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int))
         self.lblDecPlaceTool.setText(str(self.sldDecPlacesTool.value()))
 
+        # Updates the value when the user changes the decimal places
         self.sldDecPlacesPanel.valueChanged.connect(self.dec_places_value_changed_panel)
         self.sldDecPlacesTool.valueChanged.connect(self.dec_places_value_changed_tool)
+
+        # Button clicks
+        self.btnHelp.clicked.connect(self.help_btn_click)  # Triggers when the Help button is pressed
+
+    def help_btn_click(self):
+        self.show_help()
+
+    def show_help(self):
+        """Opens the help dialog. The dialog displays the html documentation.
+        The documentation contains information on the options dialog.
+        """
+
+        # Directory of the docking_panel.html file used for the help option
+        help_file_dir = '%s/resources/help/build/html/options_dialog.html' % os.path.dirname(__file__)
+        help_file = 'file:///%s/resources/help/build/html/options_dialog.html' % os.path.dirname(__file__)
+
+        # Checks whether the required html document exist
+        if os.path.exists(help_file_dir):
+            results_dialog = HelpDialog()
+            results_dialog.web_view.load(QUrl(help_file))
+            results_dialog.exec_()
+        # Skips showing the help file because the plugin cannot find it
+        else:
+            error_msg = "Cannot find the /resources/help/build/html/options_dialog.html file. Cannot open the help dialog."
+            self.iface.messageBar().pushCritical("Missing file: ", error_msg)
 
     def dec_places_value_changed_panel(self):
         """This method is called when the user moves the decimal place slider for the panel.

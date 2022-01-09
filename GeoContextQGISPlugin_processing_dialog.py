@@ -15,6 +15,9 @@ import sys
 from PyQt5.QtWidgets import QDialog
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import QgsSettings, QgsMapLayer,QgsWkbTypes
+from qgis.PyQt.QtCore import QUrl
+
+from .geocontext_help_dialog import HelpDialog
 
 # Directory for third party modules
 third_party_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'third_party'))
@@ -32,7 +35,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 
 class ProcessingDialog(QDialog, FORM_CLASS):
-    def __init__(self, parent=None):
+    def __init__(self, iface, parent=None):
         """Constructor."""
         super(ProcessingDialog, self).__init__(parent)
         # Set up the user interface from Designer.
@@ -42,6 +45,8 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         QDialog.__init__(self, parent)
         self.setupUi(self)
+
+        self.iface = iface
 
         # Retrieves the schema and request base URLs
         settings = QgsSettings()
@@ -101,6 +106,31 @@ class ProcessingDialog(QDialog, FORM_CLASS):
 
         self.cbRegistry.currentTextChanged.connect(self.registry_changed)  # Triggers when the user changes the registry type
         self.cbKey.currentTextChanged.connect(self.key_changed)  # Triggers when the user changes the key name
+
+        # Buttons clicked
+        self.btnHelp.clicked.connect(self.help_btn_click)  # Triggers when the Help button is pressed
+
+    def help_btn_click(self):
+        self.show_help()
+
+    def show_help(self):
+        """Opens the help dialog. The dialog displays the html documentation.
+        The documentation contains information on the processing tool.
+        """
+
+        # Directory of the docking_panel.html file used for the help option
+        help_file_dir = '%s/resources/help/build/html/processing_tool.html' % os.path.dirname(__file__)
+        help_file = 'file:///%s/resources/help/build/html/processing_tool.html' % os.path.dirname(__file__)
+
+        # Checks whether the required html document exist
+        if os.path.exists(help_file_dir):
+            results_dialog = HelpDialog()
+            results_dialog.web_view.load(QUrl(help_file))
+            results_dialog.exec_()
+        # Skips showing the help file because the plugin cannot find it
+        else:
+            error_msg = "Cannot find the /resources/help/build/html/processing_tool.html file. Cannot open the help dialog."
+            self.iface.messageBar().pushCritical("Missing file: ", error_msg)
 
     def find_name_info(self, search_name, registry):
         """The method finds the key ID of a provided key name. It checks each case until

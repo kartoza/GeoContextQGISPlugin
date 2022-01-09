@@ -6,11 +6,11 @@
 name=GeoContext
 qgisMinimumVersion=3.0
 description=QGIS plugin to connect to GeoContext
-version=0.1
+version=1.0
 author=Kartoza
 email=divan@kartoza.com
 
-about=QGIS plugin to access GeoContext data
+about=QGIS plugin to access GeoContext data. Allows the user to select location using the cursor to retrieve data for the selected point. A processing tool allows the user to provided a point layer as input. Data will be fetched for each point and stored in a new point.
 
 tracker=https://github.com/kartoza/GeoContextQGISPlugin\issues
 repository=https://github.com/kartoza/GeoContextQGISPlugin
