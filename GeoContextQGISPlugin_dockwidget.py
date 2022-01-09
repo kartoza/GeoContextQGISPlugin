@@ -26,8 +26,10 @@ import os
 import sys
 import time
 
+from .geocontext_help_dialog import HelpDialog
+
 from qgis.PyQt import QtGui, QtWidgets, uic
-from qgis.PyQt.QtCore import pyqtSignal
+from qgis.PyQt.QtCore import pyqtSignal, QUrl
 from qgis.PyQt.QtWidgets import QTableWidgetItem
 from qgis.core import QgsProject, QgsSettings, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsPointXY
 
@@ -46,7 +48,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     closingPlugin = pyqtSignal()
 
-    def __init__(self, canvas, point_tool, parent=None):
+    def __init__(self, canvas, point_tool, iface, parent=None):
         """Constructor."""
         super(GeoContextQGISPluginDockWidget, self).__init__(parent)
         # Set up the user interface from Designer.
@@ -55,6 +57,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+
+        self.iface = iface
 
         # Retrieves the schema data from the URL stored using the options dialog
         settings = QgsSettings()
@@ -114,6 +118,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btnClear.clicked.connect(self.clear_results_table)  # Triggers when the Clear button is clicked
         self.btnFetch.clicked.connect(self.fetch_btn_click)  # Triggers when the Fetch button is pressed
         self.btnCursor.clicked.connect(self.cursor_btn_click)  # Triggers when the Cursor button is pressed
+        self.btnHelp.clicked.connect(self.help_btn_click)  # Triggers when the Help button is pressed
         self.btnClose.clicked.connect(self.close_btn_click)  # Triggers when the Close button is pressed
 
     def closeEvent(self, event):
@@ -227,8 +232,30 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.canvas.setMapTool(self.point_tool)
             self.cursor_active = True
 
+    def help_btn_click(self):
+        self.show_help()
+
     def close_btn_click(self):
         print("close")
+
+    def show_help(self):
+        """Opens the help dialog. The dialog displays the html documentation.
+        The documentation contains information on the docking panel.
+        """
+
+        # Directory of the docking_panel.html file used for the help option
+        help_file_dir = '%s/resources/help/build/html/docking_panel.html' % os.path.dirname(__file__)
+        help_file = 'file:///%s/resources/help/build/html/docking_panel.html' % os.path.dirname(__file__)
+
+        # Checks whether the required html document exist
+        if os.path.exists(help_file_dir):
+            results_dialog = HelpDialog()
+            results_dialog.web_view.load(QUrl(help_file))
+            results_dialog.exec_()
+        # Skips showing the help file because the plugin cannot find it
+        else:
+            error_msg = "Cannot find the /resources/help/build/html/docking_panel.html file. Cannot open the help dialog."
+            self.iface.messageBar().pushCritical("Missing file: ", error_msg)
 
     def get_canvas_crs(self):
         """Returns the coordinate system of the canvas (e.g. EPSG:4326 (WGS84)).

@@ -21,7 +21,7 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant, QUrl
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
 from qgis.core import (QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext, QgsMapLayer, QgsCoordinateTransform, QgsPluginLayerRegistry, QgsLayerTree, QgsMapLayer, QgsCoordinateReferenceSystem, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsPointXY)
@@ -37,6 +37,7 @@ import time
 
 from .GeoContextQGISPlugin_options_dialog import OptionsDialog
 from .GeoContextQGISPlugin_processing_dialog import ProcessingDialog
+from .geocontext_help_dialog import HelpDialog
 
 # Directory for third party modules
 third_party_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'third_party'))
@@ -192,19 +193,28 @@ class GeoContextQGISPlugin:
 
         self.add_action(
             icon_path,
-            text=self.tr(u'Options'),
-            callback=self.show_options,
+            text=self.tr(u'Processing tool'),
+            callback=self.show_processing,
             parent=self.iface.mainWindow(),
             add_to_menu=True,
             add_to_toolbar=False)
 
         self.add_action(
             icon_path,
-            text=self.tr(u'Process'),
-            callback=self.show_processing,
+            text=self.tr(u'Options'),
+            callback=self.show_options,
             parent=self.iface.mainWindow(),
             add_to_menu=True,
             add_to_toolbar=False)
+
+        self.help_action = self.add_action(
+            icon_path,
+            text=self.tr('Help', ),
+            callback=self.show_help,
+            parent=self.iface.mainWindow(),
+            add_to_menu=True,
+            add_to_toolbar=False)
+        self.actions.append(self.help_action)
 
         # Trigger for when the user clicks in the canvas when the panel is open and the cursor is active
         self.point_tool.canvasClicked.connect(self.canvas_click)
@@ -251,7 +261,7 @@ class GeoContextQGISPlugin:
             #    removed on close (see self.onClosePlugin method)
             if self.dockwidget == None:
                 # Create the dockwidget (after translation) and keep reference
-                self.dockwidget = GeoContextQGISPluginDockWidget(self.canvas, self.point_tool)
+                self.dockwidget = GeoContextQGISPluginDockWidget(self.canvas, self.point_tool, self.iface)
 
             # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
@@ -264,10 +274,14 @@ class GeoContextQGISPlugin:
             self.canvas.setMapTool(self.point_tool)
 
     def show_options(self):
-        dialog = OptionsDialog()
+        """Opens the options dialog. The user can change/set the settings for the plugin here.
+        Settings includes the endpoint URL, schema configuration, decimal places, etc.
+        """
+
+        dialog = OptionsDialog(self.iface)
         result = dialog.exec_()
 
-        # See if OK was pressed
+        # The user saved the changes to the settings
         if result:
             dialog.set_url()
             dialog.set_schema()
@@ -275,14 +289,19 @@ class GeoContextQGISPlugin:
             dialog.set_dec_places_panel()
             dialog.set_dec_places_tool()
             dialog.set_request_coordinate_system()
+        # The user closed the dialog without saving
         else:
             pass
 
     def show_processing(self):
-        dialog = ProcessingDialog()
+        """Opens the processing tool. The user can provide the dialog a point layer
+        as input. Each point will be processed.
+        """
+
+        dialog = ProcessingDialog(self.iface)
         result = dialog.exec_()
 
-        # See if OK was pressed
+        # User selected parameters and pressed the button to run the tool
         if result:
             error_found, error_msg = dialog.check_parameters_for_errors()
 
@@ -290,8 +309,28 @@ class GeoContextQGISPlugin:
                 self.process_points_layer(dialog)
             else:  # Error found with the parameters. Points will not be processed, and an error message is shown
                 self.iface.messageBar().pushCritical("Parameter error: ", error_msg)
+        # The user closed the tool without running the tool
         else:
             pass
+
+    def show_help(self):
+        """Opens the help dialog. The dialog displays the html documentation.
+        The documentation contains installation instructions, how to use the plugin, etc.
+        """
+
+        # Directory of the index.html file used for the help option
+        help_file_dir = '%s/resources/help/build/html/index.html' % os.path.dirname(__file__)
+        help_file = 'file:///%s/resources/help/build/html/index.html' % os.path.dirname(__file__)
+
+        # Checks whether the required html document exist
+        if os.path.exists(help_file_dir):
+            results_dialog = HelpDialog()
+            results_dialog.web_view.load(QUrl(help_file))
+            results_dialog.exec_()
+        # Skips showing the help file because the plugin cannot find it
+        else:
+            error_msg = "Cannot find the /resources/help/build/html/index.html file. Cannot open the help dialog."
+            self.iface.messageBar().pushCritical("Missing file: ", error_msg)
 
     def get_canvas_crs(self):
         """Returns the coordinate system of the canvas (e.g. EPSG:4326 (WGS84)).
