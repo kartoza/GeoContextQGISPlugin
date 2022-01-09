@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Processing tool &#8212; GeoContext QGIS plugin 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/nature.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Options Dialog" href="options_dialog.html" />
+    <link rel="prev" title="Docking panel" href="docking_panel.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="options_dialog.html" title="Options Dialog"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="docking_panel.html" title="Docking panel"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">GeoContext QGIS plugin 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Processing tool</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="processing-tool">
+<span id="processing-tool-label"></span><h1>Processing tool<a class="headerlink" href="#processing-tool" title="Permalink to this headline">¶</a></h1>
+<p>To open the processing tool for the plugin, the user can go to ‘Plugins’ -&gt; ‘GeoContext’.
+Here is an example of the menu:</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/plugin_menu.png"><img alt="_images/plugin_menu.png" class="align-center" src="_images/plugin_menu.png" style="width: 189.5px; height: 138.5px;" /></a>
+</div></blockquote>
+<p>The processing tool can be accessed via the GeoContext menu, as illustrated in the ‘Plugin menu and toolbar’
+section. This tool allows the user to provide a point vector file as input to perform requests with. A request
+will be performed for each of the points contained by the vector layer. Any points with no geometry will be ignored.
+Here is a quick explanation on the parameters of the tool:</p>
+<ul>
+<li><p>Point layer: This is the input layer which contains the points for which requests will be made. This can only be a point vector layer;</p></li>
+<li><p>Selected features only: If the user has selected features of the input layer, the processing will only perform on the selection;</p></li>
+<li><p>Endpoint URL: Base URL used to perform requests. This can be changed in the options;</p></li>
+<li><p>Schema configuration: The link used to retrieve the schema docs. This can be changed in the options;</p></li>
+<li><p>Registry: The registry type, either ‘Service’, ‘Group’, or ‘Collection’;</p></li>
+<li><p>Key: The key name. This name will be used to retrieve the key ID, which in turn is used to perform the request;</p></li>
+<li><p>Field name/prefix: This is the field name/prefix for the field(s) which will be added. At least one character needs to be provided;</p></li>
+<li><p>Output point file: The newly created file. Can either be geopackage (gpkg) or shapefile (shp); and</p></li>
+<li><p>Open output file after running algorithm: If the processing is successful the newly created point file will be added to the QGIS map canvas.</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/plugin_menu.png"><img alt="_images/plugin_menu.png" class="align-center" src="_images/plugin_menu.png" style="width: 189.5px; height: 138.5px;" /></a>
+</div></blockquote>
+</li>
+</ul>
+<section id="results-from-processing-tool">
+<h2>Results from processing tool<a class="headerlink" href="#results-from-processing-tool" title="Permalink to this headline">¶</a></h2>
+<p>The figure which follows show the extracted elevation values for points. This has been obtained using ‘Service’
+registry type.</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/result_service_elevation.png"><img alt="_images/result_service_elevation.png" class="align-center" src="_images/result_service_elevation.png" style="width: 331.5px; height: 317.5px;" /></a>
+</div></blockquote>
+<p>Notable is that the attribute table which follows contains a large number of added values/attributes. This is because
+the request were done on a ‘Collection’, in this case on ‘Global climate collection’ - the results therefore
+contains several attributes, e.g. bioclimatic conditions, rainfall, temperature, etc.</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/result_collection_climate.png"><img alt="_images/result_collection_climate.png" class="align-center" src="_images/result_collection_climate.png" style="width: 666.5px; height: 124.0px;" /></a>
+</div></blockquote>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Processing tool</a><ul>
+<li><a class="reference internal" href="#results-from-processing-tool">Results from processing tool</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="docking_panel.html"
+                        title="previous chapter">Docking panel</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="options_dialog.html"
+                        title="next chapter">Options Dialog</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/processing_tool.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="options_dialog.html" title="Options Dialog"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="docking_panel.html" title="Docking panel"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">GeoContext QGIS plugin 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Processing tool</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Kartoza (Pty) Ltd..
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

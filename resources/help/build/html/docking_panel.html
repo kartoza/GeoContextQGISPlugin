@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Docking panel &#8212; GeoContext QGIS plugin 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/nature.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Processing tool" href="processing_tool.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="processing_tool.html" title="Processing tool"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">GeoContext QGIS plugin 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Docking panel</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="docking-panel">
+<span id="docking-panel-label"></span><h1>Docking panel<a class="headerlink" href="#docking-panel" title="Permalink to this headline">¶</a></h1>
+<p>The toolbar can be used to open the GeoContext docking panel. The panel allows the user to select point locations using
+the cursor. The figure which follows indicate the GeoContext toolbar (highlighted in red).</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/toolbar.png"><img alt="_images/toolbar.png" class="align-center" src="_images/toolbar.png" style="width: 376.5px; height: 83.5px;" /></a>
+</div></blockquote>
+<p>This panel can be opened when clicking on the toolbar button. When the panel has been opened, the user can select a point
+location using the cursor. The coordinates of the point location will be retrieved, which will then be used to perform
+a request for the selected registry type and key name. Here is a quick explanation of each of the panel’s features:</p>
+<ul>
+<li><p>Registry: Can be either ‘Service’, ‘Group’, or ‘Collection’;</p></li>
+<li><p>Key: The key name of the data the user wants to retrieve. The key name is used to retrieve the key ID, which is then used to perform the request;</p></li>
+<li><p>Information table: Shows details related to the selected registry type and key;</p></li>
+<li><p>Longitude: This is the x-coordinate of the selected location;</p></li>
+<li><p>Latitude: This is the y-coordinate of the selected location;</p></li>
+<li><p>Cursor: Can be used to enable or disable the canvas point tool cursor. The user won’t be to select points using the cursor if this is disabled;</p></li>
+<li><p>Fetch: Does a request for the location, and selected data;</p></li>
+<li><p>Results table(s): Results from the performed request; and</p></li>
+<li><p>Clear table: Clears the table of any content.</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/panel.png"><img alt="_images/panel.png" class="align-center" src="_images/panel.png" style="width: 229.0px; height: 418.0px;" /></a>
+</div></blockquote>
+</li>
+</ul>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="installation.html"
+                        title="previous chapter">Installation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="processing_tool.html"
+                        title="next chapter">Processing tool</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/docking_panel.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="processing_tool.html" title="Processing tool"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">GeoContext QGIS plugin 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Docking panel</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Kartoza (Pty) Ltd..
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>
