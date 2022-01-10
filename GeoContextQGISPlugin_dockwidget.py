@@ -38,7 +38,9 @@ third_party_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'thir
 if third_party_path not in sys.path:
     sys.path.append(third_party_path)
 
+# Core API modules
 from coreapi.client import Client
+from requests import exceptions
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'GeoContextQGISPlugin_dockwidget_base.ui'))
@@ -58,29 +60,38 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
 
-        self.iface = iface
-
-        # Retrieves the schema data from the URL stored using the options dialog
-        settings = QgsSettings()
-        schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
-        url = settings.value('geocontext-qgis-plugin/url', '', type=str)
-
+        self.iface = iface  # QGIS interface
         self.canvas = canvas  # QGIS project canvas
         self.point_tool = point_tool  # Canvas point tool - cursor used to selected locations
         self.cursor_active = True  # Sets to True because the point tool is now active
 
-        # Get the list of context layers
-        client = Client()
-        self.document = client.get(schema)  # Retrieve the API schema
-        self.list_context = client.action(document=self.document, keys=["csr", "list"])
+        # Retrieves the schema data from the URL stored using the options dialog
+        settings = QgsSettings()
+        schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
 
-        # Groups
+        # Attempts to request the schema configuration from the API
+        try:
+            client = Client()
+            self.document = client.get(schema)  # Retrieve the API schema
+            self.list_context = client.action(document=self.document, keys=["csr", "list"])  # Get the list of context layers
+        except exceptions.ConnectionError:  # Could not connect to the provided URL
+            error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
+            self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+
+            self.list_context = []
+        except Exception as e:  # Other possible connection issues
+            error_msg = "Could not connect to " + schema + ". Unknown error: " + str(e)
+            self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+
+            self.list_context = []
+
+        # Groups: ONLY TEMP
         self.list_group = [{'key': 'bioclimatic_variables_group', 'name': 'Bioclimatic layers', 'description': 'N/A'},
                            {'key': 'monthly_precipitation_group', 'name': 'Monthly Precipitation', 'description': 'N/A'},
                            {'key': 'monthly_solar_radiation_group', 'name': 'Monthly Solar Radiation', 'description': 'N/A'},
                            {'key': 'monthly_max_temperature_group', 'name': 'Monthly Maximum Temperature', 'description': 'N/A'}]
 
-        # Collections
+        # Collections: ONLY TEMP
         self.list_collection = [{'key': 'global_climate_collection', 'name': 'Global climate collection', 'description': 'N/A'},
                                 {'key': 'healthy_rivers_collection', 'name': 'Healthy rivers collection', 'description': 'N/A'},
                                 {'key': 'healthy_rivers_spatial_collection', 'name': 'Healthy rivers spatial filters', 'description': 'N/A'},
@@ -92,29 +103,36 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 {'key': 'sa_river_ecosystem_collection', 'name': 'South African river collection', 'description': 'N/A'},
                                 {'key': 'sedac_collection', 'name': 'Socioeconomic data and application center collection', 'description': 'N/A'}]
 
-        # Creates a list of the key names and sorts it alphabetically
-        list_key_names = []
-        for context in self.list_context:
-            name = context['name']
-            list_key_names.append(name)
-        list_key_names = sorted(list_key_names)
+        # If the context list is empty, these steps should be skipped
+        if len(self.list_context) > 0:
+            # Creates a list of the key names and sorts it alphabetically
+            list_key_names = []
+            for context in self.list_context:
+                name = context['name']
+                list_key_names.append(name)
+            list_key_names = sorted(list_key_names)
 
-        # Adds the keys to the panel
-        self.cbKey.addItems(list_key_names)
+            # Adds the keys to the panel
+            self.cbKey.addItems(list_key_names)
 
-        # Retrieves panel parameters
-        registry = self.cbRegistry.currentText()
-        current_name = self.cbKey.currentText()
+            # Retrieves panel parameters
+            registry = self.cbRegistry.currentText()
+            current_name = self.cbKey.currentText()
 
-        # Retrieves the set information and updates the description table with it
-        dict_current = self.find_name_info(current_name, registry)
-        self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
-        self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
-        self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
+            # Retrieves the set information and updates the description table with it
+            dict_current = self.find_name_info(current_name, registry)
+            self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
+            self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
+            self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
+        else:  # Empty geocontext list. This can be a result of the incorrect URL, or the site is down
+            error_msg = "The retrieved context list is empty. Check the provided schema configuration URL or whether the site is online."
+            self.iface.messageBar().pushCritical("Empty geocontext list error: ", error_msg)
 
+        # UI triggers
         self.cbRegistry.currentTextChanged.connect(self.registry_changed)  # Triggered when the registry changes
         self.cbKey.currentTextChanged.connect(self.key_changed)  # Triggers when the key value changes
 
+        # Button triggers
         self.btnClear.clicked.connect(self.clear_results_table)  # Triggers when the Clear button is clicked
         self.btnFetch.clicked.connect(self.fetch_btn_click)  # Triggers when the Fetch button is pressed
         self.btnCursor.clicked.connect(self.cursor_btn_click)  # Triggers when the Cursor button is pressed
@@ -194,10 +212,10 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.tblResult.setItem(0, 1, QTableWidgetItem(str(data['value'])))
         # The user has Group selected
         elif registry.lower() == "group":  # UPDATE
-            group_name = data['name']
+            # group_name = data['name']
             list_dict_services = data["services"]  # Service files for a group
             for dict_service in list_dict_services:
-                key = dict_service['key']
+                # key = dict_service['key']
                 point_value = dict_service['value']
                 service_key_name = dict_service['name']
 
@@ -208,10 +226,10 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         elif registry.lower() == "collection":
             list_dict_groups = data["groups"]  # Each group contains a list of the 'Service' data associated with the group
             for dict_group in list_dict_groups:
-                group_name = dict_group['name']
+                # group_name = dict_group['name']
                 list_dict_services = dict_group["services"]  # Service files for a group
                 for dict_service in list_dict_services:
-                    key = dict_service['key']
+                    # key = dict_service['key']
                     point_value = dict_service['value']
                     service_key_name = dict_service['name']
 
@@ -404,22 +422,37 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # Docs which contains the schema of geocontext. Link can be changed in the options dialog
             schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
 
-            # Requests the schema
-            client = Client()
-            self.document = client.get(schema)  # Retrieve the API schema
+            # Checks whether the provided schema configuration URL is available
+            try:
+                # Requests the schema
+                client = Client()
+                self.document = client.get(schema)  # Retrieve the API schema
+                self.list_context = client.action(document=self.document, keys=["csr", "list"])  # Get the list of context layers
+            except exceptions.ConnectionError:  # Could not connect to the provided URL
+                error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
+                self.iface.messageBar().pushCritical("Connection error: ", error_msg)
 
-            # Requests the context list, which will contain the updated information
-            self.list_context = client.action(document=self.document, keys=["csr", "list"])  # Get the list of context layers
+                self.list_context = []
+            except Exception as e:  # Other possible connection issues
+                error_msg = "Could not connect to " + schema + ". Unknown error: " + str(e)
+                self.iface.messageBar().pushCritical("Connection error: ", error_msg)
 
-            # Adds the names to a list, and then sorts the list alphabetically
-            list_key_names = []
-            for context in self.list_context:
-                name = context['name']
-                list_key_names.append(name)
-            list_key_names = sorted(list_key_names)
+                self.list_context = []
 
-            # Applies the updated list
-            self.cbKey.addItems(list_key_names)
+            # Checks if the geocontext list contains data
+            if len(self.list_context) > 0:
+                # Adds the names to a list, and then sorts the list alphabetically
+                list_key_names = []
+                for context in self.list_context:
+                    name = context['name']
+                    list_key_names.append(name)
+                list_key_names = sorted(list_key_names)
+
+                # Applies the updated list
+                self.cbKey.addItems(list_key_names)
+            else:  # Empty geocontext list. This can be a result of the incorrect URL, or the site is down
+                error_msg = "The retrieved context list is empty. Check the provided schema configuration URL or whether the site is online."
+                self.iface.messageBar().pushCritical("Empty geocontext list error: ", error_msg)
         elif registry_type == "Group":
             # Creates a list of the group layers
             list_key_names = []
