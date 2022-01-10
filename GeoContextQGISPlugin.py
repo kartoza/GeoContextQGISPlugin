@@ -24,8 +24,9 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant, QUrl
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
-from qgis.core import (QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext, QgsMapLayer, QgsCoordinateTransform, QgsPluginLayerRegistry, QgsLayerTree, QgsMapLayer, QgsCoordinateReferenceSystem, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsPointXY)
+from qgis.core import (QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext, QgsMapLayer, QgsCoordinateTransform, QgsPluginLayerRegistry, QgsLayerTree, QgsMapLayer, QgsCoordinateReferenceSystem, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsPointXY, QgsFeature)
 from qgis.gui import QgsMapToolEmitPoint
+
 # Initialize Qt resources from file resources.py
 from .resources import *
 
@@ -44,7 +45,9 @@ third_party_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'thir
 if third_party_path not in sys.path:
     sys.path.append(third_party_path)
 
+# Core API module
 from coreapi.client import Client
+from coreapi import exceptions as coreapi_exceptions
 
 
 class GeoContextQGISPlugin:
@@ -106,17 +109,7 @@ class GeoContextQGISPlugin:
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('GeoContextQGISPlugin', message)
 
-    def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
+    def add_action(self, icon_path, text, callback, enabled_flag=True, add_to_menu=True, add_to_toolbar=True, status_tip=None, whats_this=None, parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -171,9 +164,7 @@ class GeoContextQGISPlugin:
             self.toolbar.addAction(action)
 
         if add_to_menu:
-            self.iface.addPluginToMenu(
-                self.menu,
-                action)
+            self.iface.addPluginToMenu(self.menu, action)
 
         self.actions.append(action)
 
@@ -412,6 +403,49 @@ class GeoContextQGISPlugin:
 
         return x, y
 
+    def convert_multipart_to_singlepart(self, mp_layer):
+        """If a vector file has multiple parts for a feature, each part is split into a feature.
+        This is done so that each point can have its own attribute data, as the parts might be at different
+        coordinates. The provided layer will directly be edited and no longer required multipart features
+        will be removed.
+
+        This method is aimed at point layers for this plugin, but will work for other multipart vector types.
+
+        :param mp_layer: A vector layer.
+        :type mp_layer: QgsVectorLayer
+        """
+
+        feature_count = mp_layer.featureCount()  # Total number of feature of the layer
+        features_to_remove = []  # Multipart features which will be removed when split into multiple features
+
+        # Skips this step if the layer is empty
+        if feature_count > 0:
+            mp_layer.startEditing()  # Editing is performed on the mp_layer
+            for mp_feat in mp_layer.getFeatures():  # All features
+                geom = mp_feat.geometry()  # Feature geometry
+                if geom.isMultipart():  # Checked if the geometry is multipart
+                    new_features = []
+                    temp_feature = QgsFeature(mp_feat)  # Clone of the feature
+                    features_to_remove.append(mp_feat.id())  # Feature will be removed
+
+                    for mp_part in geom.asGeometryCollection():  # Adds each part as a separate feature
+                        temp_feature.setGeometry(mp_part)
+                        new_features.append(QgsFeature(temp_feature))
+                    mp_layer.addFeatures(new_features)  # Adds the new features to the layer
+
+            # Removes all of the multipart features which has been split into separate features
+            for feat_to_remove_id in features_to_remove:
+                mp_layer.deleteFeature(feat_to_remove_id)
+
+            # Gives each singlepart feature a unique ID (fid/oid)
+            new_index = 0
+            for new_feat in mp_layer.getFeatures():
+                mp_layer.changeAttributeValue(new_feat.id(), 0, new_index)
+
+                new_index = new_index + 1
+
+            mp_layer.commitChanges()  # Applies the changes to the layer
+
     def process_points_layer(self, dialog):
         """
         This method processes a point layer provided by the user.
@@ -429,7 +463,7 @@ class GeoContextQGISPlugin:
         input_points = dialog.get_input_layer()  # QgsVectorLayer. Input point layer from canvas
         selected_features = dialog.get_selected_option()  # Selected feature will only be taken into account if True
         registry = dialog.get_registry()  # Service, group or collection
-        key = dialog.get_key()  # The data which will be requested
+        # key = dialog.get_key()  # The data which will be requested
         field_name = dialog.get_fieldname().replace(" ", "_")  # Fieldname or suffix. All spaces is replaced with '_'
         output_file = dialog.get_output_points()  # Output point file. Shapefile (shp) or geopackage (gpkg)
         load_output_file = dialog.get_layer_load_option()  # Loads the newly created file if True
@@ -437,19 +471,27 @@ class GeoContextQGISPlugin:
         layer_crs = input_points.sourceCrs()  # Retrieves the coordinate system used by the input points
         target_crs = self.get_request_crs()  # GeoContext request needs to be in WGS84
 
+        # Adds .gpkg to the end of the file name if it does not end with .gpkg
+        if not output_file.endswith(".gpkg"):
+            output_file = output_file + ".gpkg"
         output_file_name = os.path.basename(output_file)
+
+        # Creates the new file
         if selected_features and input_points.selectedFeatureCount() > 0:  # If the selection option is enabled and there is a selection
-            if output_file.endswith(".gpkg"):  # Geopackage format
-                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs, onlySelected=True)
-            elif output_file.endswith(".shp"):  # Shapefile format
-                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs, "ESRI Shapefile", onlySelected=True)  # shp format
-            input_new = QgsVectorLayer(output_file, output_file_name)
-        else:  # If the only selection option is disabled or there is no features selected
-            if output_file.endswith(".gpkg"):  # Geopackage format
-                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs)
-            elif output_file.endswith(".shp"):  # Shapefile format
-                QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs, "ESRI Shapefile")  # shp format
-            input_new = QgsVectorLayer(output_file, output_file_name)
+            status_index, msg = QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs, onlySelected=True)
+            if status_index == 2:  # File already exists and cannot be overwritten
+                self.iface.messageBar().pushCritical("File creation error: ", msg)
+                return  # No processing will be done
+        else:  # If the only selection option is disabled or there are no features selected
+            status_index, msg = QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs)
+            if status_index == 2:  # File already exists and cannot be overwritten
+                self.iface.messageBar().pushCritical("File creation error: ", msg)
+                return  # No processing will be done
+        input_new = QgsVectorLayer(output_file, output_file_name)
+
+        input_type = input_points.wkbType()  # Vector type for input
+        if input_type == 4:  # If a multipoint layer, otherwise skipped
+            self.convert_multipart_to_singlepart(input_new)  # Splits all multipart features into singlepart features
 
         # The user selected the 'Service' registry option
         if registry == 'Service':
@@ -465,6 +507,8 @@ class GeoContextQGISPlugin:
 
                 feat_geom = input_feat.geometry()
                 if not feat_geom.isNull():  # If a point does not contain geometry, it is skipped
+                    if feat_geom.isMultipart():
+                        feat_geom.convertToSingleType()
                     point = feat_geom.asPoint()
 
                     if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
@@ -488,6 +532,8 @@ class GeoContextQGISPlugin:
             for input_feat in input_new.getFeatures():  # Processes each of the features contained by the vector file
                 feat_geom = input_feat.geometry()
                 if not feat_geom.isNull():  # If a point does not contain geometry, it is skipped
+                    if feat_geom.isMultipart():
+                        feat_geom.convertToSingleType()
                     point = feat_geom.asPoint()
 
                     if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
@@ -515,6 +561,8 @@ class GeoContextQGISPlugin:
             for input_feat in input_new.getFeatures():
                 feat_geom = input_feat.geometry()
                 if not feat_geom.isNull():  # If a point does not contain geometry, it is skipped
+                    if feat_geom.isMultipart():
+                        feat_geom.convertToSingleType()
                     point = feat_geom.asPoint()
 
                     if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
@@ -529,7 +577,7 @@ class GeoContextQGISPlugin:
                     # The data is requested from the server
                     point_data = self.point_request_dialog(x, y, dialog)
 
-                    group_name = point_data['name']
+                    # group_name = point_data['name']
                     list_dict_services = point_data["services"]  # Service files for a group
                     for dict_service in list_dict_services:
                         key = dict_service['key']
@@ -547,6 +595,8 @@ class GeoContextQGISPlugin:
             for input_feat in input_new.getFeatures():  # Processes each of the features contained by the vector file
                 feat_geom = input_feat.geometry()
                 if not feat_geom.isNull():  # If a point does not contain geometry, it is skipped
+                    if feat_geom.isMultipart():
+                        feat_geom.convertToSingleType()
                     point = feat_geom.asPoint()
 
                     if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
@@ -577,6 +627,8 @@ class GeoContextQGISPlugin:
             for input_feat in input_new.getFeatures():
                 feat_geom = input_feat.geometry()
                 if not feat_geom.isNull():  # If a point does not contain geometry, it is skipped
+                    if feat_geom.isMultipart():
+                        feat_geom.convertToSingleType()
                     point = feat_geom.asPoint()
 
                     if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
@@ -591,10 +643,10 @@ class GeoContextQGISPlugin:
                     # The data is requested from the server
                     point_data = self.point_request_dialog(x, y, dialog)
 
-                    collection_name = point_data['name']
+                    # collection_name = point_data['name']
                     list_dict_groups = point_data["groups"]  # Each group contains a list of the 'Service' data associated with the group
                     for dict_group in list_dict_groups:
-                        group_name = dict_group['name']
+                        # group_name = dict_group['name']
 
                         list_dict_services = dict_group["services"]  # Service files for a group
                         for dict_service in list_dict_services:
@@ -638,12 +690,23 @@ class GeoContextQGISPlugin:
 
         dict_key = self.dockwidget.find_name_info(key_name, registry)  # Retrieves the request key using the selected key name
         key = dict_key['key']
-
-        # Performs the request
-        client = Client()
-
         url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
-        data = client.get(url_request)
+
+        # Attempts to perform a data request from the API server
+        try:
+            client = Client()
+            data = client.get(url_request)  # Performs the request
+        except coreapi_exceptions.ErrorMessage:
+            error_msg = "Could not request " + url_request + ". Check if the provided endpoint URL is correct. The site may also be down."
+            self.iface.messageBar().pushCritical("Request error: ", error_msg)
+
+            data = None  # Nothing to return
+        except Exception as e:
+            error_msg = "Could not request " + url_request + ". Unknown error: " + str(e)
+            self.iface.messageBar().pushCritical("Request error: ", error_msg)
+            print(str(e))
+
+            data = None  # Nothing to return
 
         return data
 
@@ -721,52 +784,57 @@ class GeoContextQGISPlugin:
         current_key_name = self.dockwidget.cbKey.currentText()
         data = self.point_request_panel(x, y)
 
-        # Request ends
-        end = time.time()
-        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
-        request_time_ms = round((end - start)*1000, rounding_factor)
-        self.dockwidget.lblRequestTime.setText("Request time (ms): " + str(request_time_ms))
+        # Checks whether the request has been successful. None indicates unsuccessful
+        if data is not None:
+            # Request ends
+            end = time.time()
+            rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+            request_time_ms = round((end - start)*1000, rounding_factor)
+            self.dockwidget.lblRequestTime.setText("Request time (ms): " + str(request_time_ms))
 
-        registry = self.dockwidget.cbRegistry.currentText()
-        # Service option
-        if registry.lower() == 'service':
-            settings = QgsSettings()
+            registry = self.dockwidget.cbRegistry.currentText()
+            # Service option
+            if registry.lower() == 'service':
+                settings = QgsSettings()
 
-            # If set in the options dialog, the table will automatically be cleared
-            auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
-            if auto_clear_table:
-                self.dockwidget.clear_results_table()
+                # If set in the options dialog, the table will automatically be cleared
+                auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
+                if auto_clear_table:
+                    self.dockwidget.clear_results_table()
 
-            point_value = data['value']  # Retrieves the value
-            self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
-            self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))  # Sets the key in the table
-            self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
-        # Group option
-        elif registry.lower() == "group":
-            group_name = data['name']
-            list_dict_services = data["services"]  # Service files for a group
-            for dict_service in list_dict_services:
-                key = dict_service['key']
-                point_value = dict_service['value']
-                service_key_name = dict_service['name']
-
+                point_value = data['value']  # Retrieves the value
                 self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
-                self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
+                self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))  # Sets the key in the table
                 self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
-        # Collection option
-        elif registry.lower() == "collection":
-            list_dict_groups = data["groups"]  # Each group contains a list of the 'Service' data associated with the group
-            for dict_group in list_dict_groups:
-                group_name = dict_group['name']
-                list_dict_services = dict_group["services"]  # Service files for a group
+            # Group option
+            elif registry.lower() == "group":
+                # group_name = data['name']
+                list_dict_services = data["services"]  # Service files for a group
                 for dict_service in list_dict_services:
-                    key = dict_service['key']
+                    # key = dict_service['key']
                     point_value = dict_service['value']
                     service_key_name = dict_service['name']
 
                     self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
                     self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
                     self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
+            # Collection option
+            elif registry.lower() == "collection":
+                list_dict_groups = data["groups"]  # Each group contains a list of the 'Service' data associated with the group
+                for dict_group in list_dict_groups:
+                    # group_name = dict_group['name']
+                    list_dict_services = dict_group["services"]  # Service files for a group
+                    for dict_service in list_dict_services:
+                        # key = dict_service['key']
+                        point_value = dict_service['value']
+                        service_key_name = dict_service['name']
+
+                        self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
+                        self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
+                        self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
+        else:  # Request were unsuccessful
+            error_msg = "Could not perform data request. Check if the endpoint URL is correct."
+            self.iface.messageBar().pushCritical("Request error: ", error_msg)
 
     def create_new_field(self, input_layer, input_feat, field_name):
         """Return index of the field in the input layer attribute table.
