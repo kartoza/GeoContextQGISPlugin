@@ -264,6 +264,74 @@ class GeoContextQGISPlugin:
 
             self.canvas.setMapTool(self.point_tool)
 
+    def is_float(self, value):
+        """Checks whether a string value can be converted to a float
+
+        :param value: The string value to be checked
+        :type value: str
+
+        :returns: True if the value can be converted to a float; False if not
+        :rtype: Boolean
+        """
+
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
+    def apply_decimal_places_to_float_panel(self, value):
+        """Applies the rounding factor the provided value. This method retrieves the rounding factor
+        set for the docking panel in the options dialog.
+
+        :param value: The string value to be checked
+        :type value: String or numeric
+
+        :returns: Value rounded using the rounding factor if float; otherwise the origin value is returned
+        :rtype: String
+        """
+
+        settings = QgsSettings()
+        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+
+        if value.isdigit():  # Integer
+            return value  # Number has no decimal values
+        else:  # Either string or float
+            if self.is_float(value):  # Float
+                value_float = float(value)
+                value_rounded = round(value_float, rounding_factor)
+                value_str = str(value_rounded)
+
+                return value_str
+
+        return value  # String, therefore no rounding required
+
+    def apply_decimal_places_to_float_tool(self, value):
+        """Applies the rounding factor the provided value. This method retrieves the rounding factor
+        set for the processing tool in the options dialog.
+
+        :param value: The string value to be checked
+        :type value: String or numeric
+
+        :returns: Value rounded using the rounding factor if float; otherwise the origin value is returned
+        :rtype: String
+        """
+
+        settings = QgsSettings()
+        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int)
+
+        if value.isdigit():  # Integer
+            return value  # Number has no decimal values
+        else:  # Either string or float
+            if self.is_float(value):  # Float
+                value_float = float(value)
+                value_rounded = round(value_float, rounding_factor)
+                value_str = str(value_rounded)
+
+                return value_str
+
+        return value  # String, therefore no rounding required
+
     def show_options(self):
         """Opens the options dialog. The user can change/set the settings for the plugin here.
         Settings includes the endpoint URL, schema configuration, decimal places, etc.
@@ -484,7 +552,7 @@ class GeoContextQGISPlugin:
                 return  # No processing will be done
         else:  # If the only selection option is disabled or there are no features selected
             status_index, msg = QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs)
-            if status_index == 2:  # File already exists and cannot be overwritten
+            if status_index == 2:  # File already exists and cannot be overwritten (locked)
                 self.iface.messageBar().pushCritical("File creation error: ", msg)
                 return  # No processing will be done
         input_new = QgsVectorLayer(output_file, output_file_name)
@@ -523,6 +591,7 @@ class GeoContextQGISPlugin:
                     # The data is requested from the server
                     point_data = self.point_request_dialog(x, y, dialog)
                     point_value_str = str(point_data['value'])
+                    point_value_str = self.apply_decimal_places_to_float_tool(point_value_str)
 
                     input_new.changeAttributeValue(input_feat.id(), new_field_index, point_value_str)
             input_new.commitChanges()
@@ -582,6 +651,8 @@ class GeoContextQGISPlugin:
                     for dict_service in list_dict_services:
                         key = dict_service['key']
                         point_value_str = dict_service['value']
+                        point_value_str = self.apply_decimal_places_to_float_tool(point_value_str)
+
                         coll_field_name = field_name + key
 
                         input_new.startEditing()
@@ -652,6 +723,8 @@ class GeoContextQGISPlugin:
                         for dict_service in list_dict_services:
                             key = dict_service['key']
                             point_value_str = dict_service['value']
+                            point_value_str = self.apply_decimal_places_to_float_tool(point_value_str)
+
                             coll_field_name = field_name + key
 
                             input_new.startEditing()
@@ -802,22 +875,26 @@ class GeoContextQGISPlugin:
                 if auto_clear_table:
                     self.dockwidget.clear_results_table()
 
-                point_value = data['value']  # Retrieves the value
+                point_value_str = data['value']  # Retrieves the value
+                point_value_str = self.apply_decimal_places_to_float_panel(point_value_str)
+
                 self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
                 self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))  # Sets the key in the table
-                self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
+                self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
             # Group option
             elif registry.lower() == "group":
                 # group_name = data['name']
                 list_dict_services = data["services"]  # Service files for a group
                 for dict_service in list_dict_services:
                     # key = dict_service['key']
-                    point_value = dict_service['value']
+                    point_value_str = dict_service['value']
+                    point_value_str = self.apply_decimal_places_to_float_panel(point_value_str)
+
                     service_key_name = dict_service['name']
 
                     self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
                     self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                    self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
+                    self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
             # Collection option
             elif registry.lower() == "collection":
                 list_dict_groups = data["groups"]  # Each group contains a list of the 'Service' data associated with the group
@@ -826,12 +903,14 @@ class GeoContextQGISPlugin:
                     list_dict_services = dict_group["services"]  # Service files for a group
                     for dict_service in list_dict_services:
                         # key = dict_service['key']
-                        point_value = dict_service['value']
+                        point_value_str = dict_service['value']
+                        point_value_str = self.apply_decimal_places_to_float_panel(point_value_str)
+
                         service_key_name = dict_service['name']
 
                         self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
                         self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                        self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
+                        self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
         else:  # Request were unsuccessful
             error_msg = "Could not perform data request. Check if the endpoint URL is correct."
             self.iface.messageBar().pushCritical("Request error: ", error_msg)
