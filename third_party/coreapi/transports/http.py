@@ -8,11 +8,18 @@ from coreapi.transports.base import BaseTransport
 from coreapi.utils import guess_filename, is_file, File
 import collections
 import requests
-import itypes
 import mimetypes
-import uritemplate
 import warnings
+import sys
+import os
 
+# Directory for third party modules
+third_party_path = os.path.abspath(os.path.abspath(os.path.abspath(os.path.join(os.path.dirname(__file__)))))
+if third_party_path not in sys.path:
+    sys.path.append(third_party_path)
+
+from itypes import itypes
+from uritemplate import uritemplate
 
 Params = collections.namedtuple('Params', ['path', 'query', 'data', 'files'])
 empty_params = Params({}, {}, {}, {})
