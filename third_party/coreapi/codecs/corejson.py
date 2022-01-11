@@ -5,9 +5,17 @@ from coreapi.compat import force_bytes, string_types, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object, Error, Field
 from coreapi.exceptions import ParseError
-import coreschema
 import json
 
+import sys
+import os
+
+# Directory for third party modules
+third_party_path = os.path.abspath(os.path.abspath(os.path.abspath(os.path.join(os.path.dirname(__file__)))))
+if third_party_path not in sys.path:
+    sys.path.append(third_party_path)
+
+from coreschema import coreschema
 
 # Schema encoding and decoding.
 # Just a naive first-pass at this point.

@@ -1,0 +1,11 @@
+*.pyc
+*~
+.*
+
+/*.egg-info/
+/dist/
+/env/
+/htmlcov/
+
+!.gitignore
+!.travis.yml
