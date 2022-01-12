@@ -280,55 +280,57 @@ class GeoContextQGISPlugin:
         except ValueError:
             return False
 
-    def apply_decimal_places_to_float_panel(self, value):
+    def apply_decimal_places_to_float_panel(self, value, rounding_factor):
         """Applies the rounding factor the provided value. This method retrieves the rounding factor
         set for the docking panel in the options dialog.
 
         :param value: The string value to be checked
         :type value: String or numeric
 
+        :param rounding_factor: The factor used for when the value is rounded
+        :type rounding_factor: Integer
+
         :returns: Value rounded using the rounding factor if float; otherwise the origin value is returned
         :rtype: String
         """
 
-        settings = QgsSettings()
-        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+        if value is not None:
+            if value.isdigit():  # Integer
+                return value  # Number has no decimal values
+            else:  # Either string or float
+                if self.is_float(value):  # Float
+                    value_float = float(value)
+                    value_rounded = round(value_float, rounding_factor)
+                    value_str = str(value_rounded)
 
-        if value.isdigit():  # Integer
-            return value  # Number has no decimal values
-        else:  # Either string or float
-            if self.is_float(value):  # Float
-                value_float = float(value)
-                value_rounded = round(value_float, rounding_factor)
-                value_str = str(value_rounded)
-
-                return value_str
+                    return value_str
 
         return value  # String, therefore no rounding required
 
-    def apply_decimal_places_to_float_tool(self, value):
+    def apply_decimal_places_to_float_tool(self, value, rounding_factor):
         """Applies the rounding factor the provided value. This method retrieves the rounding factor
         set for the processing tool in the options dialog.
 
         :param value: The string value to be checked
         :type value: String or numeric
 
+        :param rounding_factor: The factor used for when the value is rounded
+        :type rounding_factor: Integer
+
         :returns: Value rounded using the rounding factor if float; otherwise the origin value is returned
         :rtype: String
         """
 
-        settings = QgsSettings()
-        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int)
+        if value is not None:
+            if value.isdigit():  # Integer
+                return value  # Number has no decimal values
+            else:  # Either string or float
+                if self.is_float(value):  # Float
+                    value_float = float(value)
+                    value_rounded = round(value_float, rounding_factor)
+                    value_str = str(value_rounded)
 
-        if value.isdigit():  # Integer
-            return value  # Number has no decimal values
-        else:  # Either string or float
-            if self.is_float(value):  # Float
-                value_float = float(value)
-                value_rounded = round(value_float, rounding_factor)
-                value_str = str(value_rounded)
-
-                return value_str
+                    return value_str
 
         return value  # String, therefore no rounding required
 
@@ -365,7 +367,17 @@ class GeoContextQGISPlugin:
             error_found, error_msg = dialog.check_parameters_for_errors()
 
             if not error_found:  # No errors found with the parameters, points will be processed
-                self.process_points_layer(dialog)
+                input_points = dialog.get_input_layer()  # QgsVectorLayer. Input point layer from canvas
+                selected_features = dialog.get_selected_option()  # Selected feature will only be taken into account if True
+                registry = dialog.get_registry()  # Service, group or collection
+                key = dialog.get_key()  # The data which will be requested
+                dict_key = dialog.find_name_info(key, registry)  # Retrieved the key ID using the key name
+                key = dict_key['key']
+                field_name = dialog.get_fieldname().replace(" ", "_")  # Fieldname or suffix. All spaces is replaced with '_'
+                output_file = dialog.get_output_points()  # Output point file. Shapefile (shp) or geopackage (gpkg)
+                load_output_file = dialog.get_layer_load_option()  # Loads the newly created file if True
+
+                self.process_points_layer(input_points, selected_features, registry, key, field_name, output_file, load_output_file)
             else:  # Error found with the parameters. Points will not be processed, and an error message is shown
                 self.iface.messageBar().pushCritical("Parameter error: ", error_msg)
         # The user closed the tool without running the tool
@@ -421,7 +433,7 @@ class GeoContextQGISPlugin:
             return
 
     def transform_point_coordinates(self, point, cur_crs, target_crs):
-        """Transforms point coordinates to the WGS84 coordinate system (EPSG:4326).
+        """Transforms point coordinates to the target coordinate system.
 
         :param point: The point which will be transformed
         :type point: QgsPoint
@@ -444,7 +456,7 @@ class GeoContextQGISPlugin:
         return pt
 
     def transform_xy_coordinates(self, x, y, cur_crs, target_crs):
-        """Transforms the XY coordinates to the WGS84 coordinate system (EPSG:4326).
+        """Transforms the XY coordinates to the target coordinate system.
 
         :param x: The longitude coordinate value
         :type x: Float
@@ -514,7 +526,7 @@ class GeoContextQGISPlugin:
 
             mp_layer.commitChanges()  # Applies the changes to the layer
 
-    def process_points_layer(self, dialog):
+    def process_points_layer(self, input_points, selected_features, registry, key_name, field_name, output_file, load_output_file):
         """
         This method processes a point layer provided by the user.
         The methods takes the point layer provided by the user, and then
@@ -524,20 +536,33 @@ class GeoContextQGISPlugin:
         if enabled by the user, and the layer can also be loaded into QGIS once
         processing is done.
 
-        :param dialog: Contains the GeoContextQGISPlugin_processing object. It is required
-        by this method to retrieve the options selected by the user.
-        """
+        :param input_points: The point layer which will be processed.
+        :type input_points: QgsVectorLayer
 
-        input_points = dialog.get_input_layer()  # QgsVectorLayer. Input point layer from canvas
-        selected_features = dialog.get_selected_option()  # Selected feature will only be taken into account if True
-        registry = dialog.get_registry()  # Service, group or collection
-        # key = dialog.get_key()  # The data which will be requested
-        field_name = dialog.get_fieldname().replace(" ", "_")  # Fieldname or suffix. All spaces is replaced with '_'
-        output_file = dialog.get_output_points()  # Output point file. Shapefile (shp) or geopackage (gpkg)
-        load_output_file = dialog.get_layer_load_option()  # Loads the newly created file if True
+        :param selected_features: Used to check if only selected features should be processed
+        :type selected_features: Boolean
+
+        :param registry: The registry option selected by the user
+        :type registry: String
+
+        :param key_name: Key of the requested data
+        :type key_name: String
+
+        :param field_name: The fieldname or prefix which will be used for the new attribute fields
+        :type field_name: String
+
+        :param output_file: Output file directory and name provided by the user
+        :type output_file: String
+
+        :param load_output_file: Used to check if the newly created layer should be added to the QGIS project
+        :type load_output_file: Boolean
+        """
 
         layer_crs = input_points.sourceCrs()  # Retrieves the coordinate system used by the input points
         target_crs = self.get_request_crs()  # GeoContext request needs to be in WGS84
+
+        settings = QgsSettings()
+        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int)
 
         # Adds .gpkg to the end of the file name if it does not end with .gpkg
         if not output_file.endswith(".gpkg"):
@@ -574,7 +599,7 @@ class GeoContextQGISPlugin:
                 new_field_index = input_feat.fieldNameIndex(field_name)
 
                 feat_geom = input_feat.geometry()
-                if not feat_geom.isNull():  # If a point does not contain geometry, it is skipped
+                if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
                     if feat_geom.isMultipart():
                         feat_geom.convertToSingleType()
                     point = feat_geom.asPoint()
@@ -589,9 +614,9 @@ class GeoContextQGISPlugin:
                         y = point.y()
 
                     # The data is requested from the server
-                    point_data = self.point_request_dialog(x, y, dialog)
+                    point_data = self.point_request_dialog(x, y, registry, key_name)
                     point_value_str = str(point_data['value'])
-                    point_value_str = self.apply_decimal_places_to_float_tool(point_value_str)
+                    point_value_str = self.apply_decimal_places_to_float_tool(point_value_str, rounding_factor)
 
                     input_new.changeAttributeValue(input_feat.id(), new_field_index, point_value_str)
             input_new.commitChanges()
@@ -600,7 +625,7 @@ class GeoContextQGISPlugin:
             # Adds all of the fields to the layer
             for input_feat in input_new.getFeatures():  # Processes each of the features contained by the vector file
                 feat_geom = input_feat.geometry()
-                if not feat_geom.isNull():  # If a point does not contain geometry, it is skipped
+                if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
                     if feat_geom.isMultipart():
                         feat_geom.convertToSingleType()
                     point = feat_geom.asPoint()
@@ -615,7 +640,7 @@ class GeoContextQGISPlugin:
                         y = point.y()
 
                     # The data is requested from the server
-                    point_data = self.point_request_dialog(x, y, dialog)
+                    point_data = self.point_request_dialog(x, y, registry, key_name)
 
                     list_dict_services = point_data["services"]
                     for dict_service in list_dict_services:  # A field is added for each of the group service files
@@ -629,7 +654,7 @@ class GeoContextQGISPlugin:
             # Requests values for all features
             for input_feat in input_new.getFeatures():
                 feat_geom = input_feat.geometry()
-                if not feat_geom.isNull():  # If a point does not contain geometry, it is skipped
+                if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
                     if feat_geom.isMultipart():
                         feat_geom.convertToSingleType()
                     point = feat_geom.asPoint()
@@ -644,14 +669,14 @@ class GeoContextQGISPlugin:
                         y = point.y()
 
                     # The data is requested from the server
-                    point_data = self.point_request_dialog(x, y, dialog)
+                    point_data = self.point_request_dialog(x, y, registry, key_name)
 
                     # group_name = point_data['name']
                     list_dict_services = point_data["services"]  # Service files for a group
                     for dict_service in list_dict_services:
                         key = dict_service['key']
                         point_value_str = dict_service['value']
-                        point_value_str = self.apply_decimal_places_to_float_tool(point_value_str)
+                        point_value_str = self.apply_decimal_places_to_float_tool(point_value_str, rounding_factor)
 
                         coll_field_name = field_name + key
 
@@ -665,7 +690,7 @@ class GeoContextQGISPlugin:
             # Adds all of the fields to the layer
             for input_feat in input_new.getFeatures():  # Processes each of the features contained by the vector file
                 feat_geom = input_feat.geometry()
-                if not feat_geom.isNull():  # If a point does not contain geometry, it is skipped
+                if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
                     if feat_geom.isMultipart():
                         feat_geom.convertToSingleType()
                     point = feat_geom.asPoint()
@@ -680,7 +705,7 @@ class GeoContextQGISPlugin:
                         y = point.y()
 
                     # The data is requested from the server
-                    point_data = self.point_request_dialog(x, y, dialog)
+                    point_data = self.point_request_dialog(x, y, registry, key_name)
 
                     # Each group contains a list of the 'Service' data associated with the group
                     list_dict_groups = point_data["groups"]
@@ -697,7 +722,7 @@ class GeoContextQGISPlugin:
             # Requests values for all features
             for input_feat in input_new.getFeatures():
                 feat_geom = input_feat.geometry()
-                if not feat_geom.isNull():  # If a point does not contain geometry, it is skipped
+                if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
                     if feat_geom.isMultipart():
                         feat_geom.convertToSingleType()
                     point = feat_geom.asPoint()
@@ -712,7 +737,7 @@ class GeoContextQGISPlugin:
                         y = point.y()
 
                     # The data is requested from the server
-                    point_data = self.point_request_dialog(x, y, dialog)
+                    point_data = self.point_request_dialog(x, y, registry, key_name)
 
                     # collection_name = point_data['name']
                     list_dict_groups = point_data["groups"]  # Each group contains a list of the 'Service' data associated with the group
@@ -723,7 +748,7 @@ class GeoContextQGISPlugin:
                         for dict_service in list_dict_services:
                             key = dict_service['key']
                             point_value_str = dict_service['value']
-                            point_value_str = self.apply_decimal_places_to_float_tool(point_value_str)
+                            point_value_str = self.apply_decimal_places_to_float_tool(point_value_str, rounding_factor)
 
                             coll_field_name = field_name + key
 
@@ -783,7 +808,7 @@ class GeoContextQGISPlugin:
 
         return data
 
-    def point_request_dialog(self, x, y, dialog):
+    def point_request_dialog(self, x, y, registry, key):
         """Return the value rettrieved from the ordered dictionary containing the requested data
         from the server. This method is used by the processing dialog of the plugin.
 
@@ -795,8 +820,11 @@ class GeoContextQGISPlugin:
         :param y: Latitude coordinate
         :type y: Numeric
 
-        :param dialog: Stores the dialog which takes the required parameters as input
-        :type dialog: GeoContextQGISPlugin_processing_dialog
+        :param registry: Registry option selected by the user
+        :type registry: String
+
+        :param key: Key of the requested data
+        :type key: Sorted dictionary
 
         :returns: The data retrieved for the request for the provided location
         :rtype: OrderedDict
@@ -805,20 +833,9 @@ class GeoContextQGISPlugin:
         settings = QgsSettings()
 
         api_url = settings.value('geocontext-qgis-plugin/url')  # Base URL. Set in the options dialog
-        registry = dialog.get_registry()  # Gets the registry option selected by the user
-        key_name = dialog.get_key()  # Gets the key name set by the user
-
-        dict_key = dialog.find_name_info(key_name, registry)  # Retrieved the key ID using the key name
-        key = dict_key['key']
 
         # Performs the request from the server based on the above information
         client = Client()
-
-        # canvas_crs = self.get_canvas_crs()  # The coordinate system the QGIS project canvas uses
-        # target_crs = QgsCoordinateReferenceSystem("EPSG:4326")  # GeoContext request needs to be in WGS84
-        # if canvas_crs != target_crs:  # If the canvas coordinate system is not WGS84
-        #     # Transforms the canvas point coordinates to WGS84 prior to requesting the data
-        #     x, y = self.transform_xy_coordinates(x, y, canvas_crs, target_crs)
 
         url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
         data = client.get(url_request)
@@ -868,15 +885,14 @@ class GeoContextQGISPlugin:
             registry = self.dockwidget.cbRegistry.currentText()
             # Service option
             if registry.lower() == 'service':
-                settings = QgsSettings()
-
                 # If set in the options dialog, the table will automatically be cleared
                 auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
                 if auto_clear_table:
                     self.dockwidget.clear_results_table()
 
                 point_value_str = data['value']  # Retrieves the value
-                point_value_str = self.apply_decimal_places_to_float_panel(point_value_str)
+                rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+                point_value_str = self.apply_decimal_places_to_float_panel(point_value_str, rounding_factor)
 
                 self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
                 self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))  # Sets the key in the table
@@ -888,7 +904,8 @@ class GeoContextQGISPlugin:
                 for dict_service in list_dict_services:
                     # key = dict_service['key']
                     point_value_str = dict_service['value']
-                    point_value_str = self.apply_decimal_places_to_float_panel(point_value_str)
+                    rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+                    point_value_str = self.apply_decimal_places_to_float_panel(point_value_str, rounding_factor)
 
                     service_key_name = dict_service['name']
 
@@ -904,7 +921,8 @@ class GeoContextQGISPlugin:
                     for dict_service in list_dict_services:
                         # key = dict_service['key']
                         point_value_str = dict_service['value']
-                        point_value_str = self.apply_decimal_places_to_float_panel(point_value_str)
+                        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+                        point_value_str = self.apply_decimal_places_to_float_panel(point_value_str, rounding_factor)
 
                         service_key_name = dict_service['name']
 
