@@ -13,7 +13,7 @@ import sys
 
 from PyQt5.QtWidgets import QDialog
 from qgis.PyQt import QtWidgets, uic
-from qgis.core import QgsSettings, QgsMapLayer,QgsWkbTypes
+from qgis.core import QgsSettings, QgsMapLayer, QgsWkbTypes, QgsMapLayerProxyModel
 from qgis.PyQt.QtCore import QUrl
 
 from .geocontext_help_dialog import HelpDialog
@@ -43,6 +43,7 @@ class ProcessingDialog(QDialog, FORM_CLASS):
         self.setupUi(self)
 
         self.iface = iface
+        self.cbInputPoints.setFilters(QgsMapLayerProxyModel.PointLayer)  # Only point layers can be provided as input
 
         # Retrieves the schema and request base URLs
         settings = QgsSettings()
