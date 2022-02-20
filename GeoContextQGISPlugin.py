@@ -21,34 +21,35 @@
  *                                                                         *
  ***************************************************************************/
 """
+import os.path
+import sys
+import os
+import time
+
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant, QUrl
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
-from qgis.core import (QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext, QgsMapLayer, QgsCoordinateTransform, QgsPluginLayerRegistry, QgsLayerTree, QgsMapLayer, QgsCoordinateReferenceSystem, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsPointXY, QgsFeature)
+from qgis.core import (QgsProcessingAlgorithm, QgsApplication, QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext, QgsMapLayer, QgsCoordinateTransform, QgsPluginLayerRegistry, QgsLayerTree, QgsMapLayer, QgsCoordinateReferenceSystem, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsPointXY, QgsFeature)
 from qgis.gui import QgsMapToolEmitPoint
 
 # Initialize Qt resources from file resources.py
 from .resources import *
 
-# Import the code for the DockWidget
-from .GeoContextQGISPlugin_dockwidget import GeoContextQGISPluginDockWidget
-import os.path
-import sys
-import time
+# Import the code for the widgets
+from .widgets.GeoContextQGISPlugin_dockwidget import GeoContextQGISPluginDockWidget
+from .widgets.GeoContextQGISPlugin_options_dialog import OptionsDialog
+from .widgets.geocontext_help_dialog import HelpDialog
+from .algorithms.geocontext_point_processing_provider import GeocontextPointProcessingProvider
 
-from .GeoContextQGISPlugin_options_dialog import OptionsDialog
-from .GeoContextQGISPlugin_processing_dialog import ProcessingDialog
-from .geocontext_help_dialog import HelpDialog
-
-# Directory for third party modules
-third_party_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'third_party'))
-if third_party_path not in sys.path:
-    sys.path.append(third_party_path)
+import inspect
+cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+from .bridge_api.api_abstract import ApiClient
 
 # Core API module
 from coreapi.client import Client
 from coreapi import exceptions as coreapi_exceptions
-
 
 class GeoContextQGISPlugin:
     """QGIS Plugin Implementation."""
@@ -63,6 +64,8 @@ class GeoContextQGISPlugin:
         """
         # Save reference to the QGIS interface
         self.iface = iface
+
+        self.provider = None
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
@@ -170,6 +173,11 @@ class GeoContextQGISPlugin:
 
         return action
 
+    def initProcessing(self):
+        """Init Processing provider for QGIS >= 3.8."""
+        self.provider = GeocontextPointProcessingProvider()
+        QgsApplication.processingRegistry().addProvider(self.provider)
+
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
@@ -182,13 +190,13 @@ class GeoContextQGISPlugin:
             add_to_menu=False,
             add_to_toolbar=True)
 
-        self.add_action(
-            icon_path,
-            text=self.tr(u'Processing tool'),
-            callback=self.show_processing,
-            parent=self.iface.mainWindow(),
-            add_to_menu=True,
-            add_to_toolbar=False)
+        # self.add_action(
+        #     icon_path,
+        #     text=self.tr(u'Processing tool'),
+        #     callback=self.show_processing,
+        #     parent=self.iface.mainWindow(),
+        #     add_to_menu=True,
+        #     add_to_toolbar=False)
 
         self.add_action(
             icon_path,
@@ -206,6 +214,8 @@ class GeoContextQGISPlugin:
             add_to_menu=True,
             add_to_toolbar=False)
         self.actions.append(self.help_action)
+
+        self.initProcessing()
 
         # Trigger for when the user clicks in the canvas when the panel is open and the cursor is active
         self.point_tool.canvasClicked.connect(self.canvas_click)
@@ -238,6 +248,8 @@ class GeoContextQGISPlugin:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
+
+        QgsApplication.processingRegistry().removeProvider(self.provider)
 
     def run(self):
         """Run method that loads and starts the plugin"""
@@ -354,35 +366,35 @@ class GeoContextQGISPlugin:
         else:
             pass
 
-    def show_processing(self):
-        """Opens the processing tool. The user can provide the dialog a point layer
-        as input. Each point will be processed.
-        """
-
-        dialog = ProcessingDialog(self.iface)
-        result = dialog.exec_()
-
-        # User selected parameters and pressed the button to run the tool
-        if result:
-            error_found, error_msg = dialog.check_parameters_for_errors()
-
-            if not error_found:  # No errors found with the parameters, points will be processed
-                input_points = dialog.get_input_layer()  # QgsVectorLayer. Input point layer from canvas
-                selected_features = dialog.get_selected_option()  # Selected feature will only be taken into account if True
-                registry = dialog.get_registry()  # Service, group or collection
-                key = dialog.get_key()  # The data which will be requested
-                dict_key = dialog.find_name_info(key, registry)  # Retrieved the key ID using the key name
-                key = dict_key['key']
-                field_name = dialog.get_fieldname().replace(" ", "_")  # Fieldname or suffix. All spaces is replaced with '_'
-                output_file = dialog.get_output_points()  # Output point file. Shapefile (shp) or geopackage (gpkg)
-                load_output_file = dialog.get_layer_load_option()  # Loads the newly created file if True
-
-                self.process_points_layer(input_points, selected_features, registry, key, field_name, output_file, load_output_file)
-            else:  # Error found with the parameters. Points will not be processed, and an error message is shown
-                self.iface.messageBar().pushCritical("Parameter error: ", error_msg)
-        # The user closed the tool without running the tool
-        else:
-            pass
+    # def show_processing(self):
+    #     """Opens the processing tool. The user can provide the dialog a point layer
+    #     as input. Each point will be processed.
+    #     """
+    #
+    #     dialog = ProcessingDialog(self.iface)
+    #     result = dialog.exec_()
+    #
+    #     # User selected parameters and pressed the button to run the tool
+    #     if result:
+    #         error_found, error_msg = dialog.check_parameters_for_errors()
+    #
+    #         if not error_found:  # No errors found with the parameters, points will be processed
+    #             input_points = dialog.get_input_layer()  # QgsVectorLayer. Input point layer from canvas
+    #             selected_features = dialog.get_selected_option()  # Selected feature will only be taken into account if True
+    #             registry = dialog.get_registry()  # Service, group or collection
+    #             key = dialog.get_key()  # The data which will be requested
+    #             dict_key = dialog.find_name_info(key, registry)  # Retrieved the key ID using the key name
+    #             key = dict_key['key']
+    #             field_name = dialog.get_fieldname().replace(" ", "_")  # Fieldname or suffix. All spaces is replaced with '_'
+    #             output_file = dialog.get_output_points()  # Output point file. Shapefile (shp) or geopackage (gpkg)
+    #             load_output_file = dialog.get_layer_load_option()  # Loads the newly created file if True
+    #
+    #             self.process_points_layer(input_points, selected_features, registry, key, field_name, output_file, load_output_file)
+    #         else:  # Error found with the parameters. Points will not be processed, and an error message is shown
+    #             self.iface.messageBar().pushCritical("Parameter error: ", error_msg)
+    #     # The user closed the tool without running the tool
+    #     else:
+    #         pass
 
     def show_help(self):
         """Opens the help dialog. The dialog displays the html documentation.
@@ -526,244 +538,244 @@ class GeoContextQGISPlugin:
 
             mp_layer.commitChanges()  # Applies the changes to the layer
 
-    def process_points_layer(self, input_points, selected_features, registry, key_name, field_name, output_file, load_output_file):
-        """
-        This method processes a point layer provided by the user.
-        The methods takes the point layer provided by the user, and then
-        requests the selected registry/key in the processing dialog.
-        A new file is created which stores the original attributes with the
-        newly requested data. The method will only process the selected features
-        if enabled by the user, and the layer can also be loaded into QGIS once
-        processing is done.
-
-        :param input_points: The point layer which will be processed.
-        :type input_points: QgsVectorLayer
-
-        :param selected_features: Used to check if only selected features should be processed
-        :type selected_features: Boolean
-
-        :param registry: The registry option selected by the user
-        :type registry: String
-
-        :param key_name: Key of the requested data
-        :type key_name: String
-
-        :param field_name: The fieldname or prefix which will be used for the new attribute fields
-        :type field_name: String
-
-        :param output_file: Output file directory and name provided by the user
-        :type output_file: String
-
-        :param load_output_file: Used to check if the newly created layer should be added to the QGIS project
-        :type load_output_file: Boolean
-        """
-
-        layer_crs = input_points.sourceCrs()  # Retrieves the coordinate system used by the input points
-        target_crs = self.get_request_crs()  # GeoContext request needs to be in WGS84
-
-        settings = QgsSettings()
-        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int)
-        api_url = settings.value('geocontext-qgis-plugin/url')  # Base URL. Set in the options dialog
-
-        # Adds .gpkg to the end of the file name if it does not end with .gpkg
-        if not output_file.endswith(".gpkg"):
-            output_file = output_file + ".gpkg"
-        output_file_name = os.path.basename(output_file)
-
-        # Creates the new file
-        if selected_features and input_points.selectedFeatureCount() > 0:  # If the selection option is enabled and there is a selection
-            status_index, msg = QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs, onlySelected=True)
-            if status_index == 2:  # File already exists and cannot be overwritten
-                self.iface.messageBar().pushCritical("File creation error: ", msg)
-                return  # No processing will be done
-        else:  # If the only selection option is disabled or there are no features selected
-            status_index, msg = QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs)
-            if status_index == 2:  # File already exists and cannot be overwritten (locked)
-                self.iface.messageBar().pushCritical("File creation error: ", msg)
-                return  # No processing will be done
-        input_new = QgsVectorLayer(output_file, output_file_name)
-
-        input_type = input_points.wkbType()  # Vector type for input
-        if input_type == 4:  # If a multipoint layer, otherwise skipped
-            self.convert_multipart_to_singlepart(input_new)  # Splits all multipart features into singlepart features
-
-        # The user selected the 'Service' registry option
-        if registry == 'Service':
-            input_new.startEditing()
-            new_field = QgsField(field_name, QVariant.String)
-            input_new.addAttribute(new_field)
-            input_new.updateFields()
-            input_new.commitChanges()
-
-            input_new.startEditing()
-            for input_feat in input_new.getFeatures():  # Processes each of the features contained by the vector file
-                new_field_index = input_feat.fieldNameIndex(field_name)
-
-                feat_geom = input_feat.geometry()
-                if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
-                    if feat_geom.isMultipart():
-                        feat_geom.convertToSingleType()
-                    point = feat_geom.asPoint()
-
-                    if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
-                        # Transforms the canvas point coordinates to WGS84 prior to requesting the data
-                        pt = self.transform_point_coordinates(point, layer_crs, target_crs)
-                        x = pt.x()
-                        y = pt.y()
-                    else:  # No transformation of points required
-                        x = point.x()
-                        y = point.y()
-
-                    # The data is requested from the server
-                    point_data = self.point_request_dialog(x, y, registry, key_name, api_url)
-                    point_value_str = str(point_data['value'])
-                    point_value_str = self.apply_decimal_places_to_float_tool(point_value_str, rounding_factor)
-
-                    input_new.changeAttributeValue(input_feat.id(), new_field_index, point_value_str)
-            input_new.commitChanges()
-        # The user selected the 'Group' registry option
-        elif registry == 'Group':
-            # Adds all of the fields to the layer
-            for input_feat in input_new.getFeatures():  # Processes each of the features contained by the vector file
-                feat_geom = input_feat.geometry()
-                if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
-                    if feat_geom.isMultipart():
-                        feat_geom.convertToSingleType()
-                    point = feat_geom.asPoint()
-
-                    if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
-                        # Transforms the canvas point coordinates to WGS84 prior to requesting the data
-                        pt = self.transform_point_coordinates(point, layer_crs, target_crs)
-                        x = pt.x()
-                        y = pt.y()
-                    else:  # No transformation of points required
-                        x = point.x()
-                        y = point.y()
-
-                    # The data is requested from the server
-                    point_data = self.point_request_dialog(x, y, registry, key_name, api_url)
-
-                    list_dict_services = point_data["services"]
-                    for dict_service in list_dict_services:  # A field is added for each of the group service files
-                        key = dict_service['key']
-                        coll_field_name = field_name + key
-
-                        # Adds a new field to the attribute table
-                        self.create_new_field(input_new, input_feat, coll_field_name)
-                break  # Fields only need to be added once for a layer
-
-            # Requests values for all features
-            for input_feat in input_new.getFeatures():
-                feat_geom = input_feat.geometry()
-                if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
-                    if feat_geom.isMultipart():
-                        feat_geom.convertToSingleType()
-                    point = feat_geom.asPoint()
-
-                    if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
-                        # Transforms the canvas point coordinates to WGS84 prior to requesting the data
-                        pt = self.transform_point_coordinates(point, layer_crs, target_crs)
-                        x = pt.x()
-                        y = pt.y()
-                    else:  # No transformation of points required
-                        x = point.x()
-                        y = point.y()
-
-                    # The data is requested from the server
-                    point_data = self.point_request_dialog(x, y, registry, key_name, api_url)
-
-                    # group_name = point_data['name']
-                    list_dict_services = point_data["services"]  # Service files for a group
-                    for dict_service in list_dict_services:
-                        key = dict_service['key']
-                        point_value_str = dict_service['value']
-                        point_value_str = self.apply_decimal_places_to_float_tool(point_value_str, rounding_factor)
-
-                        coll_field_name = field_name + key
-
-                        input_new.startEditing()
-                        field_index = input_feat.fieldNameIndex(coll_field_name)  # Gets the index of the newly added field
-                        input_new.startEditing()
-                        input_new.changeAttributeValue(input_feat.id(), field_index, point_value_str)
-                        input_new.commitChanges()
-        # The user selected the 'Collection' registry option
-        elif registry == 'Collection':
-            # Adds all of the fields to the layer
-            for input_feat in input_new.getFeatures():  # Processes each of the features contained by the vector file
-                feat_geom = input_feat.geometry()
-                if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
-                    if feat_geom.isMultipart():
-                        feat_geom.convertToSingleType()
-                    point = feat_geom.asPoint()
-
-                    if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
-                        # Transforms the canvas point coordinates to WGS84 prior to requesting the data
-                        pt = self.transform_point_coordinates(point, layer_crs, target_crs)
-                        x = pt.x()
-                        y = pt.y()
-                    else:  # No transformation of points required
-                        x = point.x()
-                        y = point.y()
-
-                    # The data is requested from the server
-                    point_data = self.point_request_dialog(x, y, registry, key_name, api_url)
-
-                    # Each group contains a list of the 'Service' data associated with the group
-                    list_dict_groups = point_data["groups"]
-                    for dict_group in list_dict_groups:
-                        list_dict_services = dict_group["services"]
-                        for dict_service in list_dict_services:  # A field is added for each of the group service files
-                            key = dict_service['key']
-                            coll_field_name = field_name + key
-
-                            # Adds a new field to the attribute table
-                            self.create_new_field(input_new, input_feat, coll_field_name)
-                break  # Fields only need to be added once for a layer
-
-            # Requests values for all features
-            for input_feat in input_new.getFeatures():
-                feat_geom = input_feat.geometry()
-                if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
-                    if feat_geom.isMultipart():
-                        feat_geom.convertToSingleType()
-                    point = feat_geom.asPoint()
-
-                    if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
-                        # Transforms the canvas point coordinates to WGS84 prior to requesting the data
-                        pt = self.transform_point_coordinates(point, layer_crs, target_crs)
-                        x = pt.x()
-                        y = pt.y()
-                    else:  # No transformation of points required
-                        x = point.x()
-                        y = point.y()
-
-                    # The data is requested from the server
-                    point_data = self.point_request_dialog(x, y, registry, key_name, api_url)
-
-                    # collection_name = point_data['name']
-                    list_dict_groups = point_data["groups"]  # Each group contains a list of the 'Service' data associated with the group
-                    for dict_group in list_dict_groups:
-                        # group_name = dict_group['name']
-
-                        list_dict_services = dict_group["services"]  # Service files for a group
-                        for dict_service in list_dict_services:
-                            key = dict_service['key']
-                            point_value_str = dict_service['value']
-                            point_value_str = self.apply_decimal_places_to_float_tool(point_value_str, rounding_factor)
-
-                            coll_field_name = field_name + key
-
-                            input_new.startEditing()
-                            field_index = input_feat.fieldNameIndex(coll_field_name)  # Gets the index of the newly added field
-                            input_new.startEditing()
-                            input_new.changeAttributeValue(input_feat.id(), field_index, point_value_str)
-                            input_new.commitChanges()
-
-        # Loads the newly created file into QGIS
-        if load_output_file:
-            QgsProject.instance().addMapLayer(input_new)
-
-        self.message_bar.pushSuccess("Success: ", "Processing has finished.")
+    # def process_points_layer(self, input_points, selected_features, registry, key_name, field_name, output_file, load_output_file):
+    #     """
+    #     This method processes a point layer provided by the user.
+    #     The methods takes the point layer provided by the user, and then
+    #     requests the selected registry/key in the processing dialog.
+    #     A new file is created which stores the original attributes with the
+    #     newly requested data. The method will only process the selected features
+    #     if enabled by the user, and the layer can also be loaded into QGIS once
+    #     processing is done.
+    #
+    #     :param input_points: The point layer which will be processed.
+    #     :type input_points: QgsVectorLayer
+    #
+    #     :param selected_features: Used to check if only selected features should be processed
+    #     :type selected_features: Boolean
+    #
+    #     :param registry: The registry option selected by the user
+    #     :type registry: String
+    #
+    #     :param key_name: Key of the requested data
+    #     :type key_name: String
+    #
+    #     :param field_name: The fieldname or prefix which will be used for the new attribute fields
+    #     :type field_name: String
+    #
+    #     :param output_file: Output file directory and name provided by the user
+    #     :type output_file: String
+    #
+    #     :param load_output_file: Used to check if the newly created layer should be added to the QGIS project
+    #     :type load_output_file: Boolean
+    #     """
+    #
+    #     layer_crs = input_points.sourceCrs()  # Retrieves the coordinate system used by the input points
+    #     target_crs = self.get_request_crs()  # GeoContext request needs to be in WGS84
+    #
+    #     settings = QgsSettings()
+    #     rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int)
+    #     api_url = settings.value('geocontext-qgis-plugin/url')  # Base URL. Set in the options dialog
+    #
+    #     # Adds .gpkg to the end of the file name if it does not end with .gpkg
+    #     if not output_file.endswith(".gpkg"):
+    #         output_file = output_file + ".gpkg"
+    #     output_file_name = os.path.basename(output_file)
+    #
+    #     # Creates the new file
+    #     if selected_features and input_points.selectedFeatureCount() > 0:  # If the selection option is enabled and there is a selection
+    #         status_index, msg = QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs, onlySelected=True)
+    #         if status_index == 2:  # File already exists and cannot be overwritten
+    #             self.iface.messageBar().pushCritical("File creation error: ", msg)
+    #             return  # No processing will be done
+    #     else:  # If the only selection option is disabled or there are no features selected
+    #         status_index, msg = QgsVectorFileWriter.writeAsVectorFormat(input_points, output_file, 'UTF-8', layer_crs)
+    #         if status_index == 2:  # File already exists and cannot be overwritten (locked)
+    #             self.iface.messageBar().pushCritical("File creation error: ", msg)
+    #             return  # No processing will be done
+    #     input_new = QgsVectorLayer(output_file, output_file_name)
+    #
+    #     input_type = input_points.wkbType()  # Vector type for input
+    #     if input_type == 4:  # If a multipoint layer, otherwise skipped
+    #         self.convert_multipart_to_singlepart(input_new)  # Splits all multipart features into singlepart features
+    #
+    #     # The user selected the 'Service' registry option
+    #     if registry == 'Service':
+    #         input_new.startEditing()
+    #         new_field = QgsField(field_name, QVariant.String)
+    #         input_new.addAttribute(new_field)
+    #         input_new.updateFields()
+    #         input_new.commitChanges()
+    #
+    #         input_new.startEditing()
+    #         for input_feat in input_new.getFeatures():  # Processes each of the features contained by the vector file
+    #             new_field_index = input_feat.fieldNameIndex(field_name)
+    #
+    #             feat_geom = input_feat.geometry()
+    #             if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
+    #                 if feat_geom.isMultipart():
+    #                     feat_geom.convertToSingleType()
+    #                 point = feat_geom.asPoint()
+    #
+    #                 if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
+    #                     # Transforms the canvas point coordinates to WGS84 prior to requesting the data
+    #                     pt = self.transform_point_coordinates(point, layer_crs, target_crs)
+    #                     x = pt.x()
+    #                     y = pt.y()
+    #                 else:  # No transformation of points required
+    #                     x = point.x()
+    #                     y = point.y()
+    #
+    #                 # The data is requested from the server
+    #                 point_data = self.point_request_dialog(x, y, registry, key_name, api_url)
+    #                 point_value_str = str(point_data['value'])
+    #                 point_value_str = self.apply_decimal_places_to_float_tool(point_value_str, rounding_factor)
+    #
+    #                 input_new.changeAttributeValue(input_feat.id(), new_field_index, point_value_str)
+    #         input_new.commitChanges()
+    #     # The user selected the 'Group' registry option
+    #     elif registry == 'Group':
+    #         # Adds all of the fields to the layer
+    #         for input_feat in input_new.getFeatures():  # Processes each of the features contained by the vector file
+    #             feat_geom = input_feat.geometry()
+    #             if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
+    #                 if feat_geom.isMultipart():
+    #                     feat_geom.convertToSingleType()
+    #                 point = feat_geom.asPoint()
+    #
+    #                 if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
+    #                     # Transforms the canvas point coordinates to WGS84 prior to requesting the data
+    #                     pt = self.transform_point_coordinates(point, layer_crs, target_crs)
+    #                     x = pt.x()
+    #                     y = pt.y()
+    #                 else:  # No transformation of points required
+    #                     x = point.x()
+    #                     y = point.y()
+    #
+    #                 # The data is requested from the server
+    #                 point_data = self.point_request_dialog(x, y, registry, key_name, api_url)
+    #
+    #                 list_dict_services = point_data["services"]
+    #                 for dict_service in list_dict_services:  # A field is added for each of the group service files
+    #                     key = dict_service['key']
+    #                     coll_field_name = field_name + key
+    #
+    #                     # Adds a new field to the attribute table
+    #                     self.create_new_field(input_new, input_feat, coll_field_name)
+    #             break  # Fields only need to be added once for a layer
+    #
+    #         # Requests values for all features
+    #         for input_feat in input_new.getFeatures():
+    #             feat_geom = input_feat.geometry()
+    #             if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
+    #                 if feat_geom.isMultipart():
+    #                     feat_geom.convertToSingleType()
+    #                 point = feat_geom.asPoint()
+    #
+    #                 if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
+    #                     # Transforms the canvas point coordinates to WGS84 prior to requesting the data
+    #                     pt = self.transform_point_coordinates(point, layer_crs, target_crs)
+    #                     x = pt.x()
+    #                     y = pt.y()
+    #                 else:  # No transformation of points required
+    #                     x = point.x()
+    #                     y = point.y()
+    #
+    #                 # The data is requested from the server
+    #                 point_data = self.point_request_dialog(x, y, registry, key_name, api_url)
+    #
+    #                 # group_name = point_data['name']
+    #                 list_dict_services = point_data["services"]  # Service files for a group
+    #                 for dict_service in list_dict_services:
+    #                     key = dict_service['key']
+    #                     point_value_str = dict_service['value']
+    #                     point_value_str = self.apply_decimal_places_to_float_tool(point_value_str, rounding_factor)
+    #
+    #                     coll_field_name = field_name + key
+    #
+    #                     input_new.startEditing()
+    #                     field_index = input_feat.fieldNameIndex(coll_field_name)  # Gets the index of the newly added field
+    #                     input_new.startEditing()
+    #                     input_new.changeAttributeValue(input_feat.id(), field_index, point_value_str)
+    #                     input_new.commitChanges()
+    #     # The user selected the 'Collection' registry option
+    #     elif registry == 'Collection':
+    #         # Adds all of the fields to the layer
+    #         for input_feat in input_new.getFeatures():  # Processes each of the features contained by the vector file
+    #             feat_geom = input_feat.geometry()
+    #             if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
+    #                 if feat_geom.isMultipart():
+    #                     feat_geom.convertToSingleType()
+    #                 point = feat_geom.asPoint()
+    #
+    #                 if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
+    #                     # Transforms the canvas point coordinates to WGS84 prior to requesting the data
+    #                     pt = self.transform_point_coordinates(point, layer_crs, target_crs)
+    #                     x = pt.x()
+    #                     y = pt.y()
+    #                 else:  # No transformation of points required
+    #                     x = point.x()
+    #                     y = point.y()
+    #
+    #                 # The data is requested from the server
+    #                 point_data = self.point_request_dialog(x, y, registry, key_name, api_url)
+    #
+    #                 # Each group contains a list of the 'Service' data associated with the group
+    #                 list_dict_groups = point_data["groups"]
+    #                 for dict_group in list_dict_groups:
+    #                     list_dict_services = dict_group["services"]
+    #                     for dict_service in list_dict_services:  # A field is added for each of the group service files
+    #                         key = dict_service['key']
+    #                         coll_field_name = field_name + key
+    #
+    #                         # Adds a new field to the attribute table
+    #                         self.create_new_field(input_new, input_feat, coll_field_name)
+    #             break  # Fields only need to be added once for a layer
+    #
+    #         # Requests values for all features
+    #         for input_feat in input_new.getFeatures():
+    #             feat_geom = input_feat.geometry()
+    #             if not feat_geom.isNull() and not feat_geom.isEmpty():  # If a point does not contain geometry, it is skipped
+    #                 if feat_geom.isMultipart():
+    #                     feat_geom.convertToSingleType()
+    #                 point = feat_geom.asPoint()
+    #
+    #                 if layer_crs != target_crs:  # If the canvas coordinate system is not WGS84
+    #                     # Transforms the canvas point coordinates to WGS84 prior to requesting the data
+    #                     pt = self.transform_point_coordinates(point, layer_crs, target_crs)
+    #                     x = pt.x()
+    #                     y = pt.y()
+    #                 else:  # No transformation of points required
+    #                     x = point.x()
+    #                     y = point.y()
+    #
+    #                 # The data is requested from the server
+    #                 point_data = self.point_request_dialog(x, y, registry, key_name, api_url)
+    #
+    #                 # collection_name = point_data['name']
+    #                 list_dict_groups = point_data["groups"]  # Each group contains a list of the 'Service' data associated with the group
+    #                 for dict_group in list_dict_groups:
+    #                     # group_name = dict_group['name']
+    #
+    #                     list_dict_services = dict_group["services"]  # Service files for a group
+    #                     for dict_service in list_dict_services:
+    #                         key = dict_service['key']
+    #                         point_value_str = dict_service['value']
+    #                         point_value_str = self.apply_decimal_places_to_float_tool(point_value_str, rounding_factor)
+    #
+    #                         coll_field_name = field_name + key
+    #
+    #                         input_new.startEditing()
+    #                         field_index = input_feat.fieldNameIndex(coll_field_name)  # Gets the index of the newly added field
+    #                         input_new.startEditing()
+    #                         input_new.changeAttributeValue(input_feat.id(), field_index, point_value_str)
+    #                         input_new.commitChanges()
+    #
+    #     # Loads the newly created file into QGIS
+    #     if load_output_file:
+    #         QgsProject.instance().addMapLayer(input_new)
+    #
+    #     self.message_bar.pushSuccess("Success: ", "Processing has finished.")
 
     def point_request_panel(self, x, y, registry, key, api_url):
         """Return the value retrieved from the ordered dictionary containing the requested data
@@ -794,13 +806,21 @@ class GeoContextQGISPlugin:
 
         # Attempts to perform a data request from the API server
         try:
+            #access_token = ''
+            #endpoint_url = ''
+            #client = ApiClient(access_token, endpoint_url)
+
+            #data = client.get(url_request)
+
+            #print("TEST: " + str(data))
+
             client = Client()
             data = client.get(url_request)  # Performs the request
-        except coreapi_exceptions.ErrorMessage:
-            error_msg = "Could not request " + url_request + ". Check if the provided endpoint URL is correct. The site may also be down."
-            self.iface.messageBar().pushCritical("Request error: ", error_msg)
-
-            data = None  # Nothing to return
+        # except coreapi_exceptions.ErrorMessage:
+        #     error_msg = "Could not request " + url_request + ". Check if the provided endpoint URL is correct. The site may also be down."
+        #     self.iface.messageBar().pushCritical("Request error: ", error_msg)
+        #
+        #     data = None  # Nothing to return
         except Exception as e:
             error_msg = "Could not request " + url_request + ". Unknown error: " + str(e)
             self.iface.messageBar().pushCritical("Request error: ", error_msg)
