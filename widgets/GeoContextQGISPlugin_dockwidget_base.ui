@@ -309,13 +309,6 @@
        </property>
       </spacer>
      </item>
-     <item>
-      <widget class="QPushButton" name="btnClose">
-       <property name="text">
-        <string>Close</string>
-       </property>
-      </widget>
-     </item>
     </layout>
    </widget>
    <zorder>gbRequest</zorder>
