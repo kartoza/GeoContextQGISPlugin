@@ -74,8 +74,8 @@ class OptionsDialog(QDialog, FORM_CLASS):
         """
 
         # Directory of the docking_panel.html file used for the help option
-        help_file_dir = '%s/resources/help/build/html/options_dialog.html' % os.path.dirname(__file__)
-        help_file = 'file:///%s/resources/help/build/html/options_dialog.html' % os.path.dirname(__file__)
+        help_file_dir = '%s/resources/help/build/html/options_dialog.html' % os.path.dirname(os.path.dirname(__file__))
+        help_file = 'file:///%s/resources/help/build/html/options_dialog.html' % os.path.dirname(os.path.dirname(__file__))
 
         # Checks whether the required html document exist
         if os.path.exists(help_file_dir):

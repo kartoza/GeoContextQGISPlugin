@@ -30,6 +30,10 @@ __copyright__ = '(C) 2022 by Kartoza'
 
 __revision__ = '$Format:%H$'
 
+import sys
+import os
+import inspect
+
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.core import (QgsProcessing,
@@ -38,7 +42,19 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterFileDestination,
                        QgsProcessingParameterString,
-                       QgsProcessingParameterEnum)
+                       QgsProcessingParameterEnum,
+                       QgsVectorLayer)
+
+
+# Adds the plugin core path to the system path
+cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(cur_dir)
+sys.path.insert(0, parentdir)
+
+from utilities.utilities import (process_point,
+                                 convert_multipart_to_singlepart,
+                                 create_vector_file,
+                                 get_request_crs)
 
 
 class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
@@ -54,10 +70,6 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
     All Processing algorithms should extend the QgsProcessingAlgorithm
     class.
     """
-
-    # Constants used to refer to parameters and outputs. They will be
-    # used when calling the algorithm from another algorithm, or when
-    # calling from the QGIS console.
 
     INPUT_POINT_LAYER = "Input point layer"
     REGISTRY = "Registry"
@@ -102,7 +114,8 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.FIELD_NAME,
-                self.tr('Field name/prefix')
+                self.tr('Field name/prefix'),
+                optional=True
             )
         )
 
@@ -123,20 +136,38 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
         registry = self.parameterAsString(parameters, self.REGISTRY, context)
         key = self.parameterAsString(parameters, self.KEY, context)
         field_name = self.parameterAsString(parameters, self.FIELD_NAME, context)
+        output_points = self.parameterAsFileOutput(parameters, self.OUTPUT_POINT_LAYER, context)
 
-        for point in input_points.getFeatures():
+        print(str(input_points))
+
+        layer_crs = get_request_crs()
+        create_vector_file(input_points, output_points, layer_crs)
+        convert_multipart_to_singlepart(input_points)
+
+        output_file_name = os.path.basename(output_points)
+        input_new = QgsVectorLayer(output_points, output_file_name)
+
+        list_points = input_new.getFeatures()
+        total = input_new.featureCount()
+        completed = 0
+        for point in list_points:
             # Stop the algorithm if cancel button has been clicked
             if feedback.isCanceled():
                 feedback.pushInfo("Operation canceled by user.")
                 break
 
-            current = 0
-            total = 0
+            process_point(point, registry, 'srtm_dem', 'height', )
+
             # Update the progress bar
-            feedback.setProgress(int(current * total))
+            completed = completed + 1
+            feedback.setProgress(int(completed * total))
+            feedback.setProgressText("CURRENTLY SOMEWHERE")
+
+        if not feedback.isCanceled():
+            print("CREATE FILE HERE")
 
         # Return the results of the algorithm
-        # return {self.OUTPUT: dest_id}
+        return {self.OUTPUT_POINT_LAYER: output_points}
 
     def name(self):
         """
