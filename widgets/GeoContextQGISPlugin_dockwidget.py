@@ -59,7 +59,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.point_tool = point_tool  # Canvas point tool - cursor used to selected locations
         self.cursor_active = True  # Sets to True because the point tool is now active
 
-        # Retrieves the schema data from the URL stored using the options dialog
+        # Retrieves the schema data from the URL stored using the options
+        # dialog
         settings = QgsSettings()
         schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
 
@@ -67,35 +68,67 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         try:
             client = Client()
             self.document = client.get(schema)  # Retrieve the API schema
-            self.list_context = client.action(document=self.document, keys=["csr", "list"])  # Get the list of context layers
+            self.list_context = client.action(
+                document=self.document, keys=[
+                    "csr", "list"])  # Get the list of context layers
         except exceptions.ConnectionError:  # Could not connect to the provided URL
-            error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
+            error_msg = "Could not connect to " + schema + \
+                ". Check if the provided URL is correct. The site may also be down."
             self.iface.messageBar().pushCritical("Connection error: ", error_msg)
 
             self.list_context = []
         except Exception as e:  # Other possible connection issues
-            error_msg = "Could not connect to " + schema + ". Unknown error: " + str(e)
+            error_msg = "Could not connect to " + \
+                schema + ". Unknown error: " + str(e)
             self.iface.messageBar().pushCritical("Connection error: ", error_msg)
 
             self.list_context = []
 
         # Groups: ONLY TEMP
-        self.list_group = [{'key': 'bioclimatic_variables_group', 'name': 'Bioclimatic layers', 'description': 'N/A'},
-                           {'key': 'monthly_precipitation_group', 'name': 'Monthly Precipitation', 'description': 'N/A'},
-                           {'key': 'monthly_solar_radiation_group', 'name': 'Monthly Solar Radiation', 'description': 'N/A'},
-                           {'key': 'monthly_max_temperature_group', 'name': 'Monthly Maximum Temperature', 'description': 'N/A'}]
+        self.list_group = [{'key': 'bioclimatic_variables_group',
+                            'name': 'Bioclimatic layers',
+                            'description': 'N/A'},
+                           {'key': 'monthly_precipitation_group',
+                            'name': 'Monthly Precipitation',
+                            'description': 'N/A'},
+                           {'key': 'monthly_solar_radiation_group',
+                            'name': 'Monthly Solar Radiation',
+                            'description': 'N/A'},
+                           {'key': 'monthly_max_temperature_group',
+                            'name': 'Monthly Maximum Temperature',
+                            'description': 'N/A'}]
 
         # Collections: ONLY TEMP
-        self.list_collection = [{'key': 'global_climate_collection', 'name': 'Global climate collection', 'description': 'N/A'},
-                                {'key': 'healthy_rivers_collection', 'name': 'Healthy rivers collection', 'description': 'N/A'},
-                                {'key': 'healthy_rivers_spatial_collection', 'name': 'Healthy rivers spatial filters', 'description': 'N/A'},
-                                {'key': 'hydrological_regions', 'name': 'Hydrological regions', 'description': 'N/A'},
-                                {'key': 'ledet_collection', 'name': 'LEDET collection', 'description': 'N/A'},
-                                {'key': 'sa_boundary_collection', 'name': 'South African boundary collection', 'description': 'N/A'},
-                                {'key': 'sa_climate_collection', 'name': 'South African climate collection', 'description': 'N/A'},
-                                {'key': 'sa_land_cover_land_use_collection', 'name': 'South African land use collection', 'description': 'N/A'},
-                                {'key': 'sa_river_ecosystem_collection', 'name': 'South African river collection', 'description': 'N/A'},
-                                {'key': 'sedac_collection', 'name': 'Socioeconomic data and application center collection', 'description': 'N/A'}]
+        self.list_collection = [{'key': 'global_climate_collection',
+                                 'name': 'Global climate collection',
+                                 'description': 'N/A'},
+                                {'key': 'healthy_rivers_collection',
+                                 'name': 'Healthy rivers collection',
+                                 'description': 'N/A'},
+                                {'key': 'healthy_rivers_spatial_collection',
+                                 'name': 'Healthy rivers spatial filters',
+                                 'description': 'N/A'},
+                                {'key': 'hydrological_regions',
+                                 'name': 'Hydrological regions',
+                                 'description': 'N/A'},
+                                {'key': 'ledet_collection',
+                                 'name': 'LEDET collection',
+                                 'description': 'N/A'},
+                                {'key': 'sa_boundary_collection',
+                                 'name': 'South African boundary collection',
+                                 'description': 'N/A'},
+                                {'key': 'sa_climate_collection',
+                                 'name': 'South African climate collection',
+                                 'description': 'N/A'},
+                                {'key': 'sa_land_cover_land_use_collection',
+                                 'name': 'South African land use collection',
+                                 'description': 'N/A'},
+                                {'key': 'sa_river_ecosystem_collection',
+                                 'name': 'South African river collection',
+                                 'description': 'N/A'},
+                                {'key': 'sedac_collection',
+                                 'name': 'Socioeconomic data and application center collection',
+                                 'description': 'N/A'}]
 
         # If the context list is empty, these steps should be skipped
         if len(self.list_context) > 0:
@@ -113,25 +146,40 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             registry = self.cbRegistry.currentText()
             current_name = self.cbKey.currentText()
 
-            # Retrieves the set information and updates the description table with it
+            # Retrieves the set information and updates the description table
+            # with it
             dict_current = self.find_name_info(current_name, registry)
-            self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
-            self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
-            self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
+            self.tblDetails.setItem(
+                0, 0, QtWidgets.QTableWidgetItem(
+                    dict_current['key']))
+            self.tblDetails.setItem(
+                0, 1, QtWidgets.QTableWidgetItem(
+                    dict_current['name']))
+            self.tblDetails.setItem(
+                0, 2, QtWidgets.QTableWidgetItem(
+                    dict_current['description']))
         else:  # Empty geocontext list. This can be a result of the incorrect URL, or the site is down
             error_msg = "The retrieved context list is empty. Check the provided schema configuration URL or whether the site is online."
-            self.iface.messageBar().pushCritical("Empty geocontext list error: ", error_msg)
+            self.iface.messageBar().pushCritical(
+                "Empty geocontext list error: ", error_msg)
 
         # UI triggers
-        self.cbRegistry.currentTextChanged.connect(self.registry_changed)  # Triggered when the registry changes
-        self.cbKey.currentTextChanged.connect(self.key_changed)  # Triggers when the key value changes
+        self.cbRegistry.currentTextChanged.connect(
+            self.registry_changed)  # Triggered when the registry changes
+        self.cbKey.currentTextChanged.connect(
+            self.key_changed)  # Triggers when the key value changes
 
         # Button triggers
-        self.btnClear.clicked.connect(self.clear_results_table)  # Triggers when the Clear button is clicked
-        self.btnFetch.clicked.connect(self.fetch_btn_click)  # Triggers when the Fetch button is pressed
-        self.btnCursor.clicked.connect(self.cursor_btn_click)  # Triggers when the Cursor button is pressed
-        self.btnHelp.clicked.connect(self.help_btn_click)  # Triggers when the Help button is pressed
-        self.btnClose.clicked.connect(self.close_btn_click)  # Triggers when the Close button is pressed
+        # Triggers when the Clear button is clicked
+        self.btnClear.clicked.connect(self.clear_results_table)
+        # Triggers when the Fetch button is pressed
+        self.btnFetch.clicked.connect(self.fetch_btn_click)
+        # Triggers when the Cursor button is pressed
+        self.btnCursor.clicked.connect(self.cursor_btn_click)
+        # Triggers when the Help button is pressed
+        self.btnHelp.clicked.connect(self.help_btn_click)
+        # Triggers when the Close button is pressed
+        self.btnClose.clicked.connect(self.close_btn_click)
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -156,14 +204,21 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         key_name = self.cbKey.currentText()
 
         # If the key name is empty, this step is skipped
-        # This happens when the key list is cleared, which then triggers prior to the updating the list
+        # This happens when the key list is cleared, which then triggers prior
+        # to the updating the list
         if len(key_name) > 0:
             dict_current = self.find_name_info(key_name, registry)
 
             # Updates the table
-            self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
-            self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
-            self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
+            self.tblDetails.setItem(
+                0, 0, QtWidgets.QTableWidgetItem(
+                    dict_current['key']))
+            self.tblDetails.setItem(
+                0, 1, QtWidgets.QTableWidgetItem(
+                    dict_current['name']))
+            self.tblDetails.setItem(
+                0, 2, QtWidgets.QTableWidgetItem(
+                    dict_current['description']))
 
     def fetch_btn_click(self):
         """This method is called when the Fetch button on the panel window is pressed.
@@ -186,17 +241,23 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Request ends
         end = time.time()
-        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+        rounding_factor = settings.value(
+            'geocontext-qgis-plugin/dec_places_panel', 3, type=int)
         request_time_ms = round((end - start) * 1000, rounding_factor)
-        self.lblRequestTime.setText("Request time (ms): " + str(request_time_ms))
+        self.lblRequestTime.setText(
+            "Request time (ms): " +
+            str(request_time_ms))
 
-        registry = self.cbRegistry.currentText()  # Registry: Service, group or collection
+        # Registry: Service, group or collection
+        registry = self.cbRegistry.currentText()
         # The user has Service selected
         if registry.lower() == 'service':
             settings = QgsSettings()
 
-            # If set, the table will automatically be cleared. This can be set in the options dialog
-            auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
+            # If set, the table will automatically be cleared. This can be set
+            # in the options dialog
+            auto_clear_table = settings.value(
+                'geocontext-qgis-plugin/auto_clear_table', False, type=bool)
             if auto_clear_table:
                 self.clear_results_table()
 
@@ -213,23 +274,33 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 point_value = dict_service['value']
                 service_key_name = dict_service['name']
 
-                self.tblResult.insertRow(0)  # Always add at the top of the table
-                self.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                self.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
+                # Always add at the top of the table
+                self.tblResult.insertRow(0)
+                self.tblResult.setItem(0, 0, QTableWidgetItem(
+                    service_key_name))  # Sets the key in the table
+                self.tblResult.setItem(
+                    0, 1, QTableWidgetItem(
+                        str(point_value)))  # Sets the description
         # The user has Collection selected
         elif registry.lower() == "collection":
-            list_dict_groups = data["groups"]  # Each group contains a list of the 'Service' data associated with the group
+            # Each group contains a list of the 'Service' data associated with
+            # the group
+            list_dict_groups = data["groups"]
             for dict_group in list_dict_groups:
                 # group_name = dict_group['name']
-                list_dict_services = dict_group["services"]  # Service files for a group
+                # Service files for a group
+                list_dict_services = dict_group["services"]
                 for dict_service in list_dict_services:
                     # key = dict_service['key']
                     point_value = dict_service['value']
                     service_key_name = dict_service['name']
 
-                    self.tblResult.insertRow(0)  # Always add at the top of the table
-                    self.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                    self.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
+                    # Always add at the top of the table
+                    self.tblResult.insertRow(0)
+                    self.tblResult.setItem(0, 0, QTableWidgetItem(
+                        service_key_name))  # Sets the key in the table
+                    self.tblResult.setItem(0, 1, QTableWidgetItem(
+                        str(point_value)))  # Sets the description
 
     def cursor_btn_click(self):
         """This method is called when the Cursor button on the panel is clicked.
@@ -256,8 +327,10 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """
 
         # Directory of the docking_panel.html file used for the help option
-        help_file_dir = '%s/resources/help/build/html/docking_panel.html' % os.path.dirname(os.path.dirname(__file__))
-        help_file = 'file:///%s/resources/help/build/html/docking_panel.html' % os.path.dirname(os.path.dirname(__file__))
+        help_file_dir = '%s/resources/help/build/html/docking_panel.html' % os.path.dirname(
+            os.path.dirname(__file__))
+        help_file = 'file:///%s/resources/help/build/html/docking_panel.html' % os.path.dirname(
+            os.path.dirname(__file__))
 
         # Checks whether the required html document exist
         if os.path.exists(help_file_dir):
@@ -290,7 +363,10 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # Gets the coordinate system set by the user. Defaults to WGS84
         # NOTE: At the moment only WGS84 is selectable
         settings = QgsSettings()
-        request_crs = settings.value('geocontext-qgis-plugin/request_crs', "WGS84 (EPSG:4326)", type=str)
+        request_crs = settings.value(
+            'geocontext-qgis-plugin/request_crs',
+            "WGS84 (EPSG:4326)",
+            type=str)
 
         if request_crs == "WGS84 (EPSG:4326)":  # WGS84 coordinate system
             return QgsCoordinateReferenceSystem("EPSG:4326")
@@ -343,7 +419,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         settings = QgsSettings()
 
-        api_url = settings.value('geocontext-qgis-plugin/url')  # Base request URL
+        api_url = settings.value(
+            'geocontext-qgis-plugin/url')  # Base request URL
         registry = (self.cbRegistry.currentText())  # Registry type
         key_name = self.cbKey.currentText()  # Key name
 
@@ -354,7 +431,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # Performs the request
         client = Client()
 
-        url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+        url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + \
+            key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
 
         data = client.get(url_request)
         return data
@@ -413,29 +491,36 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if registry_type == "Service":
             settings = QgsSettings()
 
-            # Docs which contains the schema of geocontext. Link can be changed in the options dialog
-            schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
+            # Docs which contains the schema of geocontext. Link can be changed
+            # in the options dialog
+            schema = settings.value(
+                'geocontext-qgis-plugin/schema', '', type=str)
 
             # Checks whether the provided schema configuration URL is available
             try:
                 # Requests the schema
                 client = Client()
                 self.document = client.get(schema)  # Retrieve the API schema
-                self.list_context = client.action(document=self.document, keys=["csr", "list"])  # Get the list of context layers
+                self.list_context = client.action(
+                    document=self.document, keys=[
+                        "csr", "list"])  # Get the list of context layers
             except exceptions.ConnectionError:  # Could not connect to the provided URL
-                error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
+                error_msg = "Could not connect to " + schema + \
+                    ". Check if the provided URL is correct. The site may also be down."
                 self.iface.messageBar().pushCritical("Connection error: ", error_msg)
 
                 self.list_context = []
             except Exception as e:  # Other possible connection issues
-                error_msg = "Could not connect to " + schema + ". Unknown error: " + str(e)
+                error_msg = "Could not connect to " + \
+                    schema + ". Unknown error: " + str(e)
                 self.iface.messageBar().pushCritical("Connection error: ", error_msg)
 
                 self.list_context = []
 
             # Checks if the geocontext list contains data
             if len(self.list_context) > 0:
-                # Adds the names to a list, and then sorts the list alphabetically
+                # Adds the names to a list, and then sorts the list
+                # alphabetically
                 list_key_names = []
                 for context in self.list_context:
                     name = context['name']
