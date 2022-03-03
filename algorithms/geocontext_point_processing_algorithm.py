@@ -83,11 +83,12 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterEnum(
                 self.REGISTRY,
                 self.tr('Registry'),
-                options=[self.tr('Service'), self.tr('Group'), self.tr('Collection')],
+                options=[
+                    self.tr('Service'),
+                    self.tr('Group'),
+                    self.tr('Collection')],
                 defaultValue=0,
-                optional=False
-            )
-        )
+                optional=False))
 
         self.addParameter(
             QgsProcessingParameterEnum(
@@ -119,10 +120,12 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
         Here is where the processing itself takes place.
         """
 
-        input_points = self.parameterAsSource(parameters, self.INPUT_POINT_LAYER, context)
+        input_points = self.parameterAsSource(
+            parameters, self.INPUT_POINT_LAYER, context)
         registry = self.parameterAsString(parameters, self.REGISTRY, context)
         key = self.parameterAsString(parameters, self.KEY, context)
-        field_name = self.parameterAsString(parameters, self.FIELD_NAME, context)
+        field_name = self.parameterAsString(
+            parameters, self.FIELD_NAME, context)
 
         for point in input_points.getFeatures():
             # Stop the algorithm if cancel button has been clicked

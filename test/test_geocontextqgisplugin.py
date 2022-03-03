@@ -14,19 +14,19 @@ import unittest
 from qgis.core import QgsProject, QgsCoordinateTransform, QgsPoint, QgsCoordinateReferenceSystem, QgsVectorLayer
 
 from GeoContextQGISPlugin import (
-   is_float,
-   apply_decimal_places_to_float_panel,
-   apply_decimal_places_tofloat_tool,
-   get_canvas_crs,
-   get_request_crs,
-   transform_point_coordinates,
-   transform_xy_coordinates,
-   convert_multipart_to_singlepart,
-   process_points_layer,
-   point_request_panel,
-   point_request_dialog,
-   canvas_click,
-   create_new_field,
+    is_float,
+    apply_decimal_places_to_float_panel,
+    apply_decimal_places_tofloat_tool,
+    get_canvas_crs,
+    get_request_crs,
+    transform_point_coordinates,
+    transform_xy_coordinates,
+    convert_multipart_to_singlepart,
+    process_points_layer,
+    point_request_panel,
+    point_request_dialog,
+    canvas_click,
+    create_new_field,
 )
 
 #from utilities_for_testing import get_qgis_app
@@ -42,7 +42,10 @@ ENDPOINT_URL = "https://staging.geocontext.kartoza.com/api/v2/"
 SCHEMA_CONFIG = "https://geocontext.kartoza.com/docs"
 
 # Directories used for testing
-TEMP_DIR = os.path.join(os.path.expanduser('~'), 'temp', 'geocontext-qgis-plugin')
+TEMP_DIR = os.path.join(
+    os.path.expanduser('~'),
+    'temp',
+    'geocontext-qgis-plugin')
 __file__ = "C:/Users/Divan/AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/GeoContextQGISPlugin/test/"
 DATA_TEST_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -64,7 +67,11 @@ def duplicate_layer(input_layer, geom_type):
     attr = layer.dataProvider().fields().toList()
     feats = [feat for feat in layer.getFeatures()]
 
-    dup_layer = QgsVectorLayer(geom_type + "?crs=epsg:4326", "duplicated_layer", "memory")
+    dup_layer = QgsVectorLayer(
+        geom_type +
+        "?crs=epsg:4326",
+        "duplicated_layer",
+        "memory")
     dup_layer_data = dup_layer.dataProvider()
     dup_layer_data.addAttributes(attr)
     dup_layer.updateFields()
@@ -86,21 +93,24 @@ class TestGeocontextMethods(unittest.TestCase):
         value_str_float = "1.333252525"
         expected = True
         result = is_float(value_str_float)
-        msg = "Expected %s but got %s for %s" % (str(expected), str(result), value_str_float)
+        msg = "Expected %s but got %s for %s" % (
+            str(expected), str(result), value_str_float)
         self.assertEqual(expected, result, msg)
 
         # Tests an integer type. This should return False
         value_str_int = '5'
         expected = False
         result = is_float(value_str_int)
-        msg = "Expected %s but got %s for %s" % (str(expected), str(result), value_str_int)
+        msg = "Expected %s but got %s for %s" % (
+            str(expected), str(result), value_str_int)
         self.assertEqual(expected, result, msg)
 
         # Tests a text string, this should return False
         value_str_text = "hello world"
         expected = False
         result = is_float(value_str_text)
-        msg = "Expected %s but got %s for %s" % (str(expected), str(result), value_str_text)
+        msg = "Expected %s but got %s for %s" % (
+            str(expected), str(result), value_str_text)
         self.assertEqual(expected, result, msg)
 
     def test_apply_decimal_places_panel(self):
@@ -113,22 +123,28 @@ class TestGeocontextMethods(unittest.TestCase):
         # Test if a float is correctly rounded
         value_float = "5.2349"
         expected = "5.235"
-        result = apply_decimal_places_to_float_panel(value_float, rounding_factor)
-        msg = "Expected %s but got %s for %s" % (str(expected), str(result), value_float)
+        result = apply_decimal_places_to_float_panel(
+            value_float, rounding_factor)
+        msg = "Expected %s but got %s for %s" % (
+            str(expected), str(result), value_float)
         self.assertEqual(expected, result, msg)
 
         # An integer should not change
         value_int = "10"
         expected = "10"
-        result = apply_decimal_places_to_float_panel(value_int, rounding_factor)
-        msg = "Expected %s but got %s for %s" % (str(expected), str(result), value_int)
+        result = apply_decimal_places_to_float_panel(
+            value_int, rounding_factor)
+        msg = "Expected %s but got %s for %s" % (
+            str(expected), str(result), value_int)
         self.assertEqual(expected, result, msg)
 
         # A string should not change
         value_string = "hello world"
         expected = "hello world"
-        result = apply_decimal_places_to_float_panel(value_string, rounding_factor)
-        msg = "Expected %s but got %s for %s" % (str(expected), str(result), value_string)
+        result = apply_decimal_places_to_float_panel(
+            value_string, rounding_factor)
+        msg = "Expected %s but got %s for %s" % (
+            str(expected), str(result), value_string)
         self.assertEqual(expected, result, msg)
 
     def test_apply_decimal_places_tool(self):
@@ -141,22 +157,27 @@ class TestGeocontextMethods(unittest.TestCase):
         # Test if a float is correctly rounded
         value_float = "5.2349"
         expected = "5.235"
-        result = apply_decimal_places_to_float_tool(value_float, rounding_factor)
-        msg = "Expected %s but got %s for %s" % (str(expected), str(result), value_float)
+        result = apply_decimal_places_to_float_tool(
+            value_float, rounding_factor)
+        msg = "Expected %s but got %s for %s" % (
+            str(expected), str(result), value_float)
         self.assertEqual(expected, result, msg)
 
         # An integer should not change
         value_int = "10"
         expected = "10"
         result = apply_decimal_places_to_float_tool(value_int, rounding_factor)
-        msg = "Expected %s but got %s for %s" % (str(expected), str(result), value_int)
+        msg = "Expected %s but got %s for %s" % (
+            str(expected), str(result), value_int)
         self.assertEqual(expected, result, msg)
 
         # A string should not change
         value_string = "hello world"
         expected = "hello world"
-        result = apply_decimal_places_to_float_tool(value_string, rounding_factor)
-        msg = "Expected %s but got %s for %s" % (str(expected), str(result), value_string)
+        result = apply_decimal_places_to_float_tool(
+            value_string, rounding_factor)
+        msg = "Expected %s but got %s for %s" % (
+            str(expected), str(result), value_string)
         self.assertEqual(expected, result, msg)
 
     def test_get_crs(self):
@@ -186,11 +207,13 @@ class TestGeocontextMethods(unittest.TestCase):
         result = transform_point_coordinates(pt, crs_lo19, crs_wgs84)
 
         result_x = result.x()
-        msg = "Expected %s but got %s for %s" % (str(expected_x), str(result_x), " x-coordinate")
+        msg = "Expected %s but got %s for %s" % (
+            str(expected_x), str(result_x), " x-coordinate")
         self.assertEqual(expected_x, result_x, msg)
 
         result_y = result.y()
-        msg = "Expected %s but got %s for %s" % (str(expected_y), str(result_y), " y-coordinate")
+        msg = "Expected %s but got %s for %s" % (
+            str(expected_y), str(result_y), " y-coordinate")
         self.assertEqual(expected_y, result_y, msg)
 
         # Albers equal area conic projection (Africa)
@@ -207,11 +230,13 @@ class TestGeocontextMethods(unittest.TestCase):
         result = transform_point_coordinates(pt, crs_albers, crs_wgs84)
 
         result_x = result.x()
-        msg = "Expected %s but got %s for %s" % (str(expected_x), str(result_x), " x-coordinate")
+        msg = "Expected %s but got %s for %s" % (
+            str(expected_x), str(result_x), " x-coordinate")
         self.assertEqual(expected_x, result_x, msg)
 
         result_y = result.y()
-        msg = "Expected %s but got %s for %s" % (str(expected_y), str(result_y), " y-coordinate")
+        msg = "Expected %s but got %s for %s" % (
+            str(expected_y), str(result_y), " y-coordinate")
         self.assertEqual(expected_y, result_y, msg)
 
     def test_transform_xy_coordinates(self):
@@ -231,12 +256,15 @@ class TestGeocontextMethods(unittest.TestCase):
         crs_wgs84 = QgsCoordinateReferenceSystem("EPSG:4326")  # WGS84
         crs_lo19 = QgsCoordinateReferenceSystem("EPSG:2048")  # Lo19
 
-        result_x, result_y = transform_point_coordinates(coor_x, coor_y, crs_lo19, crs_wgs84)
+        result_x, result_y = transform_point_coordinates(
+            coor_x, coor_y, crs_lo19, crs_wgs84)
 
-        msg = "Expected %s but got %s for %s" % (str(expected_x), str(result_x), " x-coordinate")
+        msg = "Expected %s but got %s for %s" % (
+            str(expected_x), str(result_x), " x-coordinate")
         self.assertEqual(expected_x, result_x, msg)
 
-        msg = "Expected %s but got %s for %s" % (str(expected_y), str(result_y), " y-coordinate")
+        msg = "Expected %s but got %s for %s" % (
+            str(expected_y), str(result_y), " y-coordinate")
         self.assertEqual(expected_y, result_y, msg)
 
         # Albers equal area conic projection (Africa)
@@ -249,12 +277,15 @@ class TestGeocontextMethods(unittest.TestCase):
         crs_wgs84 = QgsCoordinateReferenceSystem("EPSG:4326")  # WGS84
         crs_albers = QgsCoordinateReferenceSystem("ESRI:102022")  # Albers
 
-        result_x, result_y = transform_point_coordinates(coor_x, coor_y, crs_albers, crs_wgs84)
+        result_x, result_y = transform_point_coordinates(
+            coor_x, coor_y, crs_albers, crs_wgs84)
 
-        msg = "Expected %s but got %s for %s" % (str(expected_x), str(result_x), " x-coordinate")
+        msg = "Expected %s but got %s for %s" % (
+            str(expected_x), str(result_x), " x-coordinate")
         self.assertEqual(expected_x, result_x, msg)
 
-        msg = "Expected %s but got %s for %s" % (str(expected_y), str(result_y), " y-coordinate")
+        msg = "Expected %s but got %s for %s" % (
+            str(expected_y), str(result_y), " y-coordinate")
         self.assertEqual(expected_y, result_y, msg)
 
     def test_convert_multipart_to_singlepart(self):
@@ -263,13 +294,18 @@ class TestGeocontextMethods(unittest.TestCase):
         layer has the same number of features as expected after a multipoint layer has been coverted.
         """
 
-        layer_duplicate = duplicate_layer(DATA_TEST_DIR + "/wgs84/points_multipoint_wgs84.gpkg", "Multipoint")
+        layer_duplicate = duplicate_layer(
+            DATA_TEST_DIR +
+            "/wgs84/points_multipoint_wgs84.gpkg",
+            "Multipoint")
 
         convert_multipart_to_singlepart(layer_duplicate)
 
         expected = 20  # Number of features expected after conversion
-        feat_count = layer_duplicate.featureCount()  # Number of feature for converted layer
-        msg = "Expected %s but got %s for %s" % (str(expected), str(feat_count), " for multipart to singlepart conversion")
+        # Number of feature for converted layer
+        feat_count = layer_duplicate.featureCount()
+        msg = "Expected %s but got %s for %s" % (str(expected), str(
+            feat_count), " for multipart to singlepart conversion")
         self.assertEqual(expected, feat_count, msg)
 
     def test_process_points_layer(self):
@@ -288,16 +324,40 @@ class TestGeocontextMethods(unittest.TestCase):
         output_file = TEMP_DIR + "service_test.gpkg"
         load_output_file = False
 
-        process_points_layer(layer_point, selected_features, registry, key_name, field_name, output_file, load_output_file)
+        process_points_layer(
+            layer_point,
+            selected_features,
+            registry,
+            key_name,
+            field_name,
+            output_file,
+            load_output_file)
         result_layer = QgsVectorLayer(output_file, "service_test.gpkg")
 
         feat_count = result_layer.featureCount()
         expected = 16
-        msg = "Expected %s but got %s for %s" % (str(expected), str(feat_count), " for singlepart processing")
+        msg = "Expected %s but got %s for %s" % (
+            str(expected), str(feat_count), " for singlepart processing")
         self.assertEqual(expected, feat_count, msg)
 
         result_field_name = field_name
-        list_expected = [168, 88, 27, 195, 1219, 899, 183, 183, 122, 91, 152, 396, 99, 274, 146, 158]
+        list_expected = [
+            168,
+            88,
+            27,
+            195,
+            1219,
+            899,
+            183,
+            183,
+            122,
+            91,
+            152,
+            396,
+            99,
+            274,
+            146,
+            158]
 
         index_expected = 0
         for feat in result_layer.getFeatures():
@@ -306,7 +366,8 @@ class TestGeocontextMethods(unittest.TestCase):
             result_value = list_attributes(result_field_index)
             expected = list_expected[index_expected]
 
-            msg = "Expected %s but got %s for %s" % (str(expected), str(result_value), " when processing " + layer_dir)
+            msg = "Expected %s but got %s for %s" % (
+                str(expected), str(result_value), " when processing " + layer_dir)
             self.assertEqual(str(expected), str(result_value), msg)
 
             index_expected = index_expected + 1
@@ -318,12 +379,20 @@ class TestGeocontextMethods(unittest.TestCase):
         layer_dir = DATA_TEST_DIR + "/projected/points_multipoint_lo19.gpkg"
         layer_point = duplicate_layer(layer_dir, "Point")
 
-        process_points_layer(layer_point, selected_features, registry, key_name, field_name + "_", output_file, load_output_file)
+        process_points_layer(
+            layer_point,
+            selected_features,
+            registry,
+            key_name,
+            field_name + "_",
+            output_file,
+            load_output_file)
         result_layer = QgsVectorLayer(output_file, "group_test.gpkg")
 
         feat_count = result_layer.featureCount()
         expected = 12
-        msg = "Expected %s but got %s for %s" % (str(expected), str(feat_count), " for multipart processing")
+        msg = "Expected %s but got %s for %s" % (
+            str(expected), str(feat_count), " for multipart processing")
         self.assertEqual(expected, feat_count, msg)
 
         result_field_name = field_name + "_monthly_precipitation_january"
@@ -336,7 +405,8 @@ class TestGeocontextMethods(unittest.TestCase):
             result_value = list_attributes(result_field_index)
             expected = list_expected[index_expected]
 
-            msg = "Expected %s but got %s for %s" % (str(expected), str(result_value), " when processing " + layer_dir)
+            msg = "Expected %s but got %s for %s" % (
+                str(expected), str(result_value), " when processing " + layer_dir)
             self.assertEqual(str(expected), str(result_value), msg)
 
             index_expected = index_expected + 1
@@ -348,16 +418,34 @@ class TestGeocontextMethods(unittest.TestCase):
         layer_dir = DATA_TEST_DIR + "/wgs84/points_wgs84_broken_geom.gpkg"
         layer_point = duplicate_layer(layer_dir, "Point")
 
-        process_points_layer(layer_point, selected_features, registry, key_name, field_name + "_", output_file, load_output_file)
+        process_points_layer(
+            layer_point,
+            selected_features,
+            registry,
+            key_name,
+            field_name + "_",
+            output_file,
+            load_output_file)
         result_layer = QgsVectorLayer(output_file, "collection_test.gpkg")
 
         feat_count = result_layer.featureCount()
         expected = 10
-        msg = "Expected %s but got %s for %s" % (str(expected), str(feat_count), " for singlepart, broken geometry processing")
+        msg = "Expected %s but got %s for %s" % (str(expected), str(
+            feat_count), " for singlepart, broken geometry processing")
         self.assertEqual(expected, feat_count, msg)
 
         result_field_name = field_name + "_yearly_bioclimatic_variables_01"
-        list_expected = [17.129, 17.217, None, 17.688, None, 17.483, 17.746, 17.462, 17.542, 17.996]
+        list_expected = [
+            17.129,
+            17.217,
+            None,
+            17.688,
+            None,
+            17.483,
+            17.746,
+            17.462,
+            17.542,
+            17.996]
 
         index_expected = 0
         for feat in result_layer.getFeatures():
@@ -366,7 +454,8 @@ class TestGeocontextMethods(unittest.TestCase):
             result_value = list_attributes(result_field_index)
             expected = list_expected[index_expected]
 
-            msg = "Expected %s but got %s for %s" % (str(expected), str(result_value), " when processing " + layer_dir)
+            msg = "Expected %s but got %s for %s" % (
+                str(expected), str(result_value), " when processing " + layer_dir)
             self.assertEqual(str(expected), str(result_value), msg)
 
             index_expected = index_expected + 1
@@ -387,7 +476,8 @@ class TestGeocontextMethods(unittest.TestCase):
         result_value = data['value']
         expected = 20.9
 
-        msg = "Expected %s but got %s for %s" % (str(expected), str(result_value), " when performing a panel request")
+        msg = "Expected %s but got %s for %s" % (str(expected), str(
+            result_value), " when performing a panel request")
         self.assertEqual(str(expected), str(result_value), msg)
 
         # Group
@@ -405,7 +495,8 @@ class TestGeocontextMethods(unittest.TestCase):
             result_value = dict_service['value']
             expected = list_expected[index_expected]
 
-            msg = "Expected %s but got %s for %s" % (str(expected), str(result_value), " when performing a panel request")
+            msg = "Expected %s but got %s for %s" % (str(expected), str(
+                result_value), " when performing a panel request")
             self.assertEqual(str(expected), str(result_value), msg)
 
             index_expected = index_expected + 1
@@ -417,19 +508,24 @@ class TestGeocontextMethods(unittest.TestCase):
         key = "sa_land_cover_land_use_collection"
 
         data = point_request_panel(x, y, registry, key, ENDPOINT_URL)
-        list_dict_groups = data["groups"]  # Each group contains a list of the 'Service' data associated with the group
-        list_expected = [81.9, 213, 277, "Protected Area", 5, 4, "FRs 9  Swartland Shale Renosterveld"]
+        # Each group contains a list of the 'Service' data associated with the
+        # group
+        list_dict_groups = data["groups"]
+        list_expected = [81.9, 213, 277, "Protected Area",
+                         5, 4, "FRs 9  Swartland Shale Renosterveld"]
 
         index_expected = 0
         for dict_group in list_dict_groups:
-            list_dict_services = dict_group["services"]  # Service files for a group
+            # Service files for a group
+            list_dict_services = dict_group["services"]
             for dict_service in list_dict_services:
                 result_value = dict_service['value']
                 expected = list_expected[index_expected]
 
                 index_expected = index_expected + 1
 
-                msg = "Expected %s but got %s for %s" % (str(expected), str(result_value), " when performing a panel request")
+                msg = "Expected %s but got %s for %s" % (str(expected), str(
+                    result_value), " when performing a panel request")
                 self.assertEqual(str(expected), str(result_value), msg)
 
     def test_point_request_dialog(self):
@@ -448,7 +544,8 @@ class TestGeocontextMethods(unittest.TestCase):
         result_value = data['value']
         expected = 20.9
 
-        msg = "Expected %s but got %s for %s" % (str(expected), str(result_value), " when performing a panel request")
+        msg = "Expected %s but got %s for %s" % (str(expected), str(
+            result_value), " when performing a panel request")
         self.assertEqual(str(expected), str(result_value), msg)
 
         # Group
@@ -466,7 +563,8 @@ class TestGeocontextMethods(unittest.TestCase):
             result_value = dict_service['value']
             expected = list_expected[index_expected]
 
-            msg = "Expected %s but got %s for %s" % (str(expected), str(result_value), " when performing a panel request")
+            msg = "Expected %s but got %s for %s" % (str(expected), str(
+                result_value), " when performing a panel request")
             self.assertEqual(str(expected), str(result_value), msg)
 
             index_expected = index_expected + 1
@@ -478,19 +576,24 @@ class TestGeocontextMethods(unittest.TestCase):
         key = "sa_land_cover_land_use_collection"
 
         data = point_request_dialog(x, y, registry, key, ENDPOINT_URL)
-        list_dict_groups = data["groups"]  # Each group contains a list of the 'Service' data associated with the group
-        list_expected = [81.9, 213, 277, "Protected Area", 5, 4, "FRs 9  Swartland Shale Renosterveld"]
+        # Each group contains a list of the 'Service' data associated with the
+        # group
+        list_dict_groups = data["groups"]
+        list_expected = [81.9, 213, 277, "Protected Area",
+                         5, 4, "FRs 9  Swartland Shale Renosterveld"]
 
         index_expected = 0
         for dict_group in list_dict_groups:
-            list_dict_services = dict_group["services"]  # Service files for a group
+            # Service files for a group
+            list_dict_services = dict_group["services"]
             for dict_service in list_dict_services:
                 result_value = dict_service['value']
                 expected = list_expected[index_expected]
 
                 index_expected = index_expected + 1
 
-                msg = "Expected %s but got %s for %s" % (str(expected), str(result_value), " when performing a panel request")
+                msg = "Expected %s but got %s for %s" % (str(expected), str(
+                    result_value), " when performing a panel request")
                 self.assertEqual(str(expected), str(result_value), msg)
 
     def test_canvas_click(self):
@@ -505,7 +608,8 @@ class TestGeocontextMethods(unittest.TestCase):
         layer_dir = DATA_TEST_DIR + "/wgs84/points_multipoint_wgs84.gpkg"
         layer_duplicate = duplicate_layer(layer_dir, "Point")
         for feat in layer_duplicate.getFeatures():
-            index_new_field = create_new_field(layer_duplicate, feat, "testing_field")
+            index_new_field = create_new_field(
+                layer_duplicate, feat, "testing_field")
 
             result = feat.fieldNameIndex(index_new_field)
             msg = "Expected True but got False when testing the create_new_field method."

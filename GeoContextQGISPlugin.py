@@ -21,6 +21,9 @@
  *                                                                         *
  ***************************************************************************/
 """
+from coreapi import exceptions as coreapi_exceptions
+from coreapi.client import Client
+from .bridge_api.api_abstract import ApiClient
 import os.path
 import sys
 import os
@@ -29,7 +32,26 @@ import time
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant, QUrl
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
-from qgis.core import (QgsProcessingAlgorithm, QgsApplication, QgsProject, QgsSettings, QgsVectorLayer, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext, QgsMapLayer, QgsCoordinateTransform, QgsPluginLayerRegistry, QgsLayerTree, QgsMapLayer, QgsCoordinateReferenceSystem, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsPointXY, QgsFeature)
+from qgis.core import (
+    QgsProcessingAlgorithm,
+    QgsApplication,
+    QgsProject,
+    QgsSettings,
+    QgsVectorLayer,
+    QgsField,
+    QgsVectorFileWriter,
+    QgsCoordinateTransformContext,
+    QgsMapLayer,
+    QgsCoordinateTransform,
+    QgsPluginLayerRegistry,
+    QgsLayerTree,
+    QgsMapLayer,
+    QgsCoordinateReferenceSystem,
+    Qgis,
+    QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform,
+    QgsPointXY,
+    QgsFeature)
 from qgis.gui import QgsMapToolEmitPoint
 
 # Initialize Qt resources from file resources.py
@@ -45,11 +67,9 @@ import inspect
 cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
-from .bridge_api.api_abstract import ApiClient
 
 # Core API module
-from coreapi.client import Client
-from coreapi import exceptions as coreapi_exceptions
+
 
 class GeoContextQGISPlugin:
     """QGIS Plugin Implementation."""
@@ -95,7 +115,8 @@ class GeoContextQGISPlugin:
         self.message_bar = self.iface.messageBar()
 
         self.canvas = self.iface.mapCanvas()
-        self.point_tool = QgsMapToolEmitPoint(self.canvas)  # Enables the cursor tool for selecting locations
+        # Enables the cursor tool for selecting locations
+        self.point_tool = QgsMapToolEmitPoint(self.canvas)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -112,7 +133,17 @@ class GeoContextQGISPlugin:
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('GeoContextQGISPlugin', message)
 
-    def add_action(self, icon_path, text, callback, enabled_flag=True, add_to_menu=True, add_to_toolbar=True, status_tip=None, whats_this=None, parent=None):
+    def add_action(
+            self,
+            icon_path,
+            text,
+            callback,
+            enabled_flag=True,
+            add_to_menu=True,
+            add_to_toolbar=True,
+            status_tip=None,
+            whats_this=None,
+            parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -217,13 +248,14 @@ class GeoContextQGISPlugin:
 
         self.initProcessing()
 
-        # Trigger for when the user clicks in the canvas when the panel is open and the cursor is active
+        # Trigger for when the user clicks in the canvas when the panel is open
+        # and the cursor is active
         self.point_tool.canvasClicked.connect(self.canvas_click)
 
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed"""
 
-        #print "** CLOSING GeoContextQGISPlugin"
+        # print "** CLOSING GeoContextQGISPlugin"
 
         # disconnects
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
@@ -257,14 +289,15 @@ class GeoContextQGISPlugin:
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
-            #print "** STARTING GeoContextQGISPlugin"
+            # print "** STARTING GeoContextQGISPlugin"
 
             # dockwidget may not exist if:
             #    first run of plugin
             #    removed on close (see self.onClosePlugin method)
-            if self.dockwidget == None:
+            if self.dockwidget is None:
                 # Create the dockwidget (after translation) and keep reference
-                self.dockwidget = GeoContextQGISPluginDockWidget(self.canvas, self.point_tool, self.iface)
+                self.dockwidget = GeoContextQGISPluginDockWidget(
+                    self.canvas, self.point_tool, self.iface)
 
             # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
@@ -402,8 +435,10 @@ class GeoContextQGISPlugin:
         """
 
         # Directory of the index.html file used for the help option
-        help_file_dir = '%s/resources/help/build/html/index.html' % os.path.dirname(__file__)
-        help_file = 'file:///%s/resources/help/build/html/index.html' % os.path.dirname(__file__)
+        help_file_dir = '%s/resources/help/build/html/index.html' % os.path.dirname(
+            __file__)
+        help_file = 'file:///%s/resources/help/build/html/index.html' % os.path.dirname(
+            __file__)
 
         # Checks whether the required html document exist
         if os.path.exists(help_file_dir):
@@ -437,7 +472,10 @@ class GeoContextQGISPlugin:
         # Gets the coordinate system set by the user. Defaults to WGS84
         # NOTE: At the moment only WGS84 is selectable
         settings = QgsSettings()
-        request_crs = settings.value('geocontext-qgis-plugin/request_crs', "WGS84 (EPSG:4326)", type=str)
+        request_crs = settings.value(
+            'geocontext-qgis-plugin/request_crs',
+            "WGS84 (EPSG:4326)",
+            type=str)
 
         if request_crs == "WGS84 (EPSG:4326)":  # WGS84 coordinate system
             return QgsCoordinateReferenceSystem("EPSG:4326")
@@ -463,7 +501,10 @@ class GeoContextQGISPlugin:
         transform_context = QgsProject.instance().transformContext()
         xform = QgsCoordinateTransform(cur_crs, target_crs, transform_context)
 
-        pt = xform.transform(QgsPointXY(point.x(), point.y()))  # Transformed point
+        pt = xform.transform(
+            QgsPointXY(
+                point.x(),
+                point.y()))  # Transformed point
 
         return pt
 
@@ -508,7 +549,9 @@ class GeoContextQGISPlugin:
         """
 
         feature_count = mp_layer.featureCount()  # Total number of feature of the layer
-        features_to_remove = []  # Multipart features which will be removed when split into multiple features
+        # Multipart features which will be removed when split into multiple
+        # features
+        features_to_remove = []
 
         # Skips this step if the layer is empty
         if feature_count > 0:
@@ -518,14 +561,18 @@ class GeoContextQGISPlugin:
                 if geom.isMultipart():  # Checked if the geometry is multipart
                     new_features = []
                     temp_feature = QgsFeature(mp_feat)  # Clone of the feature
-                    features_to_remove.append(mp_feat.id())  # Feature will be removed
+                    features_to_remove.append(
+                        mp_feat.id())  # Feature will be removed
 
-                    for mp_part in geom.asGeometryCollection():  # Adds each part as a separate feature
+                    for mp_part in geom.asGeometryCollection(
+                    ):  # Adds each part as a separate feature
                         temp_feature.setGeometry(mp_part)
                         new_features.append(QgsFeature(temp_feature))
-                    mp_layer.addFeatures(new_features)  # Adds the new features to the layer
+                    # Adds the new features to the layer
+                    mp_layer.addFeatures(new_features)
 
-            # Removes all of the multipart features which has been split into separate features
+            # Removes all of the multipart features which has been split into
+            # separate features
             for feat_to_remove_id in features_to_remove:
                 mp_layer.deleteFeature(feat_to_remove_id)
 
@@ -802,7 +849,8 @@ class GeoContextQGISPlugin:
         :rtype: OrderedDict
         """
 
-        url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+        url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + \
+            key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
 
         # Attempts to perform a data request from the API server
         try:
@@ -822,7 +870,8 @@ class GeoContextQGISPlugin:
         #
         #     data = None  # Nothing to return
         except Exception as e:
-            error_msg = "Could not request " + url_request + ". Unknown error: " + str(e)
+            error_msg = "Could not request " + \
+                url_request + ". Unknown error: " + str(e)
             self.iface.messageBar().pushCritical("Request error: ", error_msg)
             print(str(e))
 
@@ -858,7 +907,8 @@ class GeoContextQGISPlugin:
         # Performs the request from the server based on the above information
         client = Client()
 
-        url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+        url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + \
+            key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
         data = client.get(url_request)
 
         return data
@@ -873,16 +923,19 @@ class GeoContextQGISPlugin:
         """
 
         settings = QgsSettings()
-        api_url = settings.value('geocontext-qgis-plugin/url')  # Base URL. This will/should be set in  the options dialog
+        # Base URL. This will/should be set in  the options dialog
+        api_url = settings.value('geocontext-qgis-plugin/url')
 
         # The coordinates from the QGIS canvas point tool
         x = point_tool[0]  # Longitude
         y = point_tool[1]  # Latitude
 
-        canvas_crs = self.get_canvas_crs()  # The coordinate system the QGIS project canvas uses
+        # The coordinate system the QGIS project canvas uses
+        canvas_crs = self.get_canvas_crs()
         target_crs = self.get_request_crs()  # GeoContext request needs to be in WGS84
         if canvas_crs != target_crs:  # If the canvas coordinate system is not WGS84
-            # Transforms the canvas point coordinates to WGS84 prior to requesting the data
+            # Transforms the canvas point coordinates to WGS84 prior to
+            # requesting the data
             x, y = self.transform_xy_coordinates(x, y, canvas_crs, target_crs)
 
         # Sets the panel values to the above
@@ -897,66 +950,93 @@ class GeoContextQGISPlugin:
         registry = self.dockwidget.cbRegistry.currentText()  # Service, group or collection
 
         key_name = self.dockwidget.cbKey.currentText()  # Key name, e.g. Elevation
-        dict_key = self.dockwidget.find_name_info(key_name,registry)  # Retrieves the request key using the selected key name
+        # Retrieves the request key using the selected key name
+        dict_key = self.dockwidget.find_name_info(key_name, registry)
         key = dict_key['key']
 
         data = self.point_request_panel(x, y, registry, key, api_url)
 
-        # Checks whether the request has been successful. None indicates unsuccessful
+        # Checks whether the request has been successful. None indicates
+        # unsuccessful
         if data is not None:
             # Request ends
             end = time.time()
-            rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
-            request_time_ms = round((end - start)*1000, rounding_factor)
-            self.dockwidget.lblRequestTime.setText("Request time (ms): " + str(request_time_ms))
+            rounding_factor = settings.value(
+                'geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+            request_time_ms = round((end - start) * 1000, rounding_factor)
+            self.dockwidget.lblRequestTime.setText(
+                "Request time (ms): " + str(request_time_ms))
 
             registry = self.dockwidget.cbRegistry.currentText()
             # Service option
             if registry.lower() == 'service':
-                # If set in the options dialog, the table will automatically be cleared
-                auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
+                # If set in the options dialog, the table will automatically be
+                # cleared
+                auto_clear_table = settings.value(
+                    'geocontext-qgis-plugin/auto_clear_table', False, type=bool)
                 if auto_clear_table:
                     self.dockwidget.clear_results_table()
 
                 point_value_str = data['value']  # Retrieves the value
-                rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
-                point_value_str = self.apply_decimal_places_to_float_panel(point_value_str, rounding_factor)
+                rounding_factor = settings.value(
+                    'geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+                point_value_str = self.apply_decimal_places_to_float_panel(
+                    point_value_str, rounding_factor)
 
-                self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
-                self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))  # Sets the key in the table
-                self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
+                # Always add at the top of the table
+                self.dockwidget.tblResult.insertRow(0)
+                self.dockwidget.tblResult.setItem(
+                    0, 0, QTableWidgetItem(current_key_name))  # Sets the key in the table
+                self.dockwidget.tblResult.setItem(
+                    0, 1, QTableWidgetItem(
+                        str(point_value_str)))  # Sets the description
             # Group option
             elif registry.lower() == "group":
                 # group_name = data['name']
-                list_dict_services = data["services"]  # Service files for a group
+                # Service files for a group
+                list_dict_services = data["services"]
                 for dict_service in list_dict_services:
                     # key = dict_service['key']
                     point_value_str = dict_service['value']
-                    rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
-                    point_value_str = self.apply_decimal_places_to_float_panel(point_value_str, rounding_factor)
+                    rounding_factor = settings.value(
+                        'geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+                    point_value_str = self.apply_decimal_places_to_float_panel(
+                        point_value_str, rounding_factor)
 
                     service_key_name = dict_service['name']
 
-                    self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
-                    self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                    self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
+                    # Always add at the top of the table
+                    self.dockwidget.tblResult.insertRow(0)
+                    self.dockwidget.tblResult.setItem(
+                        0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
+                    self.dockwidget.tblResult.setItem(
+                        0, 1, QTableWidgetItem(
+                            str(point_value_str)))  # Sets the description
             # Collection option
             elif registry.lower() == "collection":
-                list_dict_groups = data["groups"]  # Each group contains a list of the 'Service' data associated with the group
+                # Each group contains a list of the 'Service' data associated
+                # with the group
+                list_dict_groups = data["groups"]
                 for dict_group in list_dict_groups:
                     # group_name = dict_group['name']
-                    list_dict_services = dict_group["services"]  # Service files for a group
+                    # Service files for a group
+                    list_dict_services = dict_group["services"]
                     for dict_service in list_dict_services:
                         # key = dict_service['key']
                         point_value_str = dict_service['value']
-                        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
-                        point_value_str = self.apply_decimal_places_to_float_panel(point_value_str, rounding_factor)
+                        rounding_factor = settings.value(
+                            'geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+                        point_value_str = self.apply_decimal_places_to_float_panel(
+                            point_value_str, rounding_factor)
 
                         service_key_name = dict_service['name']
 
-                        self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
-                        self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                        self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
+                        # Always add at the top of the table
+                        self.dockwidget.tblResult.insertRow(0)
+                        self.dockwidget.tblResult.setItem(
+                            0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
+                        self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(
+                            str(point_value_str)))  # Sets the description
         else:  # Request were unsuccessful
             error_msg = "Could not perform data request. Check if the endpoint URL is correct."
             self.iface.messageBar().pushCritical("Request error: ", error_msg)
