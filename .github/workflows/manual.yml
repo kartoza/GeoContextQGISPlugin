@@ -1,5 +1,18 @@
 name: Format python code
-on: push
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - main
+
 jobs:
   autopep8:
     runs-on: ubuntu-latest
