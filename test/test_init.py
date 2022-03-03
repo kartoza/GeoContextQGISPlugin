@@ -1,6 +1,10 @@
 # coding=utf-8
 """Tests QGIS plugin init."""
 
+import configparser
+import logging
+import unittest
+import os
 from future import standard_library
 standard_library.install_aliases()
 __author__ = 'Tim Sutton <tim@kartoza.com>'
@@ -10,10 +14,6 @@ __license__ = "GPL"
 __copyright__ = 'Copyright 2012, Australia Indonesia Facility for '
 __copyright__ += 'Disaster Reduction'
 
-import os
-import unittest
-import logging
-import configparser
 
 LOGGER = logging.getLogger('QGIS')
 
@@ -61,6 +61,7 @@ class TestInit(unittest.TestCase):
                 expectation, file_path))
 
             self.assertIn(expectation, dict(metadata), message)
+
 
 if __name__ == '__main__':
     unittest.main()
