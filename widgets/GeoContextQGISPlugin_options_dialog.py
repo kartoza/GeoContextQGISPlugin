@@ -39,31 +39,60 @@ class OptionsDialog(QDialog, FORM_CLASS):
 
         self.iface = iface
 
-        # Sets the options according what the user has it previously set/saved using the options dialog
+        # Sets the options according what the user has it previously set/saved
+        # using the options dialog
         settings = QgsSettings()
 
         # API configuration
-        self.lineUrl.setValue(settings.value('geocontext-qgis-plugin/url', '', type=str))
-        self.lineSchema.setValue(settings.value('geocontext-qgis-plugin/schema', '', type=str))
+        self.lineUrl.setValue(
+            settings.value(
+                'geocontext-qgis-plugin/url',
+                '',
+                type=str))
+        self.lineSchema.setValue(
+            settings.value(
+                'geocontext-qgis-plugin/schema',
+                '',
+                type=str))
 
         # Global settings
-        self.cbCrs.setCurrentIndex(self.cbCrs.findText(settings.value('geocontext-qgis-plugin/request_crs', "WGS84 (EPSG:4326)", type=str)))
+        self.cbCrs.setCurrentIndex(
+            self.cbCrs.findText(
+                settings.value(
+                    'geocontext-qgis-plugin/request_crs',
+                    "WGS84 (EPSG:4326)",
+                    type=str)))
 
         # Panel settings
-        self.checkAutoClear.setChecked(settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool))
-        self.sldDecPlacesPanel.setValue(settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int))
+        self.checkAutoClear.setChecked(
+            settings.value(
+                'geocontext-qgis-plugin/auto_clear_table',
+                False,
+                type=bool))
+        self.sldDecPlacesPanel.setValue(
+            settings.value(
+                'geocontext-qgis-plugin/dec_places_panel',
+                3,
+                type=int))
         self.lblDecPlacePanel.setText(str(self.sldDecPlacesPanel.value()))
 
         # Processing tool settings
-        self.sldDecPlacesTool.setValue(settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int))
+        self.sldDecPlacesTool.setValue(
+            settings.value(
+                'geocontext-qgis-plugin/dec_places_tool',
+                3,
+                type=int))
         self.lblDecPlaceTool.setText(str(self.sldDecPlacesTool.value()))
 
         # Updates the value when the user changes the decimal places
-        self.sldDecPlacesPanel.valueChanged.connect(self.dec_places_value_changed_panel)
-        self.sldDecPlacesTool.valueChanged.connect(self.dec_places_value_changed_tool)
+        self.sldDecPlacesPanel.valueChanged.connect(
+            self.dec_places_value_changed_panel)
+        self.sldDecPlacesTool.valueChanged.connect(
+            self.dec_places_value_changed_tool)
 
         # Button clicks
-        self.btnHelp.clicked.connect(self.help_btn_click)  # Triggers when the Help button is pressed
+        # Triggers when the Help button is pressed
+        self.btnHelp.clicked.connect(self.help_btn_click)
 
     def help_btn_click(self):
         self.show_help()
@@ -74,8 +103,10 @@ class OptionsDialog(QDialog, FORM_CLASS):
         """
 
         # Directory of the docking_panel.html file used for the help option
-        help_file_dir = '%s/resources/help/build/html/options_dialog.html' % os.path.dirname(__file__)
-        help_file = 'file:///%s/resources/help/build/html/options_dialog.html' % os.path.dirname(__file__)
+        help_file_dir = '%s/resources/help/build/html/options_dialog.html' % os.path.dirname(
+            __file__)
+        help_file = 'file:///%s/resources/help/build/html/options_dialog.html' % os.path.dirname(
+            __file__)
 
         # Checks whether the required html document exist
         if os.path.exists(help_file_dir):
@@ -127,7 +158,9 @@ class OptionsDialog(QDialog, FORM_CLASS):
         settings = QgsSettings()
         auto_clear = self.checkAutoClear.checkState()
 
-        settings.setValue('geocontext-qgis-plugin/auto_clear_table', auto_clear)
+        settings.setValue(
+            'geocontext-qgis-plugin/auto_clear_table',
+            auto_clear)
 
     def set_dec_places_panel(self):
         """Sets the decimal places for the panel value requests. This can be set using
