@@ -60,7 +60,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.cursor_active = True  # Sets to True because the point tool is now active
 
         # Retrieves the schema data from the URL stored using the options dialog
-        settings =                                                                                                   QgsSettings()
+        settings = QgsSettings()
         schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
 
         # Attempts to request the schema configuration from the API
