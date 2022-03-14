@@ -30,7 +30,12 @@ __copyright__ = '(C) 2022 by Kartoza'
 
 __revision__ = '$Format:%H$'
 
-from qgis.PyQt.QtCore import QCoreApplication
+import sys
+import os
+import inspect
+import time
+
+from qgis.PyQt.QtCore import QCoreApplication, QVariant
 from qgis.PyQt.QtGui import QIcon
 from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
@@ -38,7 +43,33 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterFileDestination,
                        QgsProcessingParameterString,
-                       QgsProcessingParameterEnum)
+                       QgsProcessingParameterEnum,
+                       QgsVectorLayer,
+                       QgsField,
+                       QgsSettings)
+
+# Adds the plugin core path to the system path
+cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(cur_dir)
+sys.path.insert(0, parentdir)
+
+from bridge_api.default import SERVICE, GROUP, COLLECTION
+
+# Adds the plugin core path to the system path
+cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(cur_dir)
+sys.path.insert(0, parentdir)
+
+from utilities.utilities import (process_point,
+                                 convert_multipart_to_singlepart,
+                                 create_vector_file,
+                                 get_request_crs,
+                                 get_registry_from_index,
+                                 service_data_value,
+                                 group_data_values,
+                                 collection_data_values,
+                                 create_new_field,
+                                 apply_decimal_places_to_float_tool)
 
 
 class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
@@ -55,10 +86,6 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
     class.
     """
 
-    # Constants used to refer to parameters and outputs. They will be
-    # used when calling the algorithm from another algorithm, or when
-    # calling from the QGIS console.
-
     INPUT_POINT_LAYER = "Input point layer"
     REGISTRY = "Registry"
     KEY = "Key"
@@ -70,6 +97,47 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
+
+        # Attempts to request the schema configuration from the API
+        # try:
+        #     client = ApiClient()
+        #
+        #     response = client.get(schema)  # Retrieve the API schema
+        #     self.list_context = response.json()
+        #
+        # except exceptions.ConnectionError:  # Could not connect to the provided URL
+        #     error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
+        #     self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+        #
+        #     self.list_context = []
+        # except Exception as e:  # Other possible connection issues
+        #     error_msg = "Could not connect to " + schema + ". Unknown error: " + str(e)
+        #     self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+        #
+        #     self.list_context = []
+
+        # Services: ONLY TEMP
+        self.list_service = [{'key': 'altitude', 'name': 'Altitude', 'description': 'N/A'},
+                             {'key': 'monthly_max_temperature_december', 'name': 'Max temp dec', 'description': 'N/A'},
+                             {'key': 'monthly_precipitation_may', 'name': 'Precipitation may', 'description': 'N/A'}]
+
+        # Groups: ONLY TEMP
+        self.list_group = [{'key': 'bioclimatic_variables_group', 'name': 'Bioclimatic layers', 'description': 'N/A'},
+                           {'key': 'monthly_precipitation_group', 'name': 'Monthly Precipitation', 'description': 'N/A'},
+                           {'key': 'monthly_solar_radiation_group', 'name': 'Monthly Solar Radiation', 'description': 'N/A'},
+                           {'key': 'monthly_max_temperature_group', 'name': 'Monthly Maximum Temperature', 'description': 'N/A'}]
+
+        # Collections: ONLY TEMP
+        self.list_collection = [{'key': 'global_climate_collection', 'name': 'Global climate collection', 'description': 'N/A'},
+                                {'key': 'healthy_rivers_collection', 'name': 'Healthy rivers collection', 'description': 'N/A'},
+                                {'key': 'healthy_rivers_spatial_collection', 'name': 'Healthy rivers spatial filters', 'description': 'N/A'},
+                                {'key': 'hydrological_regions', 'name': 'Hydrological regions', 'description': 'N/A'},
+                                {'key': 'ledet_collection', 'name': 'LEDET collection', 'description': 'N/A'},
+                                {'key': 'sa_boundary_collection', 'name': 'South African boundary collection', 'description': 'N/A'},
+                                {'key': 'sa_climate_collection', 'name': 'South African climate collection', 'description': 'N/A'},
+                                {'key': 'sa_land_cover_land_use_collection', 'name': 'South African land use collection', 'description': 'N/A'},
+                                {'key': 'sa_river_ecosystem_collection', 'name': 'South African river collection', 'description': 'N/A'},
+                                {'key': 'sedac_collection', 'name': 'Socioeconomic data and application center collection', 'description': 'N/A'}]
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -83,17 +151,23 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterEnum(
                 self.REGISTRY,
                 self.tr('Registry'),
-                options=[self.tr('Service'), self.tr('Group'), self.tr('Collection')],
+                options=[self.tr(SERVICE['name']), self.tr(GROUP['name']), self.tr(COLLECTION['name'])],
                 defaultValue=0,
                 optional=False
             )
         )
 
+        list_keys = []
+        for key_to_add in self.list_service:
+        #for key_to_add in self.list_group:
+        #for key_to_add in self.list_collection:
+            list_keys.append(self.tr(key_to_add['name']))
+
         self.addParameter(
             QgsProcessingParameterEnum(
                 self.KEY,
                 self.tr('Key'),
-                options=[self.tr('TEST1'), self.tr('TEST2'), self.tr('TEST3')],
+                options=list_keys,
                 defaultValue=0,
                 optional=False
             )
@@ -102,7 +176,8 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.FIELD_NAME,
-                self.tr('Field name/prefix')
+                self.tr('Field name/prefix'),
+                optional=True
             )
         )
 
@@ -119,24 +194,157 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
         Here is where the processing itself takes place.
         """
 
-        input_points = self.parameterAsSource(parameters, self.INPUT_POINT_LAYER, context)
-        registry = self.parameterAsString(parameters, self.REGISTRY, context)
-        key = self.parameterAsString(parameters, self.KEY, context)
-        field_name = self.parameterAsString(parameters, self.FIELD_NAME, context)
+        input_points = self.parameterAsVectorLayer(parameters, self.INPUT_POINT_LAYER, context)  # QgsVectorLayer
+        registry_index = int(self.parameterAsString(parameters, self.REGISTRY, context))  # Integer
+        key_index = int(self.parameterAsString(parameters, self.KEY, context))  # Integer
+        field_name = self.parameterAsString(parameters, self.FIELD_NAME, context)  # String
+        output_points = self.parameterAsFileOutput(parameters, self.OUTPUT_POINT_LAYER, context)  # String
 
-        for point in input_points.getFeatures():
-            # Stop the algorithm if cancel button has been clicked
-            if feedback.isCanceled():
-                feedback.pushInfo("Operation canceled by user.")
-                break
+        settings = QgsSettings()
+        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
 
-            current = 0
-            total = 0
-            # Update the progress bar
-            feedback.setProgress(int(current * total))
+        if input_points.featureCount() <= 0:
+            # If the layer contains no features, processing will be stopped
+            msg = 'ADD VECTOR LAYER DIRECTORY HERE!'
+            self.iface.messageBar().pushCritical("Vector layer contains no features: ", msg)
+            return
+        else:
+            layer_crs = get_request_crs()
+            success, input_new, msg = create_vector_file(input_points, output_points, layer_crs)
+            if not success:
+                # If file creation has been unsuccessful, processing will not continue
+                self.iface.messageBar().pushCritical("Vector file creation error: ", msg)
+                return
 
-        # Return the results of the algorithm
-        # return {self.OUTPUT: dest_id}
+            input_type = input_points.wkbType()  # Vector type for input
+            if input_type == 4:  # If a multipoint layer, otherwise skipped
+                convert_multipart_to_singlepart(input_new)
+
+            layer_provider = input_new.dataProvider()
+            list_points = input_new.getFeatures()  # List of point features contained by the layer
+            total = input_new.featureCount()  # Total number of features
+            completed = 0  # Used to update the progress bar
+            for point in list_points:
+
+                print("POINT")
+
+                # Stop the algorithm if cancel button has been clicked
+                if feedback.isCanceled():
+                    feedback.pushInfo("Operation canceled by user.")
+                    break
+
+                # Gets the registry and data key
+                dict_registry = get_registry_from_index(registry_index)
+                dict_key = self.find_name_info(key_index, dict_registry['key'])
+
+                # Request starts
+                start = time.time()
+
+                # Retrieves the data from the server
+                data_json = process_point(point, dict_registry['key'], dict_key['key'], field_name)
+
+                list_data = []  # This list will store the data. All cases will be services as it will no longer split it into groups/collections
+                if dict_registry['key'] == SERVICE['key']:
+                    list_data = service_data_value(data_json)
+                elif dict_registry['key'] == GROUP['key']:
+                    list_data = group_data_values(data_json)
+                elif dict_registry['key'] == COLLECTION['key']:
+                    list_data = collection_data_values(data_json)
+                else:
+                    print("UNKNOWN REGISTRY")
+
+                if len(list_data) <= 0:
+                    # No data received from the server
+                    return
+                else:  # List contains data, processing can continue
+
+                    # ======================================================== UPDATING FIELDS DOES NOT WORK ATM ===================================
+
+                    list_attributes = []
+                    for service_data in list_data:
+                        field_name = service_data['key']
+
+                        list_attributes.append(QgsField(field_name, QVariant.String))
+
+                        #field_index = create_new_field(input_new, point, field_name)
+                    layer_provider.addAttributes(list_attributes)
+                    input_new.updateFields()
+
+                    for service_data in list_data:
+                        field_name = service_data['key']
+                        data_value = service_data['value']
+                        data_value = apply_decimal_places_to_float_tool(data_value, rounding_factor)
+
+                        print("VALUE: " + data_value)
+
+                        test = input_new.startEditing()
+                        print("EDITING: " + str(test))
+                        field_index = point.fieldNameIndex(field_name)  # Gets the index of the newly added field
+                        input_new.startEditing()
+                        input_new.changeAttributeValue(point.id(), field_index, "TEST")
+                        input_new.updateFields()
+                        input_new.updateFeature(point)
+                        input_new.commitChanges()
+
+                    # input_new.startEditing()
+                    #
+                    # # Data received from the server
+                    # for service_data in list_data:
+                    #     #input_new.startEditing()
+                    #
+                    #     data_key = service_data['key']
+                    #     data_name = service_data['name']
+                    #     data_value = service_data['value']
+                    #
+                    #     new_field = QgsField(data_key, QVariant.String)
+                    #     input_new.addAttribute(new_field)
+                    #     input_new.updateFields()
+                    #     #input_new.commitChanges()
+                    #
+                    #     print("VALUE: " + str(data_value))
+                    #
+                    #     #input_new.startEditing()
+                    #     new_field_index = point.fieldNameIndex(data_key)
+                    #     input_new.changeAttributeValue(point.id(), new_field_index, str(data_value))
+                    #     break
+                    #     #input_new.commitChanges()
+                    # input_new.commitChanges()
+                # Request ends
+                end = time.time()
+                request_time_ms = round((end - start) * 1000, rounding_factor)
+
+                # Update the progress bar
+                completed = completed + 1
+                feedback.setProgress(int((completed / total) * 100))
+                feedback.setProgressText("{} request (ms): {}".format(dict_registry['name'], str(request_time_ms)))
+            #input_new.commitChanges()
+
+            if not feedback.isCanceled():
+                print("CREATE FILE HERE")
+
+            # Return the results of the algorithm
+            return {self.OUTPUT_POINT_LAYER: output_points}
+
+    def find_name_info(self, index, registry):
+        """The method finds the key ID of a provided drop down box index.
+
+        :param index: The drop down box index of the key selected by the user
+        :type index: Integer
+
+        :param registry: The registry type selected by the user in the panel
+        :type registry: String
+
+        :returns: The dictionary of the selected key
+        :rtype: Dict
+        """
+        if registry == SERVICE['key']:
+            return self.list_service[index]
+        elif registry == GROUP['key']:
+            return self.list_group[index]
+        elif registry == COLLECTION['key']:
+            return self.list_collection[index]
+
+        return None
 
     def name(self):
         """

@@ -22,8 +22,10 @@
  ***************************************************************************/
 """
 
+import sys
 import os
 import time
+import inspect
 
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QUrl
@@ -32,8 +34,16 @@ from qgis.core import QgsProject, QgsSettings, QgsCoordinateReferenceSystem, Qgs
 
 from .geocontext_help_dialog import HelpDialog
 
+# Adds the plugin core path to the system path
+cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(cur_dir)
+sys.path.insert(0, parentdir)
+
+from utilities.utilities import (get_request_crs)
+from bridge_api.api_abstract import ApiClient
+from bridge_api.default import SERVICE, GROUP, COLLECTION, VALUE_JSON, SERVICE_JSON, GROUP_JSON, COLLECTION_JSON
+
 # Core API modules
-from coreapi.client import Client
 from requests import exceptions
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -64,20 +74,27 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
 
         # Attempts to request the schema configuration from the API
-        try:
-            client = Client()
-            self.document = client.get(schema)  # Retrieve the API schema
-            self.list_context = client.action(document=self.document, keys=["csr", "list"])  # Get the list of context layers
-        except exceptions.ConnectionError:  # Could not connect to the provided URL
-            error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
-            self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+        # try:
+        #     client = ApiClient()
+        #
+        #     response = client.get(schema)  # Retrieve the API schema
+        #     self.list_context = response.json()
+        #
+        # except exceptions.ConnectionError:  # Could not connect to the provided URL
+        #     error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
+        #     self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+        #
+        #     self.list_context = []
+        # except Exception as e:  # Other possible connection issues
+        #     error_msg = "Could not connect to " + schema + ". Unknown error: " + str(e)
+        #     self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+        #
+        #     self.list_context = []
 
-            self.list_context = []
-        except Exception as e:  # Other possible connection issues
-            error_msg = "Could not connect to " + schema + ". Unknown error: " + str(e)
-            self.iface.messageBar().pushCritical("Connection error: ", error_msg)
-
-            self.list_context = []
+        # Services: ONLY TEMP
+        self.list_context = [{'key': 'altitude', 'name': 'altitude', 'description': 'N/A'},
+                        {'key': 'monthly_max_temperature_december', 'name': 'monthly_max_temperature_december', 'description': 'N/A'},
+                        {'key': 'monthly_precipitation_may', 'name': 'monthly_precipitation_may', 'description': 'N/A'}]
 
         # Groups: ONLY TEMP
         self.list_group = [{'key': 'bioclimatic_variables_group', 'name': 'Bioclimatic layers', 'description': 'N/A'},
@@ -131,7 +148,6 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btnFetch.clicked.connect(self.fetch_btn_click)  # Triggers when the Fetch button is pressed
         self.btnCursor.clicked.connect(self.cursor_btn_click)  # Triggers when the Cursor button is pressed
         self.btnHelp.clicked.connect(self.help_btn_click)  # Triggers when the Help button is pressed
-        self.btnClose.clicked.connect(self.close_btn_click)  # Triggers when the Close button is pressed
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -192,7 +208,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         registry = self.cbRegistry.currentText()  # Registry: Service, group or collection
         # The user has Service selected
-        if registry.lower() == 'service':
+        if registry == SERVICE['name']:
             settings = QgsSettings()
 
             # If set, the table will automatically be cleared. This can be set in the options dialog
@@ -203,28 +219,28 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # Updates the table
             self.tblResult.insertRow(0)  # Always add at the top of the table
             self.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))
-            self.tblResult.setItem(0, 1, QTableWidgetItem(str(data['value'])))
+            self.tblResult.setItem(0, 1, QTableWidgetItem(str(data[VALUE_JSON])))
         # The user has Group selected
-        elif registry.lower() == "group":  # UPDATE
+        elif registry == GROUP['name']:  # UPDATE
             # group_name = data['name']
-            list_dict_services = data["services"]  # Service files for a group
+            list_dict_services = data[SERVICE_JSON]  # Service files for a group
             for dict_service in list_dict_services:
                 # key = dict_service['key']
-                point_value = dict_service['value']
+                point_value = dict_service[VALUE_JSON]
                 service_key_name = dict_service['name']
 
                 self.tblResult.insertRow(0)  # Always add at the top of the table
                 self.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
                 self.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
         # The user has Collection selected
-        elif registry.lower() == "collection":
-            list_dict_groups = data["groups"]  # Each group contains a list of the 'Service' data associated with the group
+        elif registry == COLLECTION['name']:
+            list_dict_groups = data[GROUP_JSON]  # Each group contains a list of the 'Service' data associated with the group
             for dict_group in list_dict_groups:
                 # group_name = dict_group['name']
-                list_dict_services = dict_group["services"]  # Service files for a group
+                list_dict_services = dict_group[SERVICE_JSON]  # Service files for a group
                 for dict_service in list_dict_services:
                     # key = dict_service['key']
-                    point_value = dict_service['value']
+                    point_value = dict_service[VALUE_JSON]
                     service_key_name = dict_service['name']
 
                     self.tblResult.insertRow(0)  # Always add at the top of the table
@@ -247,9 +263,6 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def help_btn_click(self):
         self.show_help()
 
-    def close_btn_click(self):
-        print("close")
-
     def show_help(self):
         """Opens the help dialog. The dialog displays the html documentation.
         The documentation contains information on the docking panel.
@@ -268,62 +281,6 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         else:
             error_msg = "Cannot find the /resources/help/build/html/docking_panel.html file. Cannot open the help dialog."
             self.iface.messageBar().pushCritical("Missing file: ", error_msg)
-
-    def get_canvas_crs(self):
-        """Returns the coordinate system of the canvas (e.g. EPSG:4326 (WGS84)).
-
-        :returns: The coordinate system of the QGIS canvas.
-        :rtype: QgsCoordinateReferenceSystem
-        """
-
-        crs = self.canvas.mapSettings().destinationCrs()  # QgsCoordinateReferenceSystem
-
-        return crs
-
-    def get_request_crs(self):
-        """Transforms the XY coordinates to the WGS84 coordinate system (EPSG:4326).
-
-        :returns: Returns the coordinate system set in the options dialog.
-        :rtype: QgsCoordinateReferenceSystem
-        """
-
-        # Gets the coordinate system set by the user. Defaults to WGS84
-        # NOTE: At the moment only WGS84 is selectable
-        settings = QgsSettings()
-        request_crs = settings.value('geocontext-qgis-plugin/request_crs', "WGS84 (EPSG:4326)", type=str)
-
-        if request_crs == "WGS84 (EPSG:4326)":  # WGS84 coordinate system
-            return QgsCoordinateReferenceSystem("EPSG:4326")
-        else:  # Unknown coordinate system
-            return
-
-    def transform_xy_coordinates(self, x, y, cur_crs, target_crs):
-        """Transforms the XY coordinates to the WGS84 coordinate system (EPSG:4326).
-
-        :param x: The longitude coordinate value
-        :type x: Float
-
-        :param y: The latitude coordinate value
-        :type y: Float
-
-        :param cur_crs: The current coordinate system of the coordinates
-        :type cur_crs: QgsCoordinateReferenceSystem
-
-        :param target_crs: The target coordinate system to which the coordinates will be transformed to
-        :type target_crs: QgsCoordinateReferenceSystem
-
-        :returns: The XY coordinates in WGS84.
-        :rtype: Float
-        """
-
-        transform_context = QgsProject.instance().transformContext()
-        xform = QgsCoordinateTransform(cur_crs, target_crs, transform_context)
-
-        pt = xform.transform(QgsPointXY(x, y))  # Transformed point
-        x = pt.x()
-        y = pt.y()
-
-        return x, y
 
     def point_request_panel(self, x, y):
         """Return the value retrieved from the ordered dictionary containing the requested data
@@ -352,12 +309,12 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         key = dict_key['key']
 
         # Performs the request
-        client = Client()
+        client = ApiClient()
 
         url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
-
         data = client.get(url_request)
-        return data
+
+        return data.json()
 
     def clear_results_table(self):
         """Clears the table in the panel. This can be called when the user clicks the
@@ -383,17 +340,17 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         :rtype: String
         """
 
-        if registry == "Service":
+        if registry == SERVICE['name']:
             for context in self.list_context:
                 current_name = context['name']
                 if current_name == search_name:
                     return context
-        elif registry == "Group":
+        elif registry == GROUP['name']:
             for group in self.list_group:
                 current_name = group['name']
                 if current_name == search_name:
                     return group
-        elif registry == "Collection":
+        elif registry == COLLECTION['name']:
             for collection in self.list_collection:
                 current_name = collection['name']
                 if current_name == search_name:
@@ -419,9 +376,10 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # Checks whether the provided schema configuration URL is available
             try:
                 # Requests the schema
-                client = Client()
-                self.document = client.get(schema)  # Retrieve the API schema
-                self.list_context = client.action(document=self.document, keys=["csr", "list"])  # Get the list of context layers
+                client = ApiClient()
+
+                response = client.get(schema)  # Retrieve the API schema
+                self.list_context = response.json()
             except exceptions.ConnectionError:  # Could not connect to the provided URL
                 error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
                 self.iface.messageBar().pushCritical("Connection error: ", error_msg)
