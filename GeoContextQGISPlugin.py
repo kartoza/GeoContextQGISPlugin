@@ -59,6 +59,8 @@ from .utilities.utilities import (get_canvas_crs,
                                   transform_xy_coordinates,
                                   apply_decimal_places_to_float_panel)
 
+from bridge_api.default import SERVICE, GROUP, COLLECTION, VALUE_JSON, SERVICE_JSON, GROUP_JSON, COLLECTION_JSON
+
 # Import the code for the widgets
 from .widgets.GeoContextQGISPlugin_dockwidget import GeoContextQGISPluginDockWidget
 from .widgets.GeoContextQGISPlugin_options_dialog import OptionsDialog
@@ -419,13 +421,13 @@ class GeoContextQGISPlugin:
 
             registry = self.dockwidget.cbRegistry.currentText()
             # Service option
-            if registry.lower() == 'service':
+            if registry == SERVICE['name']:
                 # If set in the options dialog, the table will automatically be cleared
                 auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
                 if auto_clear_table:
                     self.dockwidget.clear_results_table()
 
-                point_value_str = data['value']  # Retrieves the value
+                point_value_str = data[VALUE_JSON]  # Retrieves the value
                 rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
                 point_value_str = apply_decimal_places_to_float_panel(point_value_str, rounding_factor)
 
@@ -433,12 +435,12 @@ class GeoContextQGISPlugin:
                 self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))  # Sets the key in the table
                 self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
             # Group option
-            elif registry.lower() == "group":
+            elif registry == GROUP['name']:
                 # group_name = data['name']
-                list_dict_services = data["services"]  # Service files for a group
+                list_dict_services = data[SERVICE_JSON]  # Service files for a group
                 for dict_service in list_dict_services:
                     # key = dict_service['key']
-                    point_value_str = dict_service['value']
+                    point_value_str = dict_service[VALUE_JSON]
                     rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
                     point_value_str = apply_decimal_places_to_float_panel(point_value_str, rounding_factor)
 
@@ -448,14 +450,14 @@ class GeoContextQGISPlugin:
                     self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
                     self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
             # Collection option
-            elif registry.lower() == "collection":
-                list_dict_groups = data["groups"]  # Each group contains a list of the 'Service' data associated with the group
+            elif registry == COLLECTION['name']:
+                list_dict_groups = data[GROUP_JSON]  # Each group contains a list of the 'Service' data associated with the group
                 for dict_group in list_dict_groups:
                     # group_name = dict_group['name']
-                    list_dict_services = dict_group["services"]  # Service files for a group
+                    list_dict_services = dict_group[SERVICE_JSON]  # Service files for a group
                     for dict_service in list_dict_services:
                         # key = dict_service['key']
-                        point_value_str = dict_service['value']
+                        point_value_str = dict_service[VALUE_JSON]
                         rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
                         point_value_str = apply_decimal_places_to_float_panel(point_value_str, rounding_factor)
 

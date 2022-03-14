@@ -41,7 +41,7 @@ sys.path.insert(0, parentdir)
 
 from utilities.utilities import (get_request_crs)
 from bridge_api.api_abstract import ApiClient
-
+from bridge_api.default import SERVICE, GROUP, COLLECTION, VALUE_JSON, SERVICE_JSON, GROUP_JSON, COLLECTION_JSON
 
 # Core API modules
 from requests import exceptions
@@ -74,22 +74,27 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
 
         # Attempts to request the schema configuration from the API
-        try:
-            client = ApiClient()
+        # try:
+        #     client = ApiClient()
+        #
+        #     response = client.get(schema)  # Retrieve the API schema
+        #     self.list_context = response.json()
+        #
+        # except exceptions.ConnectionError:  # Could not connect to the provided URL
+        #     error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
+        #     self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+        #
+        #     self.list_context = []
+        # except Exception as e:  # Other possible connection issues
+        #     error_msg = "Could not connect to " + schema + ". Unknown error: " + str(e)
+        #     self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+        #
+        #     self.list_context = []
 
-            response = client.get(schema)  # Retrieve the API schema
-            self.list_context = response.json()
-
-        except exceptions.ConnectionError:  # Could not connect to the provided URL
-            error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
-            self.iface.messageBar().pushCritical("Connection error: ", error_msg)
-
-            self.list_context = []
-        except Exception as e:  # Other possible connection issues
-            error_msg = "Could not connect to " + schema + ". Unknown error: " + str(e)
-            self.iface.messageBar().pushCritical("Connection error: ", error_msg)
-
-            self.list_context = []
+        # Services: ONLY TEMP
+        self.list_context = [{'key': 'altitude', 'name': 'altitude', 'description': 'N/A'},
+                        {'key': 'monthly_max_temperature_december', 'name': 'monthly_max_temperature_december', 'description': 'N/A'},
+                        {'key': 'monthly_precipitation_may', 'name': 'monthly_precipitation_may', 'description': 'N/A'}]
 
         # Groups: ONLY TEMP
         self.list_group = [{'key': 'bioclimatic_variables_group', 'name': 'Bioclimatic layers', 'description': 'N/A'},
@@ -203,7 +208,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         registry = self.cbRegistry.currentText()  # Registry: Service, group or collection
         # The user has Service selected
-        if registry.lower() == 'service':
+        if registry == SERVICE['name']:
             settings = QgsSettings()
 
             # If set, the table will automatically be cleared. This can be set in the options dialog
@@ -214,28 +219,28 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # Updates the table
             self.tblResult.insertRow(0)  # Always add at the top of the table
             self.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))
-            self.tblResult.setItem(0, 1, QTableWidgetItem(str(data['value'])))
+            self.tblResult.setItem(0, 1, QTableWidgetItem(str(data[VALUE_JSON])))
         # The user has Group selected
-        elif registry.lower() == "group":  # UPDATE
+        elif registry == GROUP['name']:  # UPDATE
             # group_name = data['name']
-            list_dict_services = data["services"]  # Service files for a group
+            list_dict_services = data[SERVICE_JSON]  # Service files for a group
             for dict_service in list_dict_services:
                 # key = dict_service['key']
-                point_value = dict_service['value']
+                point_value = dict_service[VALUE_JSON]
                 service_key_name = dict_service['name']
 
                 self.tblResult.insertRow(0)  # Always add at the top of the table
                 self.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
                 self.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
         # The user has Collection selected
-        elif registry.lower() == "collection":
-            list_dict_groups = data["groups"]  # Each group contains a list of the 'Service' data associated with the group
+        elif registry == COLLECTION['name']:
+            list_dict_groups = data[GROUP_JSON]  # Each group contains a list of the 'Service' data associated with the group
             for dict_group in list_dict_groups:
                 # group_name = dict_group['name']
-                list_dict_services = dict_group["services"]  # Service files for a group
+                list_dict_services = dict_group[SERVICE_JSON]  # Service files for a group
                 for dict_service in list_dict_services:
                     # key = dict_service['key']
-                    point_value = dict_service['value']
+                    point_value = dict_service[VALUE_JSON]
                     service_key_name = dict_service['name']
 
                     self.tblResult.insertRow(0)  # Always add at the top of the table
@@ -307,9 +312,9 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         client = ApiClient()
 
         url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
-
         data = client.get(url_request)
-        return data
+
+        return data.json()
 
     def clear_results_table(self):
         """Clears the table in the panel. This can be called when the user clicks the
@@ -335,17 +340,17 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         :rtype: String
         """
 
-        if registry == "Service":
+        if registry == SERVICE['name']:
             for context in self.list_context:
                 current_name = context['name']
                 if current_name == search_name:
                     return context
-        elif registry == "Group":
+        elif registry == GROUP['name']:
             for group in self.list_group:
                 current_name = group['name']
                 if current_name == search_name:
                     return group
-        elif registry == "Collection":
+        elif registry == COLLECTION['name']:
             for collection in self.list_collection:
                 current_name = collection['name']
                 if current_name == search_name:

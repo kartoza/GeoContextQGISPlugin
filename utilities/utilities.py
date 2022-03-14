@@ -2,6 +2,7 @@
 
 import os
 import sys
+import inspect
 
 from qgis.PyQt.QtCore import QVariant
 from qgis.core import (QgsProject,
@@ -14,9 +15,13 @@ from qgis.core import (QgsProject,
                        QgsFeature,
                        QgsCoordinateReferenceSystem)
 
-# Core API module
-from coreapi.client import Client
-from coreapi import exceptions as coreapi_exceptions
+# Adds the plugin core path to the system path
+cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(cur_dir)
+sys.path.insert(0, parentdir)
+
+from bridge_api.default import SERVICE, GROUP, COLLECTION, VALUE_JSON, KEY_JSON, NAME_JSON, SERVICE_JSON, GROUP_JSON, COLLECTION_JSON
+from bridge_api.api_abstract import ApiClient
 
 
 def get_canvas_crs(iface):
@@ -210,6 +215,23 @@ def point_request_dialog(x, y, registry, key, api_url):
     return data
 
 
+def get_registry_from_index(index):
+    """Returns the dictionary of the service, group or collection based on the dropbox index of the element
+
+    :param index: Index from the dropbox option
+    :type index: Integer
+
+    :returns: Dictionary which contains the key and name of the registry
+    :rtype: Dict
+    """
+    if index == 0:
+        return SERVICE
+    elif index == 1:
+        return GROUP
+    elif index == 2:
+        return COLLECTION
+
+
 def process_point(input_point, registry, key_name, field_name):
     """
     This method processes a point layer provided by the user.
@@ -239,23 +261,116 @@ def process_point(input_point, registry, key_name, field_name):
     :type target_crs: QgsCoordinate
     """
 
+    point_geom = input_point.geometry()
+    if point_geom.isNull() or point_geom.isEmpty():
+        # Point is skipped if its None or has no geometry
+        return
+    else:
+        settings = QgsSettings()
+        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int)
+        api_url = settings.value('geocontext-qgis-plugin/url')  # Base URL. Set in the options dialog
+
+        if point_geom.isMultipart():
+            # Converts a point to singlepart if it is multipart
+            point_geom.convertToSingleType()
+
+        # Gets the point coordinates
+        point = point_geom.asPoint()
+        x = point.x()
+        y = point.y()
+
+        # Retrieves the data in JSON format
+        data = request_data(registry, key_name, x, y)
+
+        return data
+
+
+def request_data(registry, key, x, y):
+    """Returns the dictionary of the service, group or collection based on the dropbox index of the element
+
+    :param registry: Registry: Service, group or collection
+    :type registry: String
+
+    :param key: Key for the data to request
+    :type key: String
+
+    :param x: Longitude coordinates
+    :type x: Numeric
+
+    :param y: Latitude coordinates
+    :type y: Numeric
+
+    :returns: Returns the received data in JSON format
+    :rtype: JSON
+    """
+    settings = QgsSettings()
+
+    api_url = settings.value('geocontext-qgis-plugin/url')  # Base request URL
+
+    # Performs the request
+    client = ApiClient()
+
+    url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+    data = client.get(url_request)
+
+    return data.json()
+
+
+def service_data_value(data_json):
     settings = QgsSettings()
     rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int)
-    api_url = settings.value('geocontext-qgis-plugin/url')  # Base URL. Set in the options dialog
 
-    # input_type = input_points.wkbType()  # Vector type for input
-    # if input_type == 4:  # If a multipoint layer, otherwise skipped
-    #     self.convert_multipart_to_singlepart(input_new)  # Splits all multipart features into singlepart features
+    point_key = data_json[KEY_JSON]
+    point_name = data_json[NAME_JSON]
+    point_value = apply_decimal_places_to_float_tool(data_json[VALUE_JSON], rounding_factor)
 
-    # The user selected the 'Service' registry option
-    if registry == 'Service':
-        print("service")
-    elif registry == 'Group':
-        print("group")
-    elif registry == 'Collection':
-        print('Collection')
-    else:
-        print("Unknown registry")
+    return [{
+        'key': point_key,
+        'name': point_name,
+        'value': point_value
+    }]
+
+
+def group_data_values(data_json):
+    settings = QgsSettings()
+    rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int)
+
+    data_services = data_json[SERVICE_JSON]
+    list_services = []
+    for service in data_services:
+        service_key = service[KEY_JSON]
+        service_name = service[NAME_JSON]
+        service_value = apply_decimal_places_to_float_tool(service[VALUE_JSON], rounding_factor)
+
+        list_services.append({
+            'key': service_key,
+            'name': service_name,
+            'value': service_value
+        })
+
+    return list_services
+
+
+def collection_data_values(data_json):
+    settings = QgsSettings()
+    rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int)
+
+    data_groups = data_json[GROUP_JSON]
+    list_services = []
+    for group in data_groups:
+        data_services = group[SERVICE_JSON]
+        for service in data_services:
+            service_key = service[KEY_JSON]
+            service_name = service[NAME_JSON]
+            service_value = apply_decimal_places_to_float_tool(service[VALUE_JSON], rounding_factor)
+
+            list_services.append({
+                'key': service_key,
+                'name': service_name,
+                'value': service_value
+            })
+
+    return list_services
 
 
 def create_vector_file(input_layer, output_layer, layer_crs):
@@ -270,11 +385,25 @@ def create_vector_file(input_layer, output_layer, layer_crs):
 
     :param layer_crs: Coordinate system for output vector file
     :type layer_crs: QgsCoordinateReferenceSystem
+
+    :returns: True if file creation has been successful, otherwise false
+    :rtype: Boolean
+
+    :returns: QgsVectorLayer for the newly created layer
+    :rtype: QgsVectorLayer
+
+    :returns: A message associated with the status of the file creation
+    :rtype: String
     """
     status_index, msg = QgsVectorFileWriter.writeAsVectorFormat(input_layer, output_layer, 'UTF-8', layer_crs)
     if status_index == 2:  # File already exists and cannot be overwritten (locked)
-        error_msg = "File creation error: " + msg
-        return error_msg
+        error_msg = "File creation error due to already existing, locked file: " + msg
+        return False, None, error_msg
+
+    output_file_name = os.path.basename(output_layer)
+    new_layer = QgsVectorLayer(output_layer, output_file_name)
+
+    return True, new_layer, 'Successfully created {}'.format(output_layer)
 
 
 def convert_multipart_to_singlepart(mp_layer):
