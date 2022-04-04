@@ -433,7 +433,9 @@ class GeoContextQGISPlugin:
 
                 self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
                 self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))  # Sets the key in the table
-                self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
+                self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the value in the table
+                self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+                self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
             # Group option
             elif registry == GROUP['name']:
                 # group_name = data['name']
@@ -448,7 +450,9 @@ class GeoContextQGISPlugin:
 
                     self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
                     self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                    self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
+                    self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the value in the table
+                    self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+                    self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
             # Collection option
             elif registry == COLLECTION['name']:
                 list_dict_groups = data[GROUP_JSON]  # Each group contains a list of the 'Service' data associated with the group
@@ -465,7 +469,9 @@ class GeoContextQGISPlugin:
 
                         self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
                         self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                        self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
+                        self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the value in the table
+                        self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+                        self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
         else:  # Request were unsuccessful
             error_msg = "Could not perform data request. Check if the endpoint URL is correct."
             self.iface.messageBar().pushCritical("Request error: ", error_msg)

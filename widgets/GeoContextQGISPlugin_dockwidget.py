@@ -26,6 +26,7 @@ import sys
 import os
 import time
 import inspect
+import csv
 
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QUrl
@@ -148,6 +149,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btnFetch.clicked.connect(self.fetch_btn_click)  # Triggers when the Fetch button is pressed
         self.btnCursor.clicked.connect(self.cursor_btn_click)  # Triggers when the Cursor button is pressed
         self.btnHelp.clicked.connect(self.help_btn_click)  # Triggers when the Help button is pressed
+        self.btnExport.clicked.connect(self.export_btn_click)  # Triggers when the Export button is pressed
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -220,6 +222,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.tblResult.insertRow(0)  # Always add at the top of the table
             self.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))
             self.tblResult.setItem(0, 1, QTableWidgetItem(str(data[VALUE_JSON])))
+            self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+            self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
         # The user has Group selected
         elif registry == GROUP['name']:  # UPDATE
             # group_name = data['name']
@@ -232,6 +236,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.tblResult.insertRow(0)  # Always add at the top of the table
                 self.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
                 self.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
+                self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+                self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
         # The user has Collection selected
         elif registry == COLLECTION['name']:
             list_dict_groups = data[GROUP_JSON]  # Each group contains a list of the 'Service' data associated with the group
@@ -246,6 +252,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     self.tblResult.insertRow(0)  # Always add at the top of the table
                     self.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
                     self.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
+                    self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+                    self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
 
     def cursor_btn_click(self):
         """This method is called when the Cursor button on the panel is clicked.
@@ -262,6 +270,28 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def help_btn_click(self):
         self.show_help()
+
+    def export_btn_click(self):
+        print("export")
+
+        # CONTINUE HERE. EXPORT TO GPKG ======================================================================================================================
+
+        row_cnt = self.tblResult.rowCount()
+
+        i = 0
+        while i < row_cnt:
+            key = self.tblResult.item(i, 0).text()
+            value = self.tblResult.item(i, 1).text()
+            x = self.tblResult.item(i, 2).text()
+            y = self.tblResult.item(i, 3).text()
+
+            print(key)
+            print(value)
+            print(x)
+            print(y)
+
+            i = i + 1
+
 
     def show_help(self):
         """Opens the help dialog. The dialog displays the html documentation.

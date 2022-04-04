@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>462</width>
-    <height>834</height>
+    <height>800</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -57,14 +57,24 @@
          <string>Value</string>
         </property>
        </column>
+       <column>
+        <property name="text">
+         <string>Longitude</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Latitude</string>
+        </property>
+       </column>
       </widget>
      </item>
      <item>
       <layout class="QHBoxLayout" name="hlResults">
        <item>
-        <widget class="QPushButton" name="btnClear">
+        <widget class="QPushButton" name="btnHelp">
          <property name="text">
-          <string>Clear table</string>
+          <string>Help</string>
          </property>
         </widget>
        </item>
@@ -80,6 +90,20 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnClear">
+         <property name="text">
+          <string>Clear table</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnExport">
+         <property name="text">
+          <string>Export</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
@@ -279,42 +303,9 @@
      </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="horizontalLayoutWidget_3">
-    <property name="geometry">
-     <rect>
-      <x>9</x>
-      <y>777</y>
-      <width>441</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout_3">
-     <item>
-      <widget class="QPushButton" name="btnHelp">
-       <property name="text">
-        <string>Help</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="hsButtons">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-    </layout>
-   </widget>
    <zorder>gbRequest</zorder>
    <zorder>gbPointCoor</zorder>
    <zorder>gbResults</zorder>
-   <zorder>horizontalLayoutWidget_3</zorder>
   </widget>
  </widget>
  <customwidgets>
