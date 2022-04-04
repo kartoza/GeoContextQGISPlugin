@@ -225,9 +225,6 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
             total = input_new.featureCount()  # Total number of features
             completed = 0  # Used to update the progress bar
             for point in list_points:
-
-                print("POINT")
-
                 # Stop the algorithm if cancel button has been clicked
                 if feedback.isCanceled():
                     feedback.pushInfo("Operation canceled by user.")
@@ -255,60 +252,32 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
 
                 if len(list_data) <= 0:
                     # No data received from the server
-                    return
+                    break
                 else:  # List contains data, processing can continue
-
-                    # ======================================================== UPDATING FIELDS DOES NOT WORK ATM ===================================
-
+                    # Creates a list of fields which will be added to the attribute table
                     list_attributes = []
                     for service_data in list_data:
                         field_name = service_data['key']
-
                         list_attributes.append(QgsField(field_name, QVariant.String))
 
-                        #field_index = create_new_field(input_new, point, field_name)
+                    # Adds all of the new fields to the attribute table
+                    input_new.startEditing()
                     layer_provider.addAttributes(list_attributes)
                     input_new.updateFields()
+                    input_new.updateFeature(point)
+                    input_new.commitChanges()
 
+                    # Updates all of the attribute values
                     for service_data in list_data:
                         field_name = service_data['key']
                         data_value = service_data['value']
                         data_value = apply_decimal_places_to_float_tool(data_value, rounding_factor)
 
-                        print("VALUE: " + data_value)
-
-                        test = input_new.startEditing()
-                        print("EDITING: " + str(test))
-                        field_index = point.fieldNameIndex(field_name)  # Gets the index of the newly added field
+                        # Updates the attribute value
                         input_new.startEditing()
-                        input_new.changeAttributeValue(point.id(), field_index, "TEST")
-                        input_new.updateFields()
-                        input_new.updateFeature(point)
+                        input_new.changeAttributeValue(point.id(), layer_provider.fieldNameIndex(field_name), data_value)
                         input_new.commitChanges()
 
-                    # input_new.startEditing()
-                    #
-                    # # Data received from the server
-                    # for service_data in list_data:
-                    #     #input_new.startEditing()
-                    #
-                    #     data_key = service_data['key']
-                    #     data_name = service_data['name']
-                    #     data_value = service_data['value']
-                    #
-                    #     new_field = QgsField(data_key, QVariant.String)
-                    #     input_new.addAttribute(new_field)
-                    #     input_new.updateFields()
-                    #     #input_new.commitChanges()
-                    #
-                    #     print("VALUE: " + str(data_value))
-                    #
-                    #     #input_new.startEditing()
-                    #     new_field_index = point.fieldNameIndex(data_key)
-                    #     input_new.changeAttributeValue(point.id(), new_field_index, str(data_value))
-                    #     break
-                    #     #input_new.commitChanges()
-                    # input_new.commitChanges()
                 # Request ends
                 end = time.time()
                 request_time_ms = round((end - start) * 1000, rounding_factor)
@@ -317,7 +286,6 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
                 completed = completed + 1
                 feedback.setProgress(int((completed / total) * 100))
                 feedback.setProgressText("{} request (ms): {}".format(dict_registry['name'], str(request_time_ms)))
-            #input_new.commitChanges()
 
             if not feedback.isCanceled():
                 print("CREATE FILE HERE")
