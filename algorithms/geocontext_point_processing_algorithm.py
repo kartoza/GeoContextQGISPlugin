@@ -53,7 +53,14 @@ cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()
 parentdir = os.path.dirname(cur_dir)
 sys.path.insert(0, parentdir)
 
-from bridge_api.default import SERVICE, GROUP, COLLECTION
+from bridge_api.default import (SERVICE,
+                                GROUP,
+                                COLLECTION,
+                                TOOL_INPUT_POINT_LAYER,
+                                TOOL_REGISTRY,
+                                TOOL_KEY,
+                                TOOL_FIELD_NAME,
+                                TOOL_OUTPUT_POINT_LAYER)
 
 # Adds the plugin core path to the system path
 cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -86,12 +93,6 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
     class.
     """
 
-    INPUT_POINT_LAYER = "Input point layer"
-    REGISTRY = "Registry"
-    KEY = "Key"
-    FIELD_NAME = "Field name"
-    OUTPUT_POINT_LAYER = "Output point layer"
-
     def initAlgorithm(self, config):
         """
         Here we define the inputs and output of the algorithm, along
@@ -117,17 +118,18 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
         #     self.list_context = []
 
         # Services: ONLY TEMP
+        # Services: ONLY TEMP =====================================================================================
         self.list_service = [{'key': 'altitude', 'name': 'Altitude', 'description': 'N/A'},
                              {'key': 'monthly_max_temperature_december', 'name': 'Max temp dec', 'description': 'N/A'},
                              {'key': 'monthly_precipitation_may', 'name': 'Precipitation may', 'description': 'N/A'}]
 
-        # Groups: ONLY TEMP
+        # Groups: ONLY TEMP ======================================================================================
         self.list_group = [{'key': 'bioclimatic_variables_group', 'name': 'Bioclimatic layers', 'description': 'N/A'},
                            {'key': 'monthly_precipitation_group', 'name': 'Monthly Precipitation', 'description': 'N/A'},
                            {'key': 'monthly_solar_radiation_group', 'name': 'Monthly Solar Radiation', 'description': 'N/A'},
                            {'key': 'monthly_max_temperature_group', 'name': 'Monthly Maximum Temperature', 'description': 'N/A'}]
 
-        # Collections: ONLY TEMP
+        # Collections: ONLY TEMP =================================================================================
         self.list_collection = [{'key': 'global_climate_collection', 'name': 'Global climate collection', 'description': 'N/A'},
                                 {'key': 'healthy_rivers_collection', 'name': 'Healthy rivers collection', 'description': 'N/A'},
                                 {'key': 'healthy_rivers_spatial_collection', 'name': 'Healthy rivers spatial filters', 'description': 'N/A'},
@@ -141,22 +143,23 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.INPUT_POINT_LAYER,
-                self.tr('Point layer'),
+                TOOL_INPUT_POINT_LAYER,
+                self.tr(TOOL_INPUT_POINT_LAYER),
                 [QgsProcessing.TypeVectorPoint]
             )
         )
 
         self.addParameter(
             QgsProcessingParameterEnum(
-                self.REGISTRY,
-                self.tr('Registry'),
+                TOOL_REGISTRY,
+                self.tr(TOOL_REGISTRY),
                 options=[self.tr(SERVICE['name']), self.tr(GROUP['name']), self.tr(COLLECTION['name'])],
                 defaultValue=0,
                 optional=False
             )
         )
 
+        # Adds key options to the parameter drop down box ==================================================================================================
         list_keys = []
         for key_to_add in self.list_service:
         #for key_to_add in self.list_group:
@@ -165,8 +168,8 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterEnum(
-                self.KEY,
-                self.tr('Key'),
+                TOOL_KEY,
+                self.tr(TOOL_KEY),
                 options=list_keys,
                 defaultValue=0,
                 optional=False
@@ -175,30 +178,28 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterString(
-                self.FIELD_NAME,
-                self.tr('Field name/prefix'),
+                TOOL_FIELD_NAME,
+                self.tr(TOOL_FIELD_NAME),
                 optional=True
             )
         )
 
         self.addParameter(
             QgsProcessingParameterFileDestination(
-                self.OUTPUT_POINT_LAYER,
-                self.tr('Output point layer'),
+                TOOL_OUTPUT_POINT_LAYER,
+                self.tr(TOOL_OUTPUT_POINT_LAYER),
                 'Geopackage files (*.gpkg)'
             )
         )
 
     def processAlgorithm(self, parameters, context, feedback):
+        """Processes the point vector layer provided as input.
         """
-        Here is where the processing itself takes place.
-        """
-
-        input_points = self.parameterAsVectorLayer(parameters, self.INPUT_POINT_LAYER, context)  # QgsVectorLayer
-        registry_index = int(self.parameterAsString(parameters, self.REGISTRY, context))  # Integer
-        key_index = int(self.parameterAsString(parameters, self.KEY, context))  # Integer
-        field_name = self.parameterAsString(parameters, self.FIELD_NAME, context)  # String
-        output_points = self.parameterAsFileOutput(parameters, self.OUTPUT_POINT_LAYER, context)  # String
+        input_points = self.parameterAsVectorLayer(parameters, TOOL_INPUT_POINT_LAYER, context)  # QgsVectorLayer
+        registry_index = int(self.parameterAsString(parameters, TOOL_REGISTRY, context))  # Integer
+        key_index = int(self.parameterAsString(parameters, TOOL_KEY, context))  # Integer
+        field_name = self.parameterAsString(parameters, TOOL_FIELD_NAME, context)  # String
+        output_points = self.parameterAsFileOutput(parameters, TOOL_OUTPUT_POINT_LAYER, context)  # String
 
         settings = QgsSettings()
         rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
@@ -291,7 +292,7 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
                 print("CREATE FILE HERE")
 
             # Return the results of the algorithm
-            return {self.OUTPUT_POINT_LAYER: output_points}
+            return {TOOL_OUTPUT_POINT_LAYER: output_points}
 
     def find_name_info(self, index, registry):
         """The method finds the key ID of a provided drop down box index.

@@ -29,9 +29,17 @@ import inspect
 import csv
 
 from qgis.PyQt import QtGui, QtWidgets, uic
-from qgis.PyQt.QtCore import pyqtSignal, QUrl
+from qgis.PyQt.QtCore import pyqtSignal, QUrl, QVariant
 from qgis.PyQt.QtWidgets import QTableWidgetItem
-from qgis.core import QgsProject, QgsSettings, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsPointXY
+from qgis.core import (QgsProject,
+                       QgsSettings,
+                       QgsCoordinateReferenceSystem,
+                       QgsCoordinateTransform,
+                       QgsPointXY,
+                       QgsVectorLayer,
+                       QgsField,
+                       QgsFeature,
+                       QgsGeometry)
 
 from .geocontext_help_dialog import HelpDialog
 
@@ -40,9 +48,20 @@ cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()
 parentdir = os.path.dirname(cur_dir)
 sys.path.insert(0, parentdir)
 
-from utilities.utilities import (get_request_crs)
+from utilities.utilities import (get_request_crs,
+                                 create_vector_file)
 from bridge_api.api_abstract import ApiClient
-from bridge_api.default import SERVICE, GROUP, COLLECTION, VALUE_JSON, SERVICE_JSON, GROUP_JSON, COLLECTION_JSON
+from bridge_api.default import (SERVICE,
+                                GROUP,
+                                COLLECTION,
+                                VALUE_JSON,
+                                SERVICE_JSON,
+                                GROUP_JSON,
+                                COLLECTION_JSON,
+                                TABLE_DATA_TYPE,
+                                TABLE_VALUE,
+                                TABLE_LONG,
+                                TABLE_LAT)
 
 # Core API modules
 from requests import exceptions
@@ -69,6 +88,11 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.canvas = canvas  # QGIS project canvas
         self.point_tool = point_tool  # Canvas point tool - cursor used to selected locations
         self.cursor_active = True  # Sets to True because the point tool is now active
+        self.table_output_file.setFilter("*.gpkg")  # Output format for table exporting set to geopackage
+        self.tblResult.setHorizontalHeaderLabels([TABLE_DATA_TYPE['table'],
+                                                  TABLE_VALUE['table'],
+                                                  TABLE_LONG['table'],
+                                                  TABLE_LAT['table']])
 
         # Retrieves the schema data from the URL stored using the options dialog
         settings = QgsSettings()
@@ -269,29 +293,38 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.cursor_active = True
 
     def help_btn_click(self):
+        """Opens the help dialog.
+        """
         self.show_help()
 
     def export_btn_click(self):
-        print("export")
+        """Export the contents of the docking widget's table to a
+        geopackage (gpkg).
+        """
+        output_file = self.table_output_file.filePath()  # Ouput file provided by the user
+        output_dir = os.path.dirname(output_file)  # Folder directory of the output
+        table = self.tblResult  # QTableWidget
 
-        # CONTINUE HERE. EXPORT TO GPKG ======================================================================================================================
+        # Checks whether the table has any contents
+        num_rows = table.rowCount()
+        if num_rows <= 0:
+            # File will not be created
+            self.iface.messageBar().pushCritical("Export not performed: ", "Table has no contents!")
+            return
 
-        row_cnt = self.tblResult.rowCount()
-
-        i = 0
-        while i < row_cnt:
-            key = self.tblResult.item(i, 0).text()
-            value = self.tblResult.item(i, 1).text()
-            x = self.tblResult.item(i, 2).text()
-            y = self.tblResult.item(i, 3).text()
-
-            print(key)
-            print(value)
-            print(x)
-            print(y)
-
-            i = i + 1
-
+        # Checks if the folder path exists
+        if os.path.exists(output_dir):
+            # Exports the table data
+            success, msg = self.export_table(output_file, table)
+            if not success:
+                # Prints an error message if the output file could not be created
+                self.iface.messageBar().pushCritical("Cannot create file: ", msg)
+        else:
+            # Shows an error message if the folder path does not exist
+            if output_dir == "":
+                self.iface.messageBar().pushCritical("Output directory does not exist: ", "The user has not provided an output file!")
+            else:
+                self.iface.messageBar().pushCritical("Output directory does not exist: ", output_dir)
 
     def show_help(self):
         """Opens the help dialog. The dialog displays the html documentation.
@@ -355,6 +388,56 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         while row_count >= 0:
             self.tblResult.removeRow(row_count)
             row_count = row_count - 1
+
+    def export_table(self, output_file, table):
+        """Exports the table contents of the docking widget.
+
+        :param output_file: Directory and output file name (gpkg)
+        :type output_file: str
+
+        :param table: Pointer to the table from which data will be retrieved
+        :type table: QTableWidget
+
+        :returns: success, msg
+        :rtype: boolean, string
+        """
+        new_layer = QgsVectorLayer("Point", "temporary_points", "memory")
+        layer_provider = new_layer.dataProvider()
+
+        # Adds the new attributes fields to the layer
+        new_layer.startEditing()
+        list_attributes = [QgsField(TABLE_DATA_TYPE['file'], QVariant.String),
+                           QgsField(TABLE_VALUE['file'], QVariant.String),
+                           QgsField(TABLE_LONG['file'], QVariant.Double),
+                           QgsField(TABLE_LAT['file'], QVariant.Double)]
+        layer_provider.addAttributes(list_attributes)
+        new_layer.updateFields()
+        new_layer.commitChanges()
+
+        row_cnt = table.rowCount()
+        # Loops through each of the table entries
+        i = 0  # Current ID
+        while i < row_cnt:
+            key = table.item(i, 0).text()  # Data source
+            value = table.item(i, 1).text()  # Value at the point
+            x = float(table.item(i, 2).text())  # Longitude
+            y = float(table.item(i, 3).text())  # Latitude
+
+            # Creates the new feature and updates its attributes
+            new_layer.startEditing()
+            new_point = QgsPointXY(x, y)
+            new_feat = QgsFeature()
+            new_feat.setAttributes([key, value, x, y])
+            new_feat.setGeometry(QgsGeometry.fromPointXY(new_point))
+            layer_provider.addFeatures([new_feat])
+            new_layer.commitChanges()
+
+            i = i + 1
+
+        target_crs = QgsCoordinateReferenceSystem("EPSG:4326")  # CHANGE??? ======================================================================
+        success, created_layer, msg = create_vector_file(new_layer, output_file, target_crs)
+
+        return success, msg
 
     def find_name_info(self, search_name, registry):
         """The method finds the key ID of a provided key name. It checks each case until

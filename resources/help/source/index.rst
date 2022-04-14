@@ -26,6 +26,7 @@ Contents:
    installation
    docking_panel
    processing_tool
+   account_dialog
    options_dialog
    plugin_tests
 
