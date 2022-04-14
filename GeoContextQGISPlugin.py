@@ -27,7 +27,12 @@ import os
 import time
 import inspect
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt, QVariant, QUrl
+from qgis.PyQt.QtCore import (QSettings,
+                              QTranslator,
+                              QCoreApplication,
+                              Qt,
+                              QVariant,
+                              QUrl)
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QTableWidgetItem
 from qgis.core import (QgsProcessingAlgorithm,
@@ -59,11 +64,18 @@ from .utilities.utilities import (get_canvas_crs,
                                   transform_xy_coordinates,
                                   apply_decimal_places_to_float_panel)
 
-from bridge_api.default import SERVICE, GROUP, COLLECTION, VALUE_JSON, SERVICE_JSON, GROUP_JSON, COLLECTION_JSON
+from bridge_api.default import (SERVICE,
+                                GROUP,
+                                COLLECTION,
+                                VALUE_JSON,
+                                SERVICE_JSON,
+                                GROUP_JSON,
+                                COLLECTION_JSON)
 
 # Import the code for the widgets
 from .widgets.GeoContextQGISPlugin_dockwidget import GeoContextQGISPluginDockWidget
 from .widgets.GeoContextQGISPlugin_options_dialog import OptionsDialog
+from .widgets.GeoContextQGISPlugin_account_dialog import AccountDialog
 from .widgets.geocontext_help_dialog import HelpDialog
 from .algorithms.geocontext_point_processing_provider import GeocontextPointProcessingProvider
 from .bridge_api.api_abstract import ApiClient
@@ -220,6 +232,14 @@ class GeoContextQGISPlugin:
             add_to_menu=True,
             add_to_toolbar=False)
 
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Account'),
+            callback=self.show_account_settings,
+            parent=self.iface.mainWindow(),
+            add_to_menu=True,
+            add_to_toolbar=False)
+
         self.help_action = self.add_action(
             icon_path,
             text=self.tr('Help', ),
@@ -329,6 +349,20 @@ class GeoContextQGISPlugin:
             error_msg = "Cannot find the /resources/help/build/html/index.html file. Cannot open the help dialog."
             self.iface.messageBar().pushCritical("Missing file: ", error_msg)
 
+    def show_account_settings(self):
+        """Opens the account settings dialog.
+        """
+        dialog = AccountDialog(self.iface)
+        result = dialog.exec_()
+
+        if result:
+            dialog.set_user()
+            dialog.set_password()
+        else:
+            # The user closed the dialog without saving
+            pass
+
+
     def point_request_panel(self, x, y, registry, key, api_url):
         """Return the value retrieved from the ordered dictionary containing the requested data
         from the server. This method is used by the docket widget panel of the plugin.
@@ -404,7 +438,7 @@ class GeoContextQGISPlugin:
         registry = self.dockwidget.cbRegistry.currentText()  # Service, group or collection
 
         key_name = self.dockwidget.cbKey.currentText()  # Key name, e.g. Elevation
-        dict_key = self.dockwidget.find_name_info(key_name,registry)  # Retrieves the request key using the selected key name
+        dict_key = self.dockwidget.find_name_info(key_name, registry)  # Retrieves the request key using the selected key name
         key = dict_key['key']
 
         data = self.point_request_panel(x, y, registry, key, api_url)
@@ -416,7 +450,7 @@ class GeoContextQGISPlugin:
             # Request ends
             end = time.time()
             rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
-            request_time_ms = round((end - start)*1000, rounding_factor)
+            request_time_ms = round((end - start) * 1000, rounding_factor)
             self.dockwidget.lblRequestTime.setText("Request time (ms): " + str(request_time_ms))
 
             registry = self.dockwidget.cbRegistry.currentText()
@@ -433,7 +467,9 @@ class GeoContextQGISPlugin:
 
                 self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
                 self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))  # Sets the key in the table
-                self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
+                self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the value in the table
+                self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+                self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
             # Group option
             elif registry == GROUP['name']:
                 # group_name = data['name']
@@ -448,7 +484,9 @@ class GeoContextQGISPlugin:
 
                     self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
                     self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                    self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
+                    self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the value in the table
+                    self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+                    self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
             # Collection option
             elif registry == COLLECTION['name']:
                 list_dict_groups = data[GROUP_JSON]  # Each group contains a list of the 'Service' data associated with the group
@@ -465,7 +503,9 @@ class GeoContextQGISPlugin:
 
                         self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
                         self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                        self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
+                        self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the value in the table
+                        self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+                        self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
         else:  # Request were unsuccessful
             error_msg = "Could not perform data request. Check if the endpoint URL is correct."
             self.iface.messageBar().pushCritical("Request error: ", error_msg)

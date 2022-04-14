@@ -397,7 +397,7 @@ def create_vector_file(input_layer, output_layer, layer_crs):
     """
     status_index, msg = QgsVectorFileWriter.writeAsVectorFormat(input_layer, output_layer, 'UTF-8', layer_crs)
     if status_index == 2:  # File already exists and cannot be overwritten (locked)
-        error_msg = "File creation error due to already existing, locked file: " + msg
+        error_msg = "Output file already exists and cannot be overwritten (likely locked): %".format(msg)
         return False, None, error_msg
 
     output_file_name = os.path.basename(output_layer)
