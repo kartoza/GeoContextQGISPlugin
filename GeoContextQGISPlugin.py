@@ -354,7 +354,6 @@ class GeoContextQGISPlugin:
         """
         dialog = AccountDialog(self.iface)
         result = dialog.exec_()
-<<<<<<< HEAD
 
         if result:
             dialog.set_user()
@@ -362,16 +361,6 @@ class GeoContextQGISPlugin:
         else:
             # The user closed the dialog without saving
             pass
-=======
-
-        if result:
-            dialog.set_user()
-            dialog.set_password()
-        else:
-            # The user closed the dialog without saving
-            pass
-
->>>>>>> 84ad322a14b6c26aacfb037aa5b84ad340cd560a
 
     def point_request_panel(self, x, y, registry, key, api_url):
         """Return the value retrieved from the ordered dictionary containing the requested data

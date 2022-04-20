@@ -26,10 +26,6 @@ import sys
 import os
 import time
 import inspect
-<<<<<<< HEAD
-=======
-import csv
->>>>>>> 84ad322a14b6c26aacfb037aa5b84ad340cd560a
 
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QUrl, QVariant
@@ -54,12 +50,8 @@ sys.path.insert(0, parentdir)
 from utilities.utilities import (get_request_crs,
                                  create_vector_file)
 from bridge_api.api_abstract import ApiClient
-<<<<<<< HEAD
 from bridge_api.default import (API_DEFAULT_URL,
                                 SERVICE,
-=======
-from bridge_api.default import (SERVICE,
->>>>>>> 84ad322a14b6c26aacfb037aa5b84ad340cd560a
                                 GROUP,
                                 COLLECTION,
                                 VALUE_JSON,
@@ -71,10 +63,6 @@ from bridge_api.default import (SERVICE,
                                 TABLE_LONG,
                                 TABLE_LAT)
 
-<<<<<<< HEAD
-=======
-# Core API modules
->>>>>>> 84ad322a14b6c26aacfb037aa5b84ad340cd560a
 from requests import exceptions
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -105,57 +93,10 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                                   TABLE_LONG['table'],
                                                   TABLE_LAT['table']])
 
-<<<<<<< HEAD
         # Gets the lists of available service, group and collection layers
         self.list_context = self.retrieve_registry_list(API_DEFAULT_URL, SERVICE['key'])  # Service
         self.list_group = self.retrieve_registry_list(API_DEFAULT_URL, GROUP['key'])  # Group
         self.list_collection = self.retrieve_registry_list(API_DEFAULT_URL, COLLECTION['key'])  # Collection
-=======
-        # Retrieves the schema data from the URL stored using the options dialog
-        settings = QgsSettings()
-        schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
-
-        # Attempts to request the schema configuration from the API
-        # try:
-        #     client = ApiClient()
-        #
-        #     response = client.get(schema)  # Retrieve the API schema
-        #     self.list_context = response.json()
-        #
-        # except exceptions.ConnectionError:  # Could not connect to the provided URL
-        #     error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
-        #     self.iface.messageBar().pushCritical("Connection error: ", error_msg)
-        #
-        #     self.list_context = []
-        # except Exception as e:  # Other possible connection issues
-        #     error_msg = "Could not connect to " + schema + ". Unknown error: " + str(e)
-        #     self.iface.messageBar().pushCritical("Connection error: ", error_msg)
-        #
-        #     self.list_context = []
-
-        # Services: ONLY TEMP
-        self.list_context = [{'key': 'altitude', 'name': 'altitude', 'description': 'N/A'},
-                        {'key': 'monthly_max_temperature_december', 'name': 'monthly_max_temperature_december', 'description': 'N/A'},
-                        {'key': 'monthly_precipitation_may', 'name': 'monthly_precipitation_may', 'description': 'N/A'}]
-
-        # Groups: ONLY TEMP
-        self.list_group = [{'key': 'bioclimatic_variables_group', 'name': 'Bioclimatic layers', 'description': 'N/A'},
-                           {'key': 'monthly_precipitation_group', 'name': 'Monthly Precipitation', 'description': 'N/A'},
-                           {'key': 'monthly_solar_radiation_group', 'name': 'Monthly Solar Radiation', 'description': 'N/A'},
-                           {'key': 'monthly_max_temperature_group', 'name': 'Monthly Maximum Temperature', 'description': 'N/A'}]
-
-        # Collections: ONLY TEMP
-        self.list_collection = [{'key': 'global_climate_collection', 'name': 'Global climate collection', 'description': 'N/A'},
-                                {'key': 'healthy_rivers_collection', 'name': 'Healthy rivers collection', 'description': 'N/A'},
-                                {'key': 'healthy_rivers_spatial_collection', 'name': 'Healthy rivers spatial filters', 'description': 'N/A'},
-                                {'key': 'hydrological_regions', 'name': 'Hydrological regions', 'description': 'N/A'},
-                                {'key': 'ledet_collection', 'name': 'LEDET collection', 'description': 'N/A'},
-                                {'key': 'sa_boundary_collection', 'name': 'South African boundary collection', 'description': 'N/A'},
-                                {'key': 'sa_climate_collection', 'name': 'South African climate collection', 'description': 'N/A'},
-                                {'key': 'sa_land_cover_land_use_collection', 'name': 'South African land use collection', 'description': 'N/A'},
-                                {'key': 'sa_river_ecosystem_collection', 'name': 'South African river collection', 'description': 'N/A'},
-                                {'key': 'sedac_collection', 'name': 'Socioeconomic data and application center collection', 'description': 'N/A'}]
->>>>>>> 84ad322a14b6c26aacfb037aa5b84ad340cd560a
 
         # If the context list is empty, these steps should be skipped
         if len(self.list_context) > 0:
@@ -535,46 +476,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 name = service['name']
                 list_key_names.append(name)
 
-<<<<<<< HEAD
             # Updates the keys in the processing dialog
             self.cbKey.addItems(list_key_names)
-=======
-            # Docs which contains the schema of geocontext. Link can be changed in the options dialog
-            schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
-
-            # Checks whether the provided schema configuration URL is available
-            try:
-                # Requests the schema
-                client = ApiClient()
-
-                response = client.get(schema)  # Retrieve the API schema
-                self.list_context = response.json()
-            except exceptions.ConnectionError:  # Could not connect to the provided URL
-                error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
-                self.iface.messageBar().pushCritical("Connection error: ", error_msg)
-
-                self.list_context = []
-            except Exception as e:  # Other possible connection issues
-                error_msg = "Could not connect to " + schema + ". Unknown error: " + str(e)
-                self.iface.messageBar().pushCritical("Connection error: ", error_msg)
-
-                self.list_context = []
-
-            # Checks if the geocontext list contains data
-            if len(self.list_context) > 0:
-                # Adds the names to a list, and then sorts the list alphabetically
-                list_key_names = []
-                for context in self.list_context:
-                    name = context['name']
-                    list_key_names.append(name)
-                list_key_names = sorted(list_key_names)
-
-                # Applies the updated list
-                self.cbKey.addItems(list_key_names)
-            else:  # Empty geocontext list. This can be a result of the incorrect URL, or the site is down
-                error_msg = "The retrieved context list is empty. Check the provided schema configuration URL or whether the site is online."
-                self.iface.messageBar().pushCritical("Empty geocontext list error: ", error_msg)
->>>>>>> 84ad322a14b6c26aacfb037aa5b84ad340cd560a
         elif registry_type == "Group":
             # Creates a list of the group layers
             list_key_names = []

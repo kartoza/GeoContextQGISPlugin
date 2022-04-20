@@ -1,12 +1,9 @@
 """This module contains default values used by the plugin.
 """
 
-<<<<<<< HEAD
 # This is default Kartoza API URL endpoint
 API_DEFAULT_URL = "https://staging.geocontext.kartoza.com/api/v2"
 
-=======
->>>>>>> 84ad322a14b6c26aacfb037aa5b84ad340cd560a
 # Registry keys
 SERVICE = {
     'name': 'Service',
