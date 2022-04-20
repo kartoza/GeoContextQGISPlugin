@@ -47,16 +47,23 @@ from qgis.core import (QgsProcessing,
                        QgsVectorLayer,
                        QgsField,
                        QgsSettings)
+<<<<<<< HEAD
 from requests import exceptions
+=======
+>>>>>>> 84ad322a14b6c26aacfb037aa5b84ad340cd560a
 
 # Adds the plugin core path to the system path
 cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(cur_dir)
 sys.path.insert(0, parentdir)
 
+<<<<<<< HEAD
 from bridge_api.api_abstract import ApiClient
 from bridge_api.default import (API_DEFAULT_URL,
                                 SERVICE,
+=======
+from bridge_api.default import (SERVICE,
+>>>>>>> 84ad322a14b6c26aacfb037aa5b84ad340cd560a
                                 GROUP,
                                 COLLECTION,
                                 TOOL_INPUT_POINT_LAYER,
@@ -102,10 +109,54 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
         with some other properties.
         """
 
+<<<<<<< HEAD
         # Gets the lists of available service, group and collection layers
         self.list_service = self.retrieve_registry_list(API_DEFAULT_URL, SERVICE['key'])  # Service
         self.list_group = self.retrieve_registry_list(API_DEFAULT_URL, GROUP['key'])  # Group
         self.list_collection = self.retrieve_registry_list(API_DEFAULT_URL, COLLECTION['key'])  # Collection
+=======
+        # Attempts to request the schema configuration from the API
+        # try:
+        #     client = ApiClient()
+        #
+        #     response = client.get(schema)  # Retrieve the API schema
+        #     self.list_context = response.json()
+        #
+        # except exceptions.ConnectionError:  # Could not connect to the provided URL
+        #     error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
+        #     self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+        #
+        #     self.list_context = []
+        # except Exception as e:  # Other possible connection issues
+        #     error_msg = "Could not connect to " + schema + ". Unknown error: " + str(e)
+        #     self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+        #
+        #     self.list_context = []
+
+        # Services: ONLY TEMP
+        # Services: ONLY TEMP =====================================================================================
+        self.list_service = [{'key': 'altitude', 'name': 'Altitude', 'description': 'N/A'},
+                             {'key': 'monthly_max_temperature_december', 'name': 'Max temp dec', 'description': 'N/A'},
+                             {'key': 'monthly_precipitation_may', 'name': 'Precipitation may', 'description': 'N/A'}]
+
+        # Groups: ONLY TEMP ======================================================================================
+        self.list_group = [{'key': 'bioclimatic_variables_group', 'name': 'Bioclimatic layers', 'description': 'N/A'},
+                           {'key': 'monthly_precipitation_group', 'name': 'Monthly Precipitation', 'description': 'N/A'},
+                           {'key': 'monthly_solar_radiation_group', 'name': 'Monthly Solar Radiation', 'description': 'N/A'},
+                           {'key': 'monthly_max_temperature_group', 'name': 'Monthly Maximum Temperature', 'description': 'N/A'}]
+
+        # Collections: ONLY TEMP =================================================================================
+        self.list_collection = [{'key': 'global_climate_collection', 'name': 'Global climate collection', 'description': 'N/A'},
+                                {'key': 'healthy_rivers_collection', 'name': 'Healthy rivers collection', 'description': 'N/A'},
+                                {'key': 'healthy_rivers_spatial_collection', 'name': 'Healthy rivers spatial filters', 'description': 'N/A'},
+                                {'key': 'hydrological_regions', 'name': 'Hydrological regions', 'description': 'N/A'},
+                                {'key': 'ledet_collection', 'name': 'LEDET collection', 'description': 'N/A'},
+                                {'key': 'sa_boundary_collection', 'name': 'South African boundary collection', 'description': 'N/A'},
+                                {'key': 'sa_climate_collection', 'name': 'South African climate collection', 'description': 'N/A'},
+                                {'key': 'sa_land_cover_land_use_collection', 'name': 'South African land use collection', 'description': 'N/A'},
+                                {'key': 'sa_river_ecosystem_collection', 'name': 'South African river collection', 'description': 'N/A'},
+                                {'key': 'sedac_collection', 'name': 'Socioeconomic data and application center collection', 'description': 'N/A'}]
+>>>>>>> 84ad322a14b6c26aacfb037aa5b84ad340cd560a
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -260,6 +311,7 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
             # Return the results of the algorithm
             return {TOOL_OUTPUT_POINT_LAYER: output_points}
 
+<<<<<<< HEAD
     def retrieve_registry_list(self, api_url, registry):
         """Return a list of available layers for the provided registry.
 
@@ -302,6 +354,20 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
         :returns: The dictionary of the selected key
         :rtype: Dict
         """
+=======
+    def find_name_info(self, index, registry):
+        """The method finds the key ID of a provided drop down box index.
+
+        :param index: The drop down box index of the key selected by the user
+        :type index: Integer
+
+        :param registry: The registry type selected by the user in the panel
+        :type registry: String
+
+        :returns: The dictionary of the selected key
+        :rtype: Dict
+        """
+>>>>>>> 84ad322a14b6c26aacfb037aa5b84ad340cd560a
         if registry == SERVICE['key']:
             return self.list_service[index]
         elif registry == GROUP['key']:
