@@ -1,7 +1,7 @@
 # GeoContext QGIS plugin
 
-A QGIS plugin which retrieves data for a geographic position. Data is fetched from
-a GeoContext data server which can make use of WMS and WFS. The plugin allows the user to
+A QGIS plugin which retrieves data for a provided geographic position. Data is fetched from
+the GeoContext data server which can make use of WMS and WFS. The plugin allows the user to
 click in the QGIS map canvas, which will fetch the information for the location. Results are
 shown in a table. Another feature of the plugin is a processing tool. The tool retrieves
 values for each point in a point layer. Results are stored in the attribute in a newly created
@@ -50,7 +50,7 @@ The user can also directly clone the repository and manually copy it to the QGIS
 1. Clone the reposity using git: 'git clone https://github.com/kartoza/GeoContextQGISPlugin';
 2. Go to the QGIS plugins folder. It should be similar to 'C:\Users\USERNAME\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\GeoContextQGISPlugin',
    where USERNAME is your Windows username;
-3. Copy the cloned folder to the plugins folder; and
+3. Copy the cloned folder to the plugin's folder; and
 4. Enable the plugin in the QGIS Plugin manager. A QGIS restart might be required.
 
 # Plugin guide
@@ -64,7 +64,7 @@ the cursor. The figure which follows indicate, highlighted in red, the GeoContex
 
 ![toolbar](resources/images/toolbar.png)
 
-To open the processing tool or the options dialog for the plugin, the user can go to 'Plugins' -> 'GeoContext'.
+To open the processing tool or the option's dialog for the plugin, the user can go to 'Plugins' -> 'GeoContext'.
 Here is an example of the menu:
 
 ![plugin_menu](resources/images/plugin_menu.png)
@@ -82,15 +82,15 @@ the key ID, which is then used to perform the request;
 - Cursor: Can be used to enable or disable the canvas point tool cursor. The user won't be 
 to select points using the cursor if this is disabled;
 - Fetch: Does a request for the location, and selected data;
-- Results table(s): Results from the performed request; and
+- Results table(s): Results from the performed request;
+- Export: Export the results in the table to a geopackage (gpkg); and
 - Clear table: Clears the table of any content.
 
 
 ![panel](resources/images/panel.png)
 
 ## Processing tool
-The processing tool can be accessed via the GeoContext menu, as illustrated in the 'Plugin menu and toolbar'
-section. This tool allows the user to provide a point vector file as input to perform requests with. A request
+The processing tool can be accessed via the QGIS toolbox. This tool allows the user to provide a point vector file as input to perform requests with. A request
 will be performed for each of the points contained by the vector layer. Any points with no geometry will be ignored.
 Here is a quick explanation on the parameters of the tool:
 - Point layer: This is the input layer which contains the points for which requests will be made. This can
@@ -162,3 +162,5 @@ https://kartoza.com/
 
 **Divan Vermeulen**
 divan@kartoza.com
+
+![kartoza_logo](resources/images/KartozaLogoHorizontalDarkBackgroundRGB.png)
