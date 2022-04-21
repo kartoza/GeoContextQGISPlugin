@@ -29,7 +29,7 @@ import inspect
 
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QUrl, QVariant
-from qgis.PyQt.QtWidgets import QTableWidgetItem
+from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem
 from qgis.core import (QgsProject,
                        QgsSettings,
                        QgsCoordinateReferenceSystem,
@@ -41,6 +41,7 @@ from qgis.core import (QgsProject,
                        QgsGeometry)
 
 from .geocontext_help_dialog import HelpDialog
+from .GeoContextQGISPlugin_plot import PlotDialog
 
 # Adds the plugin core path to the system path
 cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -88,10 +89,14 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.point_tool = point_tool  # Canvas point tool - cursor used to selected locations
         self.cursor_active = True  # Sets to True because the point tool is now active
         self.table_output_file.setFilter("*.gpkg")  # Output format for table exporting set to geopackage
-        self.tblResult.setHorizontalHeaderLabels([TABLE_DATA_TYPE['table'],
-                                                  TABLE_VALUE['table'],
-                                                  TABLE_LONG['table'],
-                                                  TABLE_LAT['table']])
+
+        column_names = [TABLE_DATA_TYPE['table'],
+                        TABLE_VALUE['table'],
+                        TABLE_LONG['table'],
+                        TABLE_LAT['table']]
+        self.tblResult = QTableWidget()
+        self.tblResult.setColumnCount(len(column_names))
+        self.tblResult.setHorizontalHeaderLabels(column_names)
 
         # Gets the lists of available service, group and collection layers
         self.list_context = self.retrieve_registry_list(API_DEFAULT_URL, SERVICE['key'])  # Service
@@ -133,6 +138,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btnCursor.clicked.connect(self.cursor_btn_click)  # Triggers when the Cursor button is pressed
         self.btnHelp.clicked.connect(self.help_btn_click)  # Triggers when the Help button is pressed
         self.btnExport.clicked.connect(self.export_btn_click)  # Triggers when the Export button is pressed
+        self.btnPlot.clicked.connect(self.plot_btn_click)
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
@@ -281,6 +287,9 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.canvas.setMapTool(self.point_tool)
             self.cursor_active = True
 
+    def plot_btn_click(self):
+        self.show_plot()
+
     def help_btn_click(self):
         """Opens the help dialog.
         """
@@ -314,6 +323,10 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.iface.messageBar().pushCritical("Output directory does not exist: ", "The user has not provided an output file!")
             else:
                 self.iface.messageBar().pushCritical("Output directory does not exist: ", output_dir)
+
+    def show_plot(self):
+        results_dialog = PlotDialog(self.tblResult)
+        results_dialog.exec_()
 
     def show_help(self):
         """Opens the help dialog. The dialog displays the html documentation.

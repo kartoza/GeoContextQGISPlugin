@@ -469,6 +469,8 @@ class GeoContextQGISPlugin:
                 self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the value in the table
                 self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
                 self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
+
+                self.dockwidget.listResults.addItem(str(point_value_str))
             # Group option
             elif registry == GROUP['name']:
                 # group_name = data['name']

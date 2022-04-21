@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>462</width>
+    <width>460</width>
     <height>800</height>
    </rect>
   </property>
@@ -40,33 +40,49 @@
       </widget>
      </item>
      <item>
-      <widget class="QTableWidget" name="tblResult">
-       <property name="enabled">
+      <widget class="QTabWidget" name="tabResults">
+       <property name="tabShape">
+        <enum>QTabWidget::Rounded</enum>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <property name="documentMode">
+        <bool>false</bool>
+       </property>
+       <property name="tabsClosable">
         <bool>true</bool>
        </property>
-       <attribute name="horizontalHeaderDefaultSectionSize">
-        <number>209</number>
-       </attribute>
-       <column>
-        <property name="text">
-         <string>Data type</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Value</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Longitude</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Latitude</string>
-        </property>
-       </column>
+       <widget class="QWidget" name="tab">
+        <attribute name="title">
+         <string>Empty</string>
+        </attribute>
+        <widget class="QListWidget" name="listResults">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>401</width>
+           <height>281</height>
+          </rect>
+         </property>
+         <property name="movement">
+          <enum>QListView::Static</enum>
+         </property>
+         <property name="flow">
+          <enum>QListView::TopToBottom</enum>
+         </property>
+         <property name="layoutMode">
+          <enum>QListView::Batched</enum>
+         </property>
+         <property name="viewMode">
+          <enum>QListView::ListMode</enum>
+         </property>
+         <property name="sortingEnabled">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </widget>
       </widget>
      </item>
      <item>
@@ -113,6 +129,13 @@
         <widget class="QPushButton" name="btnClear">
          <property name="text">
           <string>Clear table</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnPlot">
+         <property name="text">
+          <string>Plot</string>
          </property>
         </widget>
        </item>
