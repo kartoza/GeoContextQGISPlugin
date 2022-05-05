@@ -42,10 +42,6 @@ class OptionsDialog(QDialog, FORM_CLASS):
         # Sets the options according what the user has it previously set/saved using the options dialog
         settings = QgsSettings()
 
-        # API configuration
-        self.lineUrl.setValue(settings.value('geocontext-qgis-plugin/url', '', type=str))
-        self.lineSchema.setValue(settings.value('geocontext-qgis-plugin/schema', '', type=str))
-
         # Global settings
         self.cbCrs.setCurrentIndex(self.cbCrs.findText(settings.value('geocontext-qgis-plugin/request_crs', "WGS84 (EPSG:4326)", type=str)))
 
@@ -98,26 +94,6 @@ class OptionsDialog(QDialog, FORM_CLASS):
         """
 
         self.lblDecPlaceTool.setText(str(self.sldDecPlacesTool.value()))
-
-    def set_url(self):
-        """Sets the base URL which will be used to request data/values.
-        This can be set using this dialog.
-        """
-
-        settings = QgsSettings()
-        url = self.lineUrl.value()
-
-        settings.setValue('geocontext-qgis-plugin/url', url)
-
-    def set_schema(self):
-        """Sets the schema docs provided by the user. This can be set using
-        this dialog
-        """
-
-        settings = QgsSettings()
-        schema = self.lineSchema.value()
-
-        settings.setValue('geocontext-qgis-plugin/schema', schema)
 
     def set_auto_clear(self):
         """Sets whether the panel table should be cleared when the user clicks in the canvas. This can be set using

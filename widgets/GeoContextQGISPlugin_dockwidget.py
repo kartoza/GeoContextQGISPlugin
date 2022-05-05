@@ -124,25 +124,36 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
             self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
             self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
+
+            self.tabResults.removeTab(0)  # Removes the already existing tab from the UI
+            list_widget = QtWidgets.QListWidget()  # The data is stored here
+            self.tabResults.addTab(list_widget, dict_current['key'])  # Adds the new tab using the list widget
         else:  # Empty geocontext list. This can be a result of the incorrect URL, or the site is down
             error_msg = "The retrieved services list is empty."
             self.iface.messageBar().pushCritical("Empty geocontext list error: ", error_msg)
 
+        self.set_connectors()
+
+    def closeEvent(self, event):
+        self.closingPlugin.emit()
+        event.accept()
+
+    def set_connectors(self):
         # UI triggers
         self.cbRegistry.currentTextChanged.connect(self.registry_changed)  # Triggered when the registry changes
         self.cbKey.currentTextChanged.connect(self.key_changed)  # Triggers when the key value changes
 
         # Button triggers
-        self.btnClear.clicked.connect(self.clear_results_table)  # Triggers when the Clear button is clicked
-        self.btnFetch.clicked.connect(self.fetch_btn_click)  # Triggers when the Fetch button is pressed
-        self.btnCursor.clicked.connect(self.cursor_btn_click)  # Triggers when the Cursor button is pressed
-        self.btnHelp.clicked.connect(self.help_btn_click)  # Triggers when the Help button is pressed
-        self.btnExport.clicked.connect(self.export_btn_click)  # Triggers when the Export button is pressed
+        self.btnClear.clicked.connect(self.clear_btn_click)
+        self.btnFetch.clicked.connect(self.fetch_btn_click)
+        self.btnCursor.clicked.connect(self.cursor_btn_click)
+        self.btnHelp.clicked.connect(self.help_btn_click)
+        self.btnExport.clicked.connect(self.export_btn_click)
         self.btnPlot.clicked.connect(self.plot_btn_click)
-
-    def closeEvent(self, event):
-        self.closingPlugin.emit()
-        event.accept()
+        self.btnAdd.clicked.connect(self.add_btn_click)
+        self.btnRemove.clicked.connect(self.remove_btn_click)
+        self.btnTable.clicked.connect(self.table_btn_click)
+        self.btnDelete.clicked.connect(self.delete_btn_click)
 
     def retrieve_registry_list(self, api_url, registry):
         """Return a list of available layers for the provided registry.
@@ -201,6 +212,55 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
             self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
             self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
+
+            # Set the current tab's text to the currently selected
+            row_count = self.tabResults.currentWidget().count()
+
+            if row_count == 0:  # If the tab is empty, rename the tab
+                self.update_current_tab_text(dict_current['key'])
+            else:  # If the tab already consists of data, create a new one
+                self.add_btn_click()
+
+    def add_btn_click(self):
+        """Adds a new tab to the tabs panel
+        """
+        # Retrieved registry and newly selected key ID
+        registry = self.cbRegistry.currentText()
+        key_name = self.cbKey.currentText()
+
+        # Key dict
+        dict_current = self.find_name_info(key_name, registry)
+
+        # Creates a new tab
+        list_widget = QtWidgets.QListWidget()
+        i = self.tabResults.addTab(list_widget, dict_current['key'])
+        self.tabResults.setCurrentIndex(i)  # Selects the newly added tab
+
+    def remove_btn_click(self):
+        """Remove the selected entry from the table
+        """
+        qlist_widget = self.tabResults.currentWidget()
+        selected_index = qlist_widget.currentRow()
+        qlist_widget.takeItem(selected_index)
+
+    def delete_btn_click(self):
+        """Remove the current tab from the tabs panel
+        """
+        count = self.tabResults.count()
+        if count == 1:  # Keep the last remaining tab, but clear it
+            self.clear_results_list()
+        else:  # If there are more than one tab
+            index = self.tabResults.currentIndex()
+            self.tabResults.removeTab(index)
+
+    def table_btn_click(self):
+        print("table")
+
+    def clear_btn_click(self):
+        """This method is called when the clear button is clicked
+        """
+        self.clear_results_list()  # Clears the list shown in the UI
+        self.clear_results_table()  # Clears the table widget which stores the data
 
     def fetch_btn_click(self):
         """This method is called when the Fetch button on the panel window is pressed.
@@ -347,6 +407,12 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             error_msg = "Cannot find the /resources/help/build/html/docking_panel.html file. Cannot open the help dialog."
             self.iface.messageBar().pushCritical("Missing file: ", error_msg)
 
+    def update_current_tab_text(self, new_text):
+        """Set the current tab's text to the currently selected.
+        """
+        tab_index = self.tabResults.currentIndex()
+        self.tabResults.setTabText(tab_index, new_text)
+
     def point_request_panel(self, x, y):
         """Return the value retrieved from the ordered dictionary containing the requested data
         from the server. This method is used by the docket widget panel of the plugin.
@@ -381,11 +447,32 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         return data.json()
 
-    def clear_results_table(self):
-        """Clears the table in the panel. This can be called when the user clicks the
+    def clear_results_list(self):
+        """Clears the table in the panel (qlistwidget). This can be called when the user clicks the
         Clear button, or if the user has automatic clearing enabled.
         """
+        qlist_widget = self.tabResults.currentWidget()
+        row_cnt = qlist_widget.count()
 
+        i = row_cnt - 1
+        while i >= 0:
+            item_widget = qlist_widget.takeItem(i)
+            i = i - 1
+
+        # Retrieved registry and newly selected key ID
+        registry = self.cbRegistry.currentText()
+        key_name = self.cbKey.currentText()
+
+        # Key dict
+        dict_current = self.find_name_info(key_name, registry)
+
+        i = self.tabResults.currentIndex()
+        self.tabResults.setTabText(i, dict_current['key'])
+
+    def clear_results_table(self):
+        """Clears the table widget. This can be called when the user clicks the
+        Clear button, or if the user has automatic clearing enabled.
+        """
         row_count = self.tblResult.rowCount()
         while row_count >= 0:
             self.tblResult.removeRow(row_count)

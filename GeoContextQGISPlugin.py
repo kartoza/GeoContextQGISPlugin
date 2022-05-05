@@ -320,8 +320,6 @@ class GeoContextQGISPlugin:
 
         # The user saved the changes to the settings
         if result:
-            dialog.set_url()
-            dialog.set_schema()
             dialog.set_auto_clear()
             dialog.set_dec_places_panel()
             dialog.set_dec_places_tool()
@@ -464,13 +462,16 @@ class GeoContextQGISPlugin:
                 rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
                 point_value_str = apply_decimal_places_to_float_panel(point_value_str, rounding_factor)
 
+                # Updates the QTableWidget stores the data
                 self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
                 self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))  # Sets the key in the table
                 self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the value in the table
                 self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
                 self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
 
-                self.dockwidget.listResults.addItem(str(point_value_str))
+                # Updates/adds the value to the docking panel table
+                qlist_widget = self.dockwidget.tabResults.currentWidget()
+                qlist_widget.addItem(str(point_value_str))
             # Group option
             elif registry == GROUP['name']:
                 # group_name = data['name']
@@ -488,6 +489,10 @@ class GeoContextQGISPlugin:
                     self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the value in the table
                     self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
                     self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
+
+                    # Updates/adds the value to the docking panel table
+                    qlist_widget = self.dockwidget.tabResults.currentWidget()
+                    qlist_widget.addItem(str(point_value_str))
             # Collection option
             elif registry == COLLECTION['name']:
                 list_dict_groups = data[GROUP_JSON]  # Each group contains a list of the 'Service' data associated with the group
@@ -507,6 +512,10 @@ class GeoContextQGISPlugin:
                         self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the value in the table
                         self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
                         self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
+
+                        # Updates/adds the value to the docking panel table
+                        qlist_widget = self.dockwidget.tabResults.currentWidget()
+                        qlist_widget.addItem(str(point_value_str))
         else:  # Request were unsuccessful
             error_msg = "Could not perform data request. Check if the endpoint URL is correct."
             self.iface.messageBar().pushCritical("Request error: ", error_msg)
