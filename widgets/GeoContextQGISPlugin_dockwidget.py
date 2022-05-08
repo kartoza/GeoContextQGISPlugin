@@ -30,15 +30,17 @@ import inspect
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QUrl, QVariant
 from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem
-from qgis.core import (QgsProject,
-                       QgsSettings,
-                       QgsCoordinateReferenceSystem,
-                       QgsCoordinateTransform,
-                       QgsPointXY,
-                       QgsVectorLayer,
-                       QgsField,
-                       QgsFeature,
-                       QgsGeometry)
+from qgis.core import (
+    QgsProject,
+    QgsSettings,
+    QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform,
+    QgsPointXY,
+    QgsVectorLayer,
+    QgsField,
+    QgsFeature,
+    QgsGeometry
+)
 
 from .geocontext_help_dialog import HelpDialog
 from .GeoContextQGISPlugin_plot import PlotDialog
@@ -48,21 +50,25 @@ cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()
 parentdir = os.path.dirname(cur_dir)
 sys.path.insert(0, parentdir)
 
-from utilities.utilities import (get_request_crs,
-                                 create_vector_file)
+from utilities.utilities import (
+    get_request_crs,
+    create_vector_file
+)
 from bridge_api.api_abstract import ApiClient
-from bridge_api.default import (API_DEFAULT_URL,
-                                SERVICE,
-                                GROUP,
-                                COLLECTION,
-                                VALUE_JSON,
-                                SERVICE_JSON,
-                                GROUP_JSON,
-                                COLLECTION_JSON,
-                                TABLE_DATA_TYPE,
-                                TABLE_VALUE,
-                                TABLE_LONG,
-                                TABLE_LAT)
+from bridge_api.default import (
+    API_DEFAULT_URL,
+    SERVICE,
+    GROUP,
+    COLLECTION,
+    VALUE_JSON,
+    SERVICE_JSON,
+    GROUP_JSON,
+    COLLECTION_JSON,
+    TABLE_DATA_TYPE,
+    TABLE_VALUE,
+    TABLE_LONG,
+    TABLE_LAT
+)
 
 from requests import exceptions
 
@@ -90,13 +96,9 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.cursor_active = True  # Sets to True because the point tool is now active
         self.table_output_file.setFilter("*.gpkg")  # Output format for table exporting set to geopackage
 
-        column_names = [TABLE_DATA_TYPE['table'],
-                        TABLE_VALUE['table'],
-                        TABLE_LONG['table'],
-                        TABLE_LAT['table']]
-        self.tblResult = QTableWidget()
-        self.tblResult.setColumnCount(len(column_names))
-        self.tblResult.setHorizontalHeaderLabels(column_names)
+        # This variable will store all the tables
+        self.tables = []
+        self.new_table()
 
         # Gets the lists of available service, group and collection layers
         self.list_context = self.retrieve_registry_list(API_DEFAULT_URL, SERVICE['key'])  # Service
@@ -236,6 +238,9 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         i = self.tabResults.addTab(list_widget, dict_current['key'])
         self.tabResults.setCurrentIndex(i)  # Selects the newly added tab
 
+        # Adds a table
+        self.new_table()
+
     def remove_btn_click(self):
         """Remove the selected entry from the table
         """
@@ -249,9 +254,13 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         count = self.tabResults.count()
         if count == 1:  # Keep the last remaining tab, but clear it
             self.clear_results_list()
+
+            self.clear_results_table(0)
         else:  # If there are more than one tab
             index = self.tabResults.currentIndex()
             self.tabResults.removeTab(index)
+
+            self.delete_table(index)
 
     def table_btn_click(self):
         print("table")
@@ -260,7 +269,9 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """This method is called when the clear button is clicked
         """
         self.clear_results_list()  # Clears the list shown in the UI
-        self.clear_results_table()  # Clears the table widget which stores the data
+
+        index = self.tabResults.currentIndex()
+        self.clear_results_table(index)  # Clears the table widget which stores the data
 
     def fetch_btn_click(self):
         """This method is called when the Fetch button on the panel window is pressed.
@@ -287,24 +298,34 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         request_time_ms = round((end - start) * 1000, rounding_factor)
         self.lblRequestTime.setText("Request time (ms): " + str(request_time_ms))
 
+        index = self.tabResults.currentIndex()
+        table = self.tables[index]  # QTableWidget
+
+        # If set, the table will automatically be cleared. This can be set in the options dialog
+        auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
+        if auto_clear_table:
+            self.clear_results_table(index)
+
         registry = self.cbRegistry.currentText()  # Registry: Service, group or collection
         # The user has Service selected
         if registry == SERVICE['name']:
             settings = QgsSettings()
 
-            # If set, the table will automatically be cleared. This can be set in the options dialog
-            auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
-            if auto_clear_table:
-                self.clear_results_table()
+            point_value = data[VALUE_JSON]
 
             # Updates the table
-            self.tblResult.insertRow(0)  # Always add at the top of the table
-            self.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))
-            self.tblResult.setItem(0, 1, QTableWidgetItem(str(data[VALUE_JSON])))
-            self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
-            self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
+            table.insertRow(0)  # Always add at the top of the table
+            table.setItem(0, 0, QTableWidgetItem(current_key_name))
+            table.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Value
+            table.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+            table.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
+
+            # Updates/adds the value to the docking panel table
+            qlist_widget = self.tabResults.currentWidget()
+            qlist_widget.addItem(str(point_value))
+
         # The user has Group selected
-        elif registry == GROUP['name']:  # UPDATE
+        elif registry == GROUP['name']:
             # group_name = data['name']
             list_dict_services = data[SERVICE_JSON]  # Service files for a group
             for dict_service in list_dict_services:
@@ -312,14 +333,19 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 point_value = dict_service[VALUE_JSON]
                 service_key_name = dict_service['name']
 
-                self.tblResult.insertRow(0)  # Always add at the top of the table
-                self.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                self.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
-                self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
-                self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
+                table.insertRow(0)  # Always add at the top of the table
+                table.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
+                table.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the value
+                table.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+                table.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
+
+                # Updates/adds the value to the docking panel table
+                qlist_widget = self.tabResults.currentWidget()
+                qlist_widget.addItem(str(point_value))
         # The user has Collection selected
         elif registry == COLLECTION['name']:
-            list_dict_groups = data[GROUP_JSON]  # Each group contains a list of the 'Service' data associated with the group
+            # Each group contains a list of the 'Service' data associated with the group
+            list_dict_groups = data[GROUP_JSON]
             for dict_group in list_dict_groups:
                 # group_name = dict_group['name']
                 list_dict_services = dict_group[SERVICE_JSON]  # Service files for a group
@@ -328,11 +354,15 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     point_value = dict_service[VALUE_JSON]
                     service_key_name = dict_service['name']
 
-                    self.tblResult.insertRow(0)  # Always add at the top of the table
-                    self.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                    self.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
-                    self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
-                    self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
+                    table.insertRow(0)  # Always add at the top of the table
+                    table.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
+                    table.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the value
+                    table.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+                    table.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
+
+                    # Updates/adds the value to the docking panel table
+                    qlist_widget = self.tabResults.currentWidget()
+                    qlist_widget.addItem(str(point_value))
 
     def cursor_btn_click(self):
         """This method is called when the Cursor button on the panel is clicked.
@@ -359,9 +389,11 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Export the contents of the docking widget's table to a
         geopackage (gpkg).
         """
-        output_file = self.table_output_file.filePath()  # Ouput file provided by the user
+        output_file = self.table_output_file.filePath()  # Output file provided by the user
         output_dir = os.path.dirname(output_file)  # Folder directory of the output
-        table = self.tblResult  # QTableWidget
+
+        index = self.tabResults.currentIndex()
+        table = self.tables[index]  # QTableWidget
 
         # Checks whether the table has any contents
         num_rows = table.rowCount()
@@ -407,6 +439,24 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             error_msg = "Cannot find the /resources/help/build/html/docking_panel.html file. Cannot open the help dialog."
             self.iface.messageBar().pushCritical("Missing file: ", error_msg)
 
+    def new_table(self):
+        column_names = [
+            TABLE_DATA_TYPE['table'],
+            TABLE_VALUE['table'],
+            TABLE_LONG['table'],
+            TABLE_LAT['table']
+        ]
+        new_table = QTableWidget()
+        new_table.setColumnCount(len(column_names))
+        new_table.setHorizontalHeaderLabels(column_names)
+
+        self.tables.append(new_table)
+
+    def delete_table(self, index):
+        removed_table = self.tables.pop(index)
+
+        return removed_table
+
     def update_current_tab_text(self, new_text):
         """Set the current tab's text to the currently selected.
         """
@@ -442,7 +492,15 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # Performs the request
         client = ApiClient()
 
-        url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+        url_request = (
+                API_DEFAULT_URL +
+                "query?" +
+                'registry=' + registry.lower() +
+                '&key=' + key +
+                '&x=' + str(x) +
+                '&y=' + str(y) +
+                '&outformat=json'
+        )
         data = client.get(url_request)
 
         return data.json()
@@ -469,13 +527,14 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         i = self.tabResults.currentIndex()
         self.tabResults.setTabText(i, dict_current['key'])
 
-    def clear_results_table(self):
+    def clear_results_table(self, index):
         """Clears the table widget. This can be called when the user clicks the
         Clear button, or if the user has automatic clearing enabled.
         """
-        row_count = self.tblResult.rowCount()
+        table_to_clear = self.tables[index]
+        row_count = table_to_clear.rowCount()
         while row_count >= 0:
-            self.tblResult.removeRow(row_count)
+            table_to_clear.removeRow(row_count)
             row_count = row_count - 1
 
     def export_table(self, output_file, table):
@@ -495,10 +554,11 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Adds the new attributes fields to the layer
         new_layer.startEditing()
-        list_attributes = [QgsField(TABLE_DATA_TYPE['file'], QVariant.String),
-                           QgsField(TABLE_VALUE['file'], QVariant.String),
-                           QgsField(TABLE_LONG['file'], QVariant.Double),
-                           QgsField(TABLE_LAT['file'], QVariant.Double)]
+        list_attributes = [
+            QgsField(TABLE_DATA_TYPE['file'], QVariant.String),
+            QgsField(TABLE_VALUE['file'], QVariant.String),
+            QgsField(TABLE_LONG['file'], QVariant.Double),
+            QgsField(TABLE_LAT['file'], QVariant.Double)]
         layer_provider.addAttributes(list_attributes)
         new_layer.updateFields()
         new_layer.commitChanges()

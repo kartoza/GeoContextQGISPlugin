@@ -17,10 +17,10 @@
    <widget class="QGroupBox" name="gbResults">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>0</x>
       <y>330</y>
-      <width>441</width>
-      <height>421</height>
+      <width>461</width>
+      <height>441</height>
      </rect>
     </property>
     <property name="title">
@@ -51,7 +51,7 @@
         <bool>false</bool>
        </property>
        <property name="tabsClosable">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
        <widget class="QWidget" name="tabResultsTab">
         <attribute name="title">
@@ -68,12 +68,20 @@
          <property name="text">
           <string>Add tab</string>
          </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/tab_add.png</normaloff>../resources/icons/tab_add.png</iconset>
+         </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="btnDelete">
          <property name="text">
           <string>Delete tab</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/tab_remove.png</normaloff>../resources/icons/tab_remove.png</iconset>
          </property>
         </widget>
        </item>
@@ -95,12 +103,20 @@
          <property name="text">
           <string>Clear table</string>
          </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/delete_table.png</normaloff>../resources/icons/delete_table.png</iconset>
+         </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="btnRemove">
          <property name="text">
           <string>Remove selected</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/delete_row.png</normaloff>../resources/icons/delete_row.png</iconset>
          </property>
         </widget>
        </item>
@@ -112,6 +128,10 @@
         <widget class="QPushButton" name="btnHelp">
          <property name="text">
           <string>Help</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/help.png</normaloff>../resources/icons/help.png</iconset>
          </property>
         </widget>
        </item>
@@ -136,12 +156,20 @@
          <property name="text">
           <string>Table</string>
          </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/edit_table.png</normaloff>../resources/icons/edit_table.png</iconset>
+         </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="btnPlot">
          <property name="text">
           <string>Plot</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/graph.png</normaloff>../resources/icons/graph.png</iconset>
          </property>
         </widget>
        </item>
@@ -153,6 +181,10 @@
         <widget class="QPushButton" name="btnExport">
          <property name="text">
           <string>Export</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/save.png</normaloff>../resources/icons/save.png</iconset>
          </property>
         </widget>
        </item>
@@ -170,10 +202,10 @@
    <widget class="QGroupBox" name="gbPointCoor">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>0</x>
       <y>210</y>
-      <width>441</width>
-      <height>110</height>
+      <width>451</width>
+      <height>133</height>
      </rect>
     </property>
     <property name="title">
@@ -206,7 +238,7 @@
      <item row="1" column="0">
       <widget class="QLabel" name="lblLat">
        <property name="text">
-        <string>Latitude   (y)</string>
+        <string>Latitude    (y)</string>
        </property>
       </widget>
      </item>
@@ -216,7 +248,7 @@
         <bool>true</bool>
        </property>
        <property name="readOnly">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
        <property name="qgisRelation" stdset="0">
         <string notr="true"/>
@@ -230,12 +262,20 @@
          <property name="text">
           <string>Cursor</string>
          </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/target_cursor.png</normaloff>../resources/icons/target_cursor.png</iconset>
+         </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="btnFetch">
          <property name="text">
           <string>Fetch</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/gps_location.png</normaloff>../resources/icons/gps_location.png</iconset>
          </property>
         </widget>
        </item>
@@ -259,23 +299,16 @@
    <widget class="QGroupBox" name="gbRequest">
     <property name="geometry">
      <rect>
-      <x>9</x>
-      <y>9</y>
-      <width>441</width>
-      <height>201</height>
+      <x>-1</x>
+      <y>-1</y>
+      <width>461</width>
+      <height>211</height>
      </rect>
     </property>
     <property name="title">
      <string>Request</string>
     </property>
     <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="lblRegistry">
-       <property name="text">
-        <string>Registry</string>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="1">
       <widget class="QComboBox" name="cbRegistry">
        <item>
@@ -360,6 +393,13 @@
          <set>NoItemFlags</set>
         </property>
        </item>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="lblRegistry">
+       <property name="text">
+        <string>Registry</string>
+       </property>
       </widget>
      </item>
     </layout>
