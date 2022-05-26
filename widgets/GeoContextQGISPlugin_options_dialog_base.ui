@@ -7,56 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>534</width>
-    <height>360</height>
+    <height>269</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Options</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <widget class="QGroupBox" name="gbApiConfig">
-     <property name="title">
-      <string>API configuration</string>
-     </property>
-     <layout class="QFormLayout" name="formLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="lblEndpointUrl">
-        <property name="text">
-         <string>Endpoint URL</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QgsFilterLineEdit" name="lineUrl">
-        <property name="placeholderText">
-         <string>Endpoint URL</string>
-        </property>
-        <property name="qgisRelation" stdset="0">
-         <string notr="true"/>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="lblSchema">
-        <property name="text">
-         <string>Schema configuration</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QgsFilterLineEdit" name="lineSchema">
-        <property name="placeholderText">
-         <string>Schema configuration</string>
-        </property>
-        <property name="qgisRelation" stdset="0">
-         <string notr="true"/>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
    <item>
     <widget class="QGroupBox" name="gbGlobalSettings">
      <property name="title">
@@ -216,17 +173,8 @@
   </layout>
   <zorder>gbProcessingTool</zorder>
   <zorder>gbPanelSettings</zorder>
-  <zorder>gbApiConfig</zorder>
   <zorder>gbGlobalSettings</zorder>
-  <zorder>horizontalLayoutWidget</zorder>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>QgsFilterLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>qgsfilterlineedit.h</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections>
   <connection>

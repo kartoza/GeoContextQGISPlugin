@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="673030f2-2eed-4138-9053-6e23280e6c45" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GeoContextQGISPlugin.py" beforeDir="false" afterPath="$PROJECT_DIR$/GeoContextQGISPlugin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/geocontext_point_processing_algorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/geocontext_point_processing_algorithm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/other/polygons_wgs84.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/other/polygons_wgs84.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/other/polyline_lo19.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/other/polyline_lo19.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_albers_broken_geom.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/projected/points_albers_broken_geom.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_albers_empty.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/projected/points_albers_empty.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_lo19.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/projected/points_lo19.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_multipoint_lo19.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/projected/points_multipoint_lo19.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_multipoint_wgs84.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_multipoint_wgs84.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_wgs84.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_broken_geom.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_broken_geom.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_empty.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_empty.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_dockwidget.py" beforeDir="false" afterPath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_dockwidget.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_dockwidget_base.ui" beforeDir="false" afterPath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_dockwidget_base.ui" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="28nHfhwBmMgHVxojHN2v1lxK70s" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/divan/Coding/Scripts/geocontext-custom/geocontext_debug_script.sh&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;Errors&quot;
+  }
+}</component>
+  <component name="RunManager" selected="Shell Script.QGIS">
+    <configuration name="Debugging" type="CompoundRunConfigurationType">
+      <toRun name="Debugging" type="PyRemoteDebugConfigurationType" />
+      <toRun name="QGIS (debugging)" type="ShConfigurationType" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Debugging" type="PyRemoteDebugConfigurationType" factoryName="Python Remote Debug">
+      <module name="GeoContextQGISPlugin" />
+      <option name="PORT" value="1234" />
+      <option name="HOST" value="localhost" />
+      <PathMappingSettings>
+        <option name="pathMappings">
+          <list />
+        </option>
+      </PathMappingSettings>
+      <option name="REDIRECT_OUTPUT" value="true" />
+      <option name="SUSPEND_AFTER_CONNECT" value="true" />
+      <method v="2" />
+    </configuration>
+    <configuration name="QGIS (debugging)" type="ShConfigurationType">
+      <option name="SCRIPT_TEXT" value="" />
+      <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
+      <option name="SCRIPT_PATH" value="$PROJECT_DIR$/../Scripts/geocontext-custom/geocontext_debug_script.sh" />
+      <option name="SCRIPT_OPTIONS" value="" />
+      <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
+      <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
+      <option name="INTERPRETER_PATH" value="/bin/bash" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="EXECUTE_IN_TERMINAL" value="true" />
+      <option name="EXECUTE_SCRIPT_FILE" value="true" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="QGIS" type="ShConfigurationType">
+      <option name="SCRIPT_TEXT" value="" />
+      <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
+      <option name="SCRIPT_PATH" value="$PROJECT_DIR$/../Scripts/geocontext-custom/geocontext_script.sh" />
+      <option name="SCRIPT_OPTIONS" value="" />
+      <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
+      <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
+      <option name="INTERPRETER_PATH" value="/bin/bash" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="EXECUTE_IN_TERMINAL" value="true" />
+      <option name="EXECUTE_SCRIPT_FILE" value="true" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Compound.Debugging" />
+      <item itemvalue="Python Debug Server.Debugging" />
+      <item itemvalue="Shell Script.QGIS" />
+      <item itemvalue="Shell Script.QGIS (debugging)" />
+    </list>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="673030f2-2eed-4138-9053-6e23280e6c45" name="Changes" comment="" />
+      <created>1651845534330</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1651845534330</updated>
+      <workItem from="1651845535657" duration="18862000" />
+      <workItem from="1653395856390" duration="3822000" />
+      <workItem from="1653477182665" duration="24131000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

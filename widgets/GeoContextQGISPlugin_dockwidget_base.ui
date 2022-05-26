@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>462</width>
-    <height>800</height>
+    <width>466</width>
+    <height>790</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,10 +17,10 @@
    <widget class="QGroupBox" name="gbResults">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>330</y>
-      <width>441</width>
-      <height>441</height>
+      <x>0</x>
+      <y>340</y>
+      <width>461</width>
+      <height>421</height>
      </rect>
     </property>
     <property name="title">
@@ -40,59 +40,118 @@
       </widget>
      </item>
      <item>
-      <widget class="QTableWidget" name="tblResult">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <attribute name="horizontalHeaderDefaultSectionSize">
-        <number>209</number>
-       </attribute>
-       <column>
-        <property name="text">
-         <string>Data type</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Value</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Longitude</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Latitude</string>
-        </property>
-       </column>
-      </widget>
-     </item>
-     <item>
-      <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="1">
-        <widget class="QPushButton" name="btnExport">
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QPushButton" name="btnAdd">
          <property name="text">
-          <string>Export</string>
+          <string>Add tab</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/tab_add.png</normaloff>../resources/icons/tab_add.png</iconset>
          </property>
         </widget>
        </item>
-       <item row="0" column="0">
-        <widget class="QgsFileWidget" name="table_output_file">
-         <property name="storageMode">
-          <enum>QgsFileWidget::SaveFile</enum>
+       <item>
+        <widget class="QPushButton" name="btnDelete">
+         <property name="text">
+          <string>Delete tab</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/tab_remove.png</normaloff>../resources/icons/tab_remove.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QComboBox" name="cbTab"/>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QTabWidget" name="tabResults">
+       <property name="tabShape">
+        <enum>QTabWidget::Rounded</enum>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <property name="documentMode">
+        <bool>false</bool>
+       </property>
+       <property name="tabsClosable">
+        <bool>false</bool>
+       </property>
+       <widget class="QWidget" name="tabResultsTab">
+        <attribute name="title">
+         <string/>
+        </attribute>
+        <layout class="QFormLayout" name="formLayout_3"/>
+       </widget>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QPushButton" name="btnClear">
+         <property name="text">
+          <string>Clear table</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/delete_table.png</normaloff>../resources/icons/delete_table.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnRemove">
+         <property name="text">
+          <string>Remove selected</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/delete_row.png</normaloff>../resources/icons/delete_row.png</iconset>
          </property>
         </widget>
        </item>
       </layout>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="hlResults">
+      <layout class="QHBoxLayout" name="gbTablePlot">
        <item>
         <widget class="QPushButton" name="btnHelp">
          <property name="text">
           <string>Help</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/help.png</normaloff>../resources/icons/help.png</iconset>
          </property>
         </widget>
        </item>
@@ -110,9 +169,46 @@
         </spacer>
        </item>
        <item>
-        <widget class="QPushButton" name="btnClear">
+        <widget class="QPushButton" name="btnTable">
          <property name="text">
-          <string>Clear table</string>
+          <string>Table</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/edit_table.png</normaloff>../resources/icons/edit_table.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnPlot">
+         <property name="text">
+          <string>Plot</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/graph.png</normaloff>../resources/icons/graph.png</iconset>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QGridLayout" name="gbExport">
+       <item row="0" column="1">
+        <widget class="QPushButton" name="btnExport">
+         <property name="text">
+          <string>Export</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/save.png</normaloff>../resources/icons/save.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QgsFileWidget" name="table_output_file">
+         <property name="storageMode">
+          <enum>QgsFileWidget::SaveFile</enum>
          </property>
         </widget>
        </item>
@@ -123,10 +219,10 @@
    <widget class="QGroupBox" name="gbPointCoor">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>0</x>
       <y>210</y>
-      <width>441</width>
-      <height>110</height>
+      <width>461</width>
+      <height>133</height>
      </rect>
     </property>
     <property name="title">
@@ -140,45 +236,23 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
-      <widget class="QgsFilterLineEdit" name="lineLong">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-       <property name="qgisRelation" stdset="0">
-        <string notr="true"/>
-       </property>
-      </widget>
-     </item>
      <item row="1" column="0">
       <widget class="QLabel" name="lblLat">
        <property name="text">
-        <string>Latitude   (y)</string>
+        <string>Latitude    (y)</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QgsFilterLineEdit" name="lineLat">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-       <property name="qgisRelation" stdset="0">
-        <string notr="true"/>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0" colspan="2">
+     <item row="3" column="0" colspan="2">
       <layout class="QHBoxLayout" name="hlPointCoor">
        <item>
         <widget class="QPushButton" name="btnCursor">
          <property name="text">
           <string>Cursor</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/target_cursor.png</normaloff>../resources/icons/target_cursor.png</iconset>
          </property>
         </widget>
        </item>
@@ -186,6 +260,10 @@
         <widget class="QPushButton" name="btnFetch">
          <property name="text">
           <string>Fetch</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../resources/icons/gps_location.png</normaloff>../resources/icons/gps_location.png</iconset>
          </property>
         </widget>
        </item>
@@ -204,28 +282,53 @@
        </item>
       </layout>
      </item>
+     <item row="0" column="1">
+      <widget class="QgsDoubleSpinBox" name="lineLong">
+       <property name="decimals">
+        <number>15</number>
+       </property>
+       <property name="minimum">
+        <double>-180.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>180.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.000001000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QgsDoubleSpinBox" name="lineLat">
+       <property name="decimals">
+        <number>15</number>
+       </property>
+       <property name="minimum">
+        <double>-90.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>90.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.000001000000000</double>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
    <widget class="QGroupBox" name="gbRequest">
     <property name="geometry">
      <rect>
-      <x>9</x>
-      <y>9</y>
-      <width>441</width>
-      <height>201</height>
+      <x>-1</x>
+      <y>-1</y>
+      <width>461</width>
+      <height>211</height>
      </rect>
     </property>
     <property name="title">
      <string>Request</string>
     </property>
     <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="lblRegistry">
-       <property name="text">
-        <string>Registry</string>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="1">
       <widget class="QComboBox" name="cbRegistry">
        <item>
@@ -312,6 +415,13 @@
        </item>
       </widget>
      </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="lblRegistry">
+       <property name="text">
+        <string>Registry</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
    <zorder>gbRequest</zorder>
@@ -321,14 +431,14 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>QgsDoubleSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header>qgsdoublespinbox.h</header>
+  </customwidget>
+  <customwidget>
    <class>QgsFileWidget</class>
    <extends>QWidget</extends>
    <header>qgsfilewidget.h</header>
-  </customwidget>
-  <customwidget>
-   <class>QgsFilterLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>qgsfilterlineedit.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -26,44 +26,50 @@ import sys
 import os
 import time
 import inspect
-import csv
 
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, QUrl, QVariant
-from qgis.PyQt.QtWidgets import QTableWidgetItem
-from qgis.core import (QgsProject,
-                       QgsSettings,
-                       QgsCoordinateReferenceSystem,
-                       QgsCoordinateTransform,
-                       QgsPointXY,
-                       QgsVectorLayer,
-                       QgsField,
-                       QgsFeature,
-                       QgsGeometry)
+from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem
+from qgis.core import (
+    QgsProject,
+    QgsSettings,
+    QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform,
+    QgsPointXY,
+    QgsVectorLayer,
+    QgsField,
+    QgsFeature,
+    QgsGeometry
+)
 
 from .geocontext_help_dialog import HelpDialog
+from .GeoContextQGISPlugin_plot import PlotDialog
 
 # Adds the plugin core path to the system path
 cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(cur_dir)
 sys.path.insert(0, parentdir)
 
-from utilities.utilities import (get_request_crs,
-                                 create_vector_file)
+from utilities.utilities import (
+    get_request_crs,
+    create_vector_file
+)
 from bridge_api.api_abstract import ApiClient
-from bridge_api.default import (SERVICE,
-                                GROUP,
-                                COLLECTION,
-                                VALUE_JSON,
-                                SERVICE_JSON,
-                                GROUP_JSON,
-                                COLLECTION_JSON,
-                                TABLE_DATA_TYPE,
-                                TABLE_VALUE,
-                                TABLE_LONG,
-                                TABLE_LAT)
+from bridge_api.default import (
+    API_DEFAULT_URL,
+    SERVICE,
+    GROUP,
+    COLLECTION,
+    VALUE_JSON,
+    SERVICE_JSON,
+    GROUP_JSON,
+    COLLECTION_JSON,
+    TABLE_DATA_TYPE,
+    TABLE_VALUE,
+    TABLE_LONG,
+    TABLE_LAT
+)
 
-# Core API modules
 from requests import exceptions
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -89,55 +95,15 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.point_tool = point_tool  # Canvas point tool - cursor used to selected locations
         self.cursor_active = True  # Sets to True because the point tool is now active
         self.table_output_file.setFilter("*.gpkg")  # Output format for table exporting set to geopackage
-        self.tblResult.setHorizontalHeaderLabels([TABLE_DATA_TYPE['table'],
-                                                  TABLE_VALUE['table'],
-                                                  TABLE_LONG['table'],
-                                                  TABLE_LAT['table']])
 
-        # Retrieves the schema data from the URL stored using the options dialog
-        settings = QgsSettings()
-        schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
+        # This variable will store all the tables
+        self.tables = []
+        self.new_table()
 
-        # Attempts to request the schema configuration from the API
-        # try:
-        #     client = ApiClient()
-        #
-        #     response = client.get(schema)  # Retrieve the API schema
-        #     self.list_context = response.json()
-        #
-        # except exceptions.ConnectionError:  # Could not connect to the provided URL
-        #     error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
-        #     self.iface.messageBar().pushCritical("Connection error: ", error_msg)
-        #
-        #     self.list_context = []
-        # except Exception as e:  # Other possible connection issues
-        #     error_msg = "Could not connect to " + schema + ". Unknown error: " + str(e)
-        #     self.iface.messageBar().pushCritical("Connection error: ", error_msg)
-        #
-        #     self.list_context = []
-
-        # Services: ONLY TEMP
-        self.list_context = [{'key': 'altitude', 'name': 'altitude', 'description': 'N/A'},
-                        {'key': 'monthly_max_temperature_december', 'name': 'monthly_max_temperature_december', 'description': 'N/A'},
-                        {'key': 'monthly_precipitation_may', 'name': 'monthly_precipitation_may', 'description': 'N/A'}]
-
-        # Groups: ONLY TEMP
-        self.list_group = [{'key': 'bioclimatic_variables_group', 'name': 'Bioclimatic layers', 'description': 'N/A'},
-                           {'key': 'monthly_precipitation_group', 'name': 'Monthly Precipitation', 'description': 'N/A'},
-                           {'key': 'monthly_solar_radiation_group', 'name': 'Monthly Solar Radiation', 'description': 'N/A'},
-                           {'key': 'monthly_max_temperature_group', 'name': 'Monthly Maximum Temperature', 'description': 'N/A'}]
-
-        # Collections: ONLY TEMP
-        self.list_collection = [{'key': 'global_climate_collection', 'name': 'Global climate collection', 'description': 'N/A'},
-                                {'key': 'healthy_rivers_collection', 'name': 'Healthy rivers collection', 'description': 'N/A'},
-                                {'key': 'healthy_rivers_spatial_collection', 'name': 'Healthy rivers spatial filters', 'description': 'N/A'},
-                                {'key': 'hydrological_regions', 'name': 'Hydrological regions', 'description': 'N/A'},
-                                {'key': 'ledet_collection', 'name': 'LEDET collection', 'description': 'N/A'},
-                                {'key': 'sa_boundary_collection', 'name': 'South African boundary collection', 'description': 'N/A'},
-                                {'key': 'sa_climate_collection', 'name': 'South African climate collection', 'description': 'N/A'},
-                                {'key': 'sa_land_cover_land_use_collection', 'name': 'South African land use collection', 'description': 'N/A'},
-                                {'key': 'sa_river_ecosystem_collection', 'name': 'South African river collection', 'description': 'N/A'},
-                                {'key': 'sedac_collection', 'name': 'Socioeconomic data and application center collection', 'description': 'N/A'}]
+        # Gets the lists of available service, group and collection layers
+        self.list_context = self.retrieve_registry_list(API_DEFAULT_URL, SERVICE['key'])  # Service
+        self.list_group = self.retrieve_registry_list(API_DEFAULT_URL, GROUP['key'])  # Group
+        self.list_collection = self.retrieve_registry_list(API_DEFAULT_URL, COLLECTION['key'])  # Collection
 
         # If the context list is empty, these steps should be skipped
         if len(self.list_context) > 0:
@@ -160,24 +126,69 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.tblDetails.setItem(0, 0, QtWidgets.QTableWidgetItem(dict_current['key']))
             self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
             self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
+
+            self.tabResults.removeTab(0)  # Removes the already existing tab from the UI
+            list_widget = QtWidgets.QListWidget()  # The data is stored here
+            self.tabResults.addTab(list_widget, dict_current['key'])  # Adds the new tab using the list widget
+            self.cbTab.addItem(dict_current['key'])
         else:  # Empty geocontext list. This can be a result of the incorrect URL, or the site is down
-            error_msg = "The retrieved context list is empty. Check the provided schema configuration URL or whether the site is online."
+            error_msg = "The retrieved services list is empty."
             self.iface.messageBar().pushCritical("Empty geocontext list error: ", error_msg)
 
-        # UI triggers
-        self.cbRegistry.currentTextChanged.connect(self.registry_changed)  # Triggered when the registry changes
-        self.cbKey.currentTextChanged.connect(self.key_changed)  # Triggers when the key value changes
-
-        # Button triggers
-        self.btnClear.clicked.connect(self.clear_results_table)  # Triggers when the Clear button is clicked
-        self.btnFetch.clicked.connect(self.fetch_btn_click)  # Triggers when the Fetch button is pressed
-        self.btnCursor.clicked.connect(self.cursor_btn_click)  # Triggers when the Cursor button is pressed
-        self.btnHelp.clicked.connect(self.help_btn_click)  # Triggers when the Help button is pressed
-        self.btnExport.clicked.connect(self.export_btn_click)  # Triggers when the Export button is pressed
+        self.set_connectors()
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
         event.accept()
+
+    def set_connectors(self):
+        # UI triggers
+        self.cbRegistry.currentTextChanged.connect(self.registry_changed)  # Triggered when the registry changes
+        self.cbKey.currentTextChanged.connect(self.key_changed)  # Triggers when the key value changes
+
+        self.cbTab.currentIndexChanged.connect(self.tab_combobox_change)
+
+        # Button triggers
+        self.btnClear.clicked.connect(self.clear_btn_click)
+        self.btnFetch.clicked.connect(self.fetch_btn_click)
+        self.btnCursor.clicked.connect(self.cursor_btn_click)
+        self.btnHelp.clicked.connect(self.help_btn_click)
+        self.btnExport.clicked.connect(self.export_btn_click)
+        self.btnPlot.clicked.connect(self.plot_btn_click)
+        self.btnAdd.clicked.connect(self.add_btn_click)
+        self.btnRemove.clicked.connect(self.remove_btn_click)
+        self.btnTable.clicked.connect(self.table_btn_click)
+        self.btnDelete.clicked.connect(self.delete_btn_click)
+
+    def retrieve_registry_list(self, api_url, registry):
+        """Return a list of available layers for the provided registry.
+
+        :param api_url: API URL for doing requests
+        :type api_url: str
+
+        :param registry: Registry type: Service, group or collection
+        :type registry: str
+
+        :returns: A list of available data in json format
+        :rtype: list
+        """
+        request_url = "{}/registries?registry={}".format(api_url, registry)
+        try:
+            client = ApiClient()
+            response = client.get(request_url)
+            list_json = response.json()
+        except exceptions.ConnectionError:  # Could not connect to the provided URL
+            error_msg = "Could not connect to " + request_url + ". Check if the provided URL is correct. The site may also be down."
+            self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+
+            list_json = []
+        except Exception as e:  # Other possible connection issues
+            error_msg = "Could not connect to " + request_url + ". Unknown error: " + str(e)
+            self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+
+            list_json = []
+
+        return list_json
 
     def registry_changed(self):
         """This method is called when the registry option is changed.
@@ -207,6 +218,79 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.tblDetails.setItem(0, 1, QtWidgets.QTableWidgetItem(dict_current['name']))
             self.tblDetails.setItem(0, 2, QtWidgets.QTableWidgetItem(dict_current['description']))
 
+            # Set the current tab's text to the currently selected
+            row_count = self.tabResults.currentWidget().count()
+
+            if row_count == 0:  # If the tab is empty, rename the tab
+                self.update_current_tab_text(dict_current['key'])
+            else:  # If the tab already consists of data, create a new one
+                self.add_btn_click()
+
+    def tab_combobox_change(self):
+        new_index = self.cbTab.currentIndex()
+        self.tabResults.setCurrentIndex(new_index)
+
+    def add_btn_click(self):
+        """Adds a new tab to the tabs panel
+        """
+        # Retrieved registry and newly selected key ID
+        registry = self.cbRegistry.currentText()
+        key_name = self.cbKey.currentText()
+
+        # Key dict
+        dict_current = self.find_name_info(key_name, registry)
+        key = dict_current['key']
+
+        # Creates a new tab
+        list_widget = QtWidgets.QListWidget()
+        i = self.tabResults.addTab(list_widget, key)
+        self.tabResults.setCurrentIndex(i)  # Selects the newly added tab
+
+        # Adds a new item to the combobox
+        self.cbTab.addItem(key)
+        self.cbTab.setCurrentIndex(i)
+
+        # Adds a table
+        self.new_table()
+
+    def remove_btn_click(self):
+        """Remove the selected entry from the table
+        """
+        qlist_widget = self.tabResults.currentWidget()
+        selected_index = qlist_widget.currentRow()
+        total = qlist_widget.count()
+        selected_index_reverse = total - selected_index - 1  # List is reversed in the table
+        tab_index = self.tabResults.currentIndex()
+
+        qlist_widget.takeItem(selected_index)
+        selected_table = self.tables[tab_index]
+        selected_table.removeRow(selected_index_reverse)
+
+    def delete_btn_click(self):
+        """Remove the current tab from the tabs panel
+        """
+        count = self.tabResults.count()
+        if count == 1:  # Keep the last remaining tab, but clears it
+            self.clear_results_list()
+
+            self.clear_results_table(0)
+        else:  # If there are more than one tab
+            index = self.tabResults.currentIndex()
+            self.tabResults.removeTab(index)
+            self.cbTab.removeItem(index)
+            self.delete_table(index)
+
+    def table_btn_click(self):
+        print("table")
+
+    def clear_btn_click(self):
+        """This method is called when the clear button is clicked
+        """
+        self.clear_results_list()  # Clears the list shown in the UI
+
+        index = self.tabResults.currentIndex()
+        self.clear_results_table(index)  # Clears the table widget which stores the data
+
     def fetch_btn_click(self):
         """This method is called when the Fetch button on the panel window is pressed.
         The location (x and y) currently shown in the panel will be retrieved with no need to click
@@ -232,24 +316,35 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         request_time_ms = round((end - start) * 1000, rounding_factor)
         self.lblRequestTime.setText("Request time (ms): " + str(request_time_ms))
 
+        index = self.tabResults.currentIndex()
+        table = self.tables[index]  # QTableWidget
+
+        # If set, the table will automatically be cleared. This can be set in the options dialog
+        auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
+        if auto_clear_table:
+            self.clear_results_table(index)
+
         registry = self.cbRegistry.currentText()  # Registry: Service, group or collection
         # The user has Service selected
         if registry == SERVICE['name']:
             settings = QgsSettings()
 
-            # If set, the table will automatically be cleared. This can be set in the options dialog
-            auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
-            if auto_clear_table:
-                self.clear_results_table()
+            point_value = data[VALUE_JSON]
+
+            # Updates/adds the value to the docking panel table
+            qlist_widget = self.tabResults.currentWidget()
+            row_index = qlist_widget.count()
+            qlist_widget.insertItem(row_index, str(point_value))
 
             # Updates the table
-            self.tblResult.insertRow(0)  # Always add at the top of the table
-            self.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))
-            self.tblResult.setItem(0, 1, QTableWidgetItem(str(data[VALUE_JSON])))
-            self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
-            self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
+            table.insertRow(0)  # Always add at the top of the table
+            table.setItem(0, 0, QTableWidgetItem(current_key_name))
+            table.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Value
+            table.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+            table.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
+
         # The user has Group selected
-        elif registry == GROUP['name']:  # UPDATE
+        elif registry == GROUP['name']:
             # group_name = data['name']
             list_dict_services = data[SERVICE_JSON]  # Service files for a group
             for dict_service in list_dict_services:
@@ -257,14 +352,20 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 point_value = dict_service[VALUE_JSON]
                 service_key_name = dict_service['name']
 
-                self.tblResult.insertRow(0)  # Always add at the top of the table
-                self.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                self.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
-                self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
-                self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
+                # Updates/adds the value to the docking panel table
+                qlist_widget = self.tabResults.currentWidget()
+                row_index = qlist_widget.count()
+                qlist_widget.insertItem(row_index, str(point_value))
+
+                table.insertRow(0)  # Always add at the top of the table
+                table.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
+                table.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the value
+                table.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+                table.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
         # The user has Collection selected
         elif registry == COLLECTION['name']:
-            list_dict_groups = data[GROUP_JSON]  # Each group contains a list of the 'Service' data associated with the group
+            # Each group contains a list of the 'Service' data associated with the group
+            list_dict_groups = data[GROUP_JSON]
             for dict_group in list_dict_groups:
                 # group_name = dict_group['name']
                 list_dict_services = dict_group[SERVICE_JSON]  # Service files for a group
@@ -273,11 +374,16 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     point_value = dict_service[VALUE_JSON]
                     service_key_name = dict_service['name']
 
-                    self.tblResult.insertRow(0)  # Always add at the top of the table
-                    self.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                    self.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the description
-                    self.dockwidget.tblResult.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
-                    self.dockwidget.tblResult.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
+                    # Updates/adds the value to the docking panel table
+                    qlist_widget = self.tabResults.currentWidget()
+                    row_index = qlist_widget.count()
+                    qlist_widget.insertItem(row_index, str(point_value))
+
+                    table.insertRow(0)  # Always add at the top of the table
+                    table.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
+                    table.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the value
+                    table.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
+                    table.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
 
     def cursor_btn_click(self):
         """This method is called when the Cursor button on the panel is clicked.
@@ -292,6 +398,9 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.canvas.setMapTool(self.point_tool)
             self.cursor_active = True
 
+    def plot_btn_click(self):
+        self.show_plot()
+
     def help_btn_click(self):
         """Opens the help dialog.
         """
@@ -301,9 +410,11 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Export the contents of the docking widget's table to a
         geopackage (gpkg).
         """
-        output_file = self.table_output_file.filePath()  # Ouput file provided by the user
+        output_file = self.table_output_file.filePath()  # Output file provided by the user
         output_dir = os.path.dirname(output_file)  # Folder directory of the output
-        table = self.tblResult  # QTableWidget
+
+        index = self.tabResults.currentIndex()
+        table = self.tables[index]  # QTableWidget
 
         # Checks whether the table has any contents
         num_rows = table.rowCount()
@@ -326,6 +437,10 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             else:
                 self.iface.messageBar().pushCritical("Output directory does not exist: ", output_dir)
 
+    def show_plot(self):
+        results_dialog = PlotDialog(self.tblResult)
+        results_dialog.exec_()
+
     def show_help(self):
         """Opens the help dialog. The dialog displays the html documentation.
         The documentation contains information on the docking panel.
@@ -344,6 +459,31 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         else:
             error_msg = "Cannot find the /resources/help/build/html/docking_panel.html file. Cannot open the help dialog."
             self.iface.messageBar().pushCritical("Missing file: ", error_msg)
+
+    def new_table(self):
+        column_names = [
+            TABLE_DATA_TYPE['table'],
+            TABLE_VALUE['table'],
+            TABLE_LONG['table'],
+            TABLE_LAT['table']
+        ]
+        new_table = QTableWidget()
+        new_table.setColumnCount(len(column_names))
+        new_table.setHorizontalHeaderLabels(column_names)
+
+        self.tables.append(new_table)
+
+    def delete_table(self, index):
+        removed_table = self.tables.pop(index)
+
+        return removed_table
+
+    def update_current_tab_text(self, new_text):
+        """Set the current tab's text to the currently selected.
+        """
+        tab_index = self.tabResults.currentIndex()
+        self.tabResults.setTabText(tab_index, new_text)
+        self.cbTab.setItemText(tab_index, new_text)
 
     def point_request_panel(self, x, y):
         """Return the value retrieved from the ordered dictionary containing the requested data
@@ -374,19 +514,49 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # Performs the request
         client = ApiClient()
 
-        url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+        url_request = (
+                API_DEFAULT_URL +
+                "query?" +
+                'registry=' + registry.lower() +
+                '&key=' + key +
+                '&x=' + str(x) +
+                '&y=' + str(y) +
+                '&outformat=json'
+        )
         data = client.get(url_request)
 
         return data.json()
 
-    def clear_results_table(self):
-        """Clears the table in the panel. This can be called when the user clicks the
+    def clear_results_list(self):
+        """Clears the table in the panel (qlistwidget). This can be called when the user clicks the
         Clear button, or if the user has automatic clearing enabled.
         """
+        qlist_widget = self.tabResults.currentWidget()
+        row_cnt = qlist_widget.count()
 
-        row_count = self.tblResult.rowCount()
+        i = row_cnt - 1
+        while i >= 0:
+            item_widget = qlist_widget.takeItem(i)
+            i = i - 1
+
+        # Retrieved registry and newly selected key ID
+        registry = self.cbRegistry.currentText()
+        key_name = self.cbKey.currentText()
+
+        # Key dict
+        dict_current = self.find_name_info(key_name, registry)
+
+        i = self.tabResults.currentIndex()
+        self.tabResults.setTabText(i, dict_current['key'])
+
+    def clear_results_table(self, index):
+        """Clears the table widget. This can be called when the user clicks the
+        Clear button, or if the user has automatic clearing enabled.
+        """
+        table_to_clear = self.tables[index]
+        row_count = table_to_clear.rowCount()
         while row_count >= 0:
-            self.tblResult.removeRow(row_count)
+            table_to_clear.removeRow(row_count)
             row_count = row_count - 1
 
     def export_table(self, output_file, table):
@@ -406,18 +576,19 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Adds the new attributes fields to the layer
         new_layer.startEditing()
-        list_attributes = [QgsField(TABLE_DATA_TYPE['file'], QVariant.String),
-                           QgsField(TABLE_VALUE['file'], QVariant.String),
-                           QgsField(TABLE_LONG['file'], QVariant.Double),
-                           QgsField(TABLE_LAT['file'], QVariant.Double)]
+        list_attributes = [
+            QgsField(TABLE_DATA_TYPE['file'], QVariant.String),
+            QgsField(TABLE_VALUE['file'], QVariant.String),
+            QgsField(TABLE_LONG['file'], QVariant.Double),
+            QgsField(TABLE_LAT['file'], QVariant.Double)]
         layer_provider.addAttributes(list_attributes)
         new_layer.updateFields()
         new_layer.commitChanges()
 
         row_cnt = table.rowCount()
         # Loops through each of the table entries
-        i = 0  # Current ID
-        while i < row_cnt:
+        i = table.rowCount() - 1  # Current ID
+        while i >= 0:
             key = table.item(i, 0).text()  # Data source
             value = table.item(i, 1).text()  # Value at the point
             x = float(table.item(i, 2).text())  # Longitude
@@ -432,7 +603,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             layer_provider.addFeatures([new_feat])
             new_layer.commitChanges()
 
-            i = i + 1
+            i = i - 1
 
         target_crs = QgsCoordinateReferenceSystem("EPSG:4326")  # CHANGE??? ======================================================================
         success, created_layer, msg = create_vector_file(new_layer, output_file, target_crs)
@@ -481,43 +652,14 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Service type is the new selection
         if registry_type == "Service":
-            settings = QgsSettings()
+            # Creates a list of the service layers
+            list_key_names = []
+            for service in self.list_context:
+                name = service['name']
+                list_key_names.append(name)
 
-            # Docs which contains the schema of geocontext. Link can be changed in the options dialog
-            schema = settings.value('geocontext-qgis-plugin/schema', '', type=str)
-
-            # Checks whether the provided schema configuration URL is available
-            try:
-                # Requests the schema
-                client = ApiClient()
-
-                response = client.get(schema)  # Retrieve the API schema
-                self.list_context = response.json()
-            except exceptions.ConnectionError:  # Could not connect to the provided URL
-                error_msg = "Could not connect to " + schema + ". Check if the provided URL is correct. The site may also be down."
-                self.iface.messageBar().pushCritical("Connection error: ", error_msg)
-
-                self.list_context = []
-            except Exception as e:  # Other possible connection issues
-                error_msg = "Could not connect to " + schema + ". Unknown error: " + str(e)
-                self.iface.messageBar().pushCritical("Connection error: ", error_msg)
-
-                self.list_context = []
-
-            # Checks if the geocontext list contains data
-            if len(self.list_context) > 0:
-                # Adds the names to a list, and then sorts the list alphabetically
-                list_key_names = []
-                for context in self.list_context:
-                    name = context['name']
-                    list_key_names.append(name)
-                list_key_names = sorted(list_key_names)
-
-                # Applies the updated list
-                self.cbKey.addItems(list_key_names)
-            else:  # Empty geocontext list. This can be a result of the incorrect URL, or the site is down
-                error_msg = "The retrieved context list is empty. Check the provided schema configuration URL or whether the site is online."
-                self.iface.messageBar().pushCritical("Empty geocontext list error: ", error_msg)
+            # Updates the keys in the processing dialog
+            self.cbKey.addItems(list_key_names)
         elif registry_type == "Group":
             # Creates a list of the group layers
             list_key_names = []
