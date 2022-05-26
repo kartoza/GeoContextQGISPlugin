@@ -130,6 +130,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.tabResults.removeTab(0)  # Removes the already existing tab from the UI
             list_widget = QtWidgets.QListWidget()  # The data is stored here
             self.tabResults.addTab(list_widget, dict_current['key'])  # Adds the new tab using the list widget
+            self.cbTab.addItem(dict_current['key'])
         else:  # Empty geocontext list. This can be a result of the incorrect URL, or the site is down
             error_msg = "The retrieved services list is empty."
             self.iface.messageBar().pushCritical("Empty geocontext list error: ", error_msg)
@@ -144,6 +145,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # UI triggers
         self.cbRegistry.currentTextChanged.connect(self.registry_changed)  # Triggered when the registry changes
         self.cbKey.currentTextChanged.connect(self.key_changed)  # Triggers when the key value changes
+
+        self.cbTab.currentIndexChanged.connect(self.tab_combobox_change)
 
         # Button triggers
         self.btnClear.clicked.connect(self.clear_btn_click)
@@ -223,6 +226,10 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             else:  # If the tab already consists of data, create a new one
                 self.add_btn_click()
 
+    def tab_combobox_change(self):
+        new_index = self.cbTab.currentIndex()
+        self.tabResults.setCurrentIndex(new_index)
+
     def add_btn_click(self):
         """Adds a new tab to the tabs panel
         """
@@ -232,11 +239,16 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Key dict
         dict_current = self.find_name_info(key_name, registry)
+        key = dict_current['key']
 
         # Creates a new tab
         list_widget = QtWidgets.QListWidget()
-        i = self.tabResults.addTab(list_widget, dict_current['key'])
+        i = self.tabResults.addTab(list_widget, key)
         self.tabResults.setCurrentIndex(i)  # Selects the newly added tab
+
+        # Adds a new item to the combobox
+        self.cbTab.addItem(key)
+        self.cbTab.setCurrentIndex(i)
 
         # Adds a table
         self.new_table()
@@ -246,20 +258,26 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """
         qlist_widget = self.tabResults.currentWidget()
         selected_index = qlist_widget.currentRow()
+        total = qlist_widget.count()
+        selected_index_reverse = total - selected_index - 1  # List is reversed in the table
+        tab_index = self.tabResults.currentIndex()
+
         qlist_widget.takeItem(selected_index)
+        selected_table = self.tables[tab_index]
+        selected_table.removeRow(selected_index_reverse)
 
     def delete_btn_click(self):
         """Remove the current tab from the tabs panel
         """
         count = self.tabResults.count()
-        if count == 1:  # Keep the last remaining tab, but clear it
+        if count == 1:  # Keep the last remaining tab, but clears it
             self.clear_results_list()
 
             self.clear_results_table(0)
         else:  # If there are more than one tab
             index = self.tabResults.currentIndex()
             self.tabResults.removeTab(index)
-
+            self.cbTab.removeItem(index)
             self.delete_table(index)
 
     def table_btn_click(self):
@@ -313,16 +331,17 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             point_value = data[VALUE_JSON]
 
+            # Updates/adds the value to the docking panel table
+            qlist_widget = self.tabResults.currentWidget()
+            row_index = qlist_widget.count()
+            qlist_widget.insertItem(row_index, str(point_value))
+
             # Updates the table
             table.insertRow(0)  # Always add at the top of the table
             table.setItem(0, 0, QTableWidgetItem(current_key_name))
             table.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Value
             table.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
             table.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
-
-            # Updates/adds the value to the docking panel table
-            qlist_widget = self.tabResults.currentWidget()
-            qlist_widget.addItem(str(point_value))
 
         # The user has Group selected
         elif registry == GROUP['name']:
@@ -333,15 +352,16 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 point_value = dict_service[VALUE_JSON]
                 service_key_name = dict_service['name']
 
+                # Updates/adds the value to the docking panel table
+                qlist_widget = self.tabResults.currentWidget()
+                row_index = qlist_widget.count()
+                qlist_widget.insertItem(row_index, str(point_value))
+
                 table.insertRow(0)  # Always add at the top of the table
                 table.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
                 table.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the value
                 table.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
                 table.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
-
-                # Updates/adds the value to the docking panel table
-                qlist_widget = self.tabResults.currentWidget()
-                qlist_widget.addItem(str(point_value))
         # The user has Collection selected
         elif registry == COLLECTION['name']:
             # Each group contains a list of the 'Service' data associated with the group
@@ -354,15 +374,16 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     point_value = dict_service[VALUE_JSON]
                     service_key_name = dict_service['name']
 
+                    # Updates/adds the value to the docking panel table
+                    qlist_widget = self.tabResults.currentWidget()
+                    row_index = qlist_widget.count()
+                    qlist_widget.insertItem(row_index, str(point_value))
+
                     table.insertRow(0)  # Always add at the top of the table
                     table.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
                     table.setItem(0, 1, QTableWidgetItem(str(point_value)))  # Sets the value
                     table.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
                     table.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
-
-                    # Updates/adds the value to the docking panel table
-                    qlist_widget = self.tabResults.currentWidget()
-                    qlist_widget.addItem(str(point_value))
 
     def cursor_btn_click(self):
         """This method is called when the Cursor button on the panel is clicked.
@@ -462,6 +483,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """
         tab_index = self.tabResults.currentIndex()
         self.tabResults.setTabText(tab_index, new_text)
+        self.cbTab.setItemText(tab_index, new_text)
 
     def point_request_panel(self, x, y):
         """Return the value retrieved from the ordered dictionary containing the requested data
@@ -565,8 +587,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         row_cnt = table.rowCount()
         # Loops through each of the table entries
-        i = 0  # Current ID
-        while i < row_cnt:
+        i = table.rowCount() - 1  # Current ID
+        while i >= 0:
             key = table.item(i, 0).text()  # Data source
             value = table.item(i, 1).text()  # Value at the point
             x = float(table.item(i, 2).text())  # Longitude
@@ -581,7 +603,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             layer_provider.addFeatures([new_feat])
             new_layer.commitChanges()
 
-            i = i + 1
+            i = i - 1
 
         target_crs = QgsCoordinateReferenceSystem("EPSG:4326")  # CHANGE??? ======================================================================
         success, created_layer, msg = create_vector_file(new_layer, output_file, target_crs)

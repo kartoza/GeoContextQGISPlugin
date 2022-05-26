@@ -427,8 +427,8 @@ class GeoContextQGISPlugin:
             x, y = transform_xy_coordinates(x, y, canvas_crs, target_crs)
 
         # Sets the panel values to the above
-        self.dockwidget.lineLong.setText(str(x))
-        self.dockwidget.lineLat.setText(str(y))
+        self.dockwidget.lineLong.setValue(float(x))
+        self.dockwidget.lineLat.setValue(float(y))
 
         # Request starts
         start = time.time()
@@ -438,13 +438,16 @@ class GeoContextQGISPlugin:
         registry = self.dockwidget.cbRegistry.currentText()  # Service, group or collection
 
         key_name = self.dockwidget.cbKey.currentText()  # Key name, e.g. Elevation
-        dict_key = self.dockwidget.find_name_info(key_name, registry)  # Key
-        key = dict_key['key']
+        data = None
+        table = None
+        # The key will be empty when there were no option to select from (e.g. could not connect the server)
+        if key_name != "":
+            dict_key = self.dockwidget.find_name_info(key_name, registry)  # Key
+            key = dict_key['key']
+            data = self.point_request_panel(x, y, registry, key, API_DEFAULT_URL)
 
-        data = self.point_request_panel(x, y, registry, key, API_DEFAULT_URL)
-
-        index = self.dockwidget.tabResults.currentIndex()
-        table = self.dockwidget.tables[index]
+            index = self.dockwidget.tabResults.currentIndex()
+            table = self.dockwidget.tables[index]
 
         # Checks whether the request has been successful. None indicates unsuccessful
         if data is not None:
@@ -468,6 +471,11 @@ class GeoContextQGISPlugin:
                 rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
                 point_value_str = apply_decimal_places_to_float_panel(point_value_str, rounding_factor)
 
+                # Updates/adds the value to the docking panel table
+                qlist_widget = self.dockwidget.tabResults.currentWidget()
+                row_index = qlist_widget.count()
+                qlist_widget.insertItem(row_index, str(point_value_str))
+
                 # Updates the QTableWidget stores the data
                 table.insertRow(0)  # Always add at the top of the table
                 table.setItem(0, 0, QTableWidgetItem(current_key_name))  # Sets the key in the table
@@ -475,9 +483,6 @@ class GeoContextQGISPlugin:
                 table.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
                 table.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
 
-                # Updates/adds the value to the docking panel table
-                qlist_widget = self.dockwidget.tabResults.currentWidget()
-                qlist_widget.addItem(str(point_value_str))
             # Group option
             elif registry == GROUP['name']:
                 # group_name = data['name']
@@ -490,15 +495,17 @@ class GeoContextQGISPlugin:
 
                     service_key_name = dict_service['name']
 
+                    # Updates/adds the value to the docking panel table
+                    qlist_widget = self.dockwidget.tabResults.currentWidget()
+                    row_index = qlist_widget.count()
+                    qlist_widget.insertItem(row_index, str(point_value_str))
+
                     table.insertRow(0)  # Always add at the top of the table
                     table.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
                     table.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the value in the table
                     table.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
                     table.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
 
-                    # Updates/adds the value to the docking panel table
-                    qlist_widget = self.dockwidget.tabResults.currentWidget()
-                    qlist_widget.addItem(str(point_value_str))
             # Collection option
             elif registry == COLLECTION['name']:
                 # Each group contains a list of the 'Service' data associated with the group
@@ -514,15 +521,16 @@ class GeoContextQGISPlugin:
 
                         service_key_name = dict_service['name']
 
+                        # Updates/adds the value to the docking panel table
+                        qlist_widget = self.dockwidget.tabResults.currentWidget()
+                        row_index = qlist_widget.count()
+                        qlist_widget.insertItem(row_index, str(point_value_str))
+
                         table.insertRow(0)  # Always add at the top of the table
                         table.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
                         table.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the value in the table
                         table.setItem(0, 2, QTableWidgetItem(str(x)))  # Latitude
                         table.setItem(0, 3, QTableWidgetItem(str(y)))  # Longitude
-
-                        # Updates/adds the value to the docking panel table
-                        qlist_widget = self.dockwidget.tabResults.currentWidget()
-                        qlist_widget.addItem(str(point_value_str))
         else:  # Request were unsuccessful
-            error_msg = "Could not perform data request. Check if the endpoint URL is correct."
+            error_msg = "Could not perform data request. Check if the URL is available."
             self.iface.messageBar().pushCritical("Request error: ", error_msg)

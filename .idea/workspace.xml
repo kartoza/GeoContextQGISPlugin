@@ -2,11 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="673030f2-2eed-4138-9053-6e23280e6c45" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/GeoContextQGISPlugin.py" beforeDir="false" afterPath="$PROJECT_DIR$/GeoContextQGISPlugin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bridge_api/default.py" beforeDir="false" afterPath="$PROJECT_DIR$/bridge_api/default.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/geocontext_point_processing_algorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/geocontext_point_processing_algorithm.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/data/other/polygons_wgs84.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/other/polygons_wgs84.gpkg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/data/other/polyline_lo19.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/other/polyline_lo19.gpkg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/data/projected/points_albers_broken_geom.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/projected/points_albers_broken_geom.gpkg" afterDir="false" />
@@ -36,15 +35,15 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "/home/divan/Coding/Scripts/geocontext-custom/geocontext_debug_script.sh",
-    "settings.editor.selected.configurable": "Errors"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/divan/Coding/Scripts/geocontext-custom/geocontext_debug_script.sh&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;Errors&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Shell Script.QGIS">
     <configuration name="Debugging" type="CompoundRunConfigurationType">
       <toRun name="Debugging" type="PyRemoteDebugConfigurationType" />
@@ -109,11 +108,24 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1651845534330</updated>
-      <workItem from="1651845535657" duration="17656000" />
+      <workItem from="1651845535657" duration="18862000" />
+      <workItem from="1653395856390" duration="3822000" />
+      <workItem from="1653477182665" duration="24131000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>

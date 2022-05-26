@@ -173,14 +173,14 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
         if input_points.featureCount() <= 0:
             # If the layer contains no features, processing will be stopped
             msg = 'ADD VECTOR LAYER DIRECTORY HERE!'
-            self.iface.messageBar().pushCritical("Vector layer contains no features: ", msg)
+            # self.iface.messageBar().pushCritical("Vector layer contains no features: ", msg)
             return
         else:
             layer_crs = get_request_crs()
             success, input_new, msg = create_vector_file(input_points, output_points, layer_crs)
             if not success:
                 # If file creation has been unsuccessful, processing will not continue
-                self.iface.messageBar().pushCritical("Vector file creation error: ", msg)
+                # self.iface.messageBar().pushCritical("Vector file creation error: ", msg)
                 return
 
             input_type = input_points.wkbType()  # Vector type for input
@@ -207,7 +207,9 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
                 # Retrieves the data from the server
                 data_json = process_point(point, dict_registry['key'], dict_key['key'], field_name)
 
-                list_data = []  # This list will store the data. All cases will be services as it will no longer split it into groups/collections
+                # This list will store the data. All cases will be
+                # services as it will no longer split it into groups/collections
+                list_data = []
                 if dict_registry['key'] == SERVICE['key']:
                     list_data = service_data_value(data_json)
                 elif dict_registry['key'] == GROUP['key']:
@@ -227,14 +229,14 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
                         field_name = service_data['key']
                         list_attributes.append(QgsField(field_name, QVariant.String))
 
-                    # Adds all of the new fields to the attribute table
+                    # Adds all the new fields to the attribute table
                     input_new.startEditing()
                     layer_provider.addAttributes(list_attributes)
                     input_new.updateFields()
                     input_new.updateFeature(point)
                     input_new.commitChanges()
 
-                    # Updates all of the attribute values
+                    # Updates all the attribute values
                     for service_data in list_data:
                         field_name = service_data['key']
                         data_value = service_data['value']
@@ -242,7 +244,9 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
 
                         # Updates the attribute value
                         input_new.startEditing()
-                        input_new.changeAttributeValue(point.id(), layer_provider.fieldNameIndex(field_name), data_value)
+                        input_new.changeAttributeValue(point.id(),
+                                                       layer_provider.fieldNameIndex(field_name),
+                                                       data_value)
                         input_new.commitChanges()
 
                 # Request ends
@@ -278,13 +282,14 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
             response = client.get(request_url)
             list_json = response.json()
         except exceptions.ConnectionError:  # Could not connect to the provided URL
-            error_msg = "Could not connect to " + request_url + ". Check if the provided URL is correct. The site may also be down."
-            self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+            error_msg = "Could not connect to " + request_url +\
+                        ". Check if the provided URL is correct. The site may also be down."
+            #self.iface.messageBar().pushCritical("Connection error: ", error_msg)
 
             list_json = []
         except Exception as e:  # Other possible connection issues
             error_msg = "Could not connect to " + request_url + ". Unknown error: " + str(e)
-            self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+            #self.iface.messageBar().pushCritical("Connection error: ", error_msg)
 
             list_json = []
 
