@@ -3,9 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="673030f2-2eed-4138-9053-6e23280e6c45" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GeoContextQGISPlugin.py" beforeDir="false" afterPath="$PROJECT_DIR$/GeoContextQGISPlugin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/geocontext_point_processing_algorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/geocontext_point_processing_algorithm.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/data/other/polygons_wgs84.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/other/polygons_wgs84.gpkg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/data/other/polyline_lo19.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/other/polyline_lo19.gpkg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/data/projected/points_albers_broken_geom.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/projected/points_albers_broken_geom.gpkg" afterDir="false" />
@@ -17,7 +14,6 @@
       <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_broken_geom.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_broken_geom.gpkg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_empty.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_empty.gpkg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_dockwidget.py" beforeDir="false" afterPath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_dockwidget.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_dockwidget_base.ui" beforeDir="false" afterPath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_dockwidget_base.ui" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -110,7 +106,7 @@
       <updated>1651845534330</updated>
       <workItem from="1651845535657" duration="18862000" />
       <workItem from="1653395856390" duration="3822000" />
-      <workItem from="1653477182665" duration="24131000" />
+      <workItem from="1653477182665" duration="24972000" />
     </task>
     <servers />
   </component>
