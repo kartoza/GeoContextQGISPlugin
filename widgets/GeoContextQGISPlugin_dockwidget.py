@@ -44,6 +44,7 @@ from qgis.core import (
 
 from .geocontext_help_dialog import HelpDialog
 from .GeoContextQGISPlugin_plot import PlotDialog
+from .GeoContextQGISPlugin_table import TableDialog
 
 # Adds the plugin core path to the system path
 cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -283,6 +284,10 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def table_btn_click(self):
         print("table")
 
+        # Opens the table dialog
+        table_dialog = TableDialog(self.tables.copy())
+        table_dialog.exec_()
+
     def clear_btn_click(self):
         """This method is called when the clear button is clicked
         """
@@ -443,8 +448,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         table = self.tables[index]
 
         # Opens the plot dialog
-        results_dialog = PlotDialog(table)
-        results_dialog.exec_()
+        plot_dialog = PlotDialog(table)
+        plot_dialog.exec_()
 
     def show_help(self):
         """Opens the help dialog. The dialog displays the html documentation.

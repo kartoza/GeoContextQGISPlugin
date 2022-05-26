@@ -14,6 +14,7 @@
       <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_broken_geom.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_broken_geom.gpkg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_empty.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_empty.gpkg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_dockwidget.py" beforeDir="false" afterPath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_dockwidget.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_plot.py" beforeDir="false" afterPath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_plot.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -106,7 +107,7 @@
       <updated>1651845534330</updated>
       <workItem from="1651845535657" duration="18862000" />
       <workItem from="1653395856390" duration="3822000" />
-      <workItem from="1653477182665" duration="24972000" />
+      <workItem from="1653477182665" duration="28474000" />
     </task>
     <servers />
   </component>

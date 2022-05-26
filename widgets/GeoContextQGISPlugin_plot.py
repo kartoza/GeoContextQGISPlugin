@@ -62,8 +62,4 @@ class PlotDialog(QDialog, FORM_CLASS):
 
             i = i + 1
 
-        print("BEFORE PLOT")
-
         self.widgetPlot.plot(plot_range, plot_values)
-
-        print("AFTER")
