@@ -98,13 +98,16 @@ class PlotDialog(QDialog, FORM_CLASS):
         exporter.export(self.plot_file_output.filePath())
 
     def set_plot_themes(self):
-        # pg.setConfigOption('background', 'r')
-        # pg.setConfigOption('foreground', 'g')
+        #pg.setConfigOption('background', 'r')
+        #pg.setConfigOption('foreground', 'g')
 
         # win = pg.GraphicsLayoutWidget()
         # win.setBackground('w')
 
-        # graph background
+        # Shows the graph grids
+        self.widgetPlot.showGrid(x=True, y=True, alpha=0.3)
+
+        # Sets the graph background to white
         viewbox = self.widgetPlot.getViewBox()
         viewbox.setBackgroundColor((255, 255, 255))
 
@@ -134,11 +137,8 @@ class PlotDialog(QDialog, FORM_CLASS):
     def set_view_limits(self):
         viewbox = self.widgetPlot.getViewBox()
 
-        print("x min: " + str(self.x_min))
-        print("x max: " + str(self.x_max))
-        print("y min: " + str(self.y_min))
-        print("y max: " + str(self.y_max))
-
+        # Applies limitation buffers to the x- and y-axis
+        # This value can be changed in default
         if self.x_min > 0:
             x_min_buf = self.x_min - (self.x_min * PLOT_LIMITS_BUFFER)
         else:
@@ -164,8 +164,6 @@ class PlotDialog(QDialog, FORM_CLASS):
             xMax=x_max_buf,
             yMin=y_min_buf,
             yMax=y_max_buf,
-            #maxXRange=[x_min_buf, x_max_buf],
-            #maxYRange=[y_min_buf, y_max_buf]
         )
 
     def random_rgb(self):
@@ -197,4 +195,5 @@ class PlotDialog(QDialog, FORM_CLASS):
         # Plots the line
         self.widgetPlot.plot(plot_range, plot_values, pen=pen)
 
+        # View set to new limits
         self.set_view_limits()
