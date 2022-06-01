@@ -18,6 +18,8 @@ COLLECTION = {
     'key': 'collection'
 }
 
+COORDINATE_SYSTEM = "EPSG:4326"
+
 # JSON response variables
 VALUE_JSON = 'value'
 KEY_JSON = 'key'
@@ -32,6 +34,10 @@ TOOL_REGISTRY = 'Registry'
 TOOL_KEY = 'Key'
 TOOL_FIELD_NAME = 'Field name'
 TOOL_OUTPUT_POINT_LAYER = 'Output point layer'
+
+# Graphs
+PLOT_LINE_WIDTH = 2
+PLOT_LIMITS_BUFFER = 0.01  # Increase graph limits: {Value} + {Value} * PLOT_LIMITS_BUFFER
 
 # Docking widget table
 TABLE_DATA_TYPE = {

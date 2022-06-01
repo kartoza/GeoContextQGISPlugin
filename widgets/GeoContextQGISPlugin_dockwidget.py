@@ -68,7 +68,8 @@ from bridge_api.default import (
     TABLE_DATA_TYPE,
     TABLE_VALUE,
     TABLE_LONG,
-    TABLE_LAT
+    TABLE_LAT,
+    COORDINATE_SYSTEM
 )
 
 from requests import exceptions
@@ -95,7 +96,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.canvas = canvas  # QGIS project canvas
         self.point_tool = point_tool  # Canvas point tool - cursor used to selected locations
         self.cursor_active = True  # Sets to True because the point tool is now active
-        self.table_output_file.setFilter("*.gpkg")  # Output format for table exporting set to geopackage
+        self.table_output_file.setFilter("*.gpkg;;*.csv")  # Output format for table exporting set to geopackage
 
         # This variable will store all the tables
         self.tables = []
@@ -148,6 +149,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.cbKey.currentTextChanged.connect(self.key_changed)  # Triggers when the key value changes
 
         self.cbTab.currentIndexChanged.connect(self.tab_combobox_change)
+        self.tabResults.currentChanged.connect(self.tab_changed)
 
         # Button triggers
         self.btnClear.clicked.connect(self.clear_btn_click)
@@ -227,9 +229,25 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             else:  # If the tab already consists of data, create a new one
                 self.add_btn_click()
 
+    def tab_changed(self):
+        tab_index = self.tabResults.currentIndex()
+        cb_index = self.cbTab.currentIndex()
+
+        if tab_index != cb_index:
+            self.cbTab.setCurrentIndex(tab_index)
+        else:
+            # This will happen when the change were a result of the combobox selection
+            return
+
     def tab_combobox_change(self):
-        new_index = self.cbTab.currentIndex()
-        self.tabResults.setCurrentIndex(new_index)
+        tab_index = self.tabResults.currentIndex()
+        cb_index = self.cbTab.currentIndex()
+
+        if tab_index != cb_index:
+            self.tabResults.setCurrentIndex(cb_index)
+        else:
+            # This will happen when the change were a result of a tab selection
+            return
 
     def add_btn_click(self):
         """Adds a new tab to the tabs panel
@@ -282,10 +300,8 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.delete_table(index)
 
     def table_btn_click(self):
-        print("table")
-
         # Opens the table dialog
-        table_dialog = TableDialog(self.tables.copy())
+        table_dialog = TableDialog(self.tables.copy(), self.get_tab_names())
         table_dialog.exec_()
 
     def clear_btn_click(self):
@@ -438,17 +454,17 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         else:
             # Shows an error message if the folder path does not exist
             if output_dir == "":
-                self.iface.messageBar().pushCritical("Output directory does not exist: ", "The user has not provided an output file!")
+                self.iface.messageBar().pushCritical("Output directory does not exist: ",
+                                                     "The user has not provided an output file!")
             else:
                 self.iface.messageBar().pushCritical("Output directory does not exist: ", output_dir)
 
     def show_plot(self):
-        # Gets the current tab index, which is used to retrieve the correct table
+        # Gets the current tab index
         index = self.tabResults.currentIndex()
-        table = self.tables[index]
 
         # Opens the plot dialog
-        plot_dialog = PlotDialog(table)
+        plot_dialog = PlotDialog(self.tables, index, self.get_tab_names())
         plot_dialog.exec_()
 
     def show_help(self):
@@ -615,7 +631,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             i = i - 1
 
-        target_crs = QgsCoordinateReferenceSystem("EPSG:4326")  # CHANGE??? ======================================================================
+        target_crs = QgsCoordinateReferenceSystem(COORDINATE_SYSTEM)
         success, created_layer, msg = create_vector_file(new_layer, output_file, target_crs)
 
         return success, msg
@@ -651,6 +667,17 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     return collection
 
         return None
+
+    def get_tab_names(self):
+        # Gets the list of names for the tabs
+        total = self.tabResults.count()
+        index = 0
+        list_tab_names = []
+        while total > index:
+            list_tab_names.append(self.tabResults.tabText(index))
+            index = index + 1
+
+        return list_tab_names
 
     def update_key_list(self, registry_type="Service"):
         """This method updates the key name list shown in the panel. It will be called when
