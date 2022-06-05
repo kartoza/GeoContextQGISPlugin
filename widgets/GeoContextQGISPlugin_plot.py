@@ -142,34 +142,11 @@ class PlotDialog(QDialog, FORM_CLASS):
     def set_view_limits(self):
         viewbox = self.widgetPlot.getViewBox()
 
-        # Applies limitation buffers to the x- and y-axis
+        # Applies limitation buffers to the x-axis and y-axis
         # This value can be changed in default
-        # if self.x_min > 0:
-        #     x_min_buf = self.x_min - (self.x_min * PLOT_LIMITS_BUFFER)
-        # else:
-        #     x_min_buf = self.x_min + (self.x_min * PLOT_LIMITS_BUFFER)
-        #
-        # if self.x_max > 0:
-        #     x_max_buf = self.x_max + (self.x_max * PLOT_LIMITS_BUFFER)
-        # else:
-        #     x_max_buf = self.x_max - (self.x_max * PLOT_LIMITS_BUFFER)
-        #
-        # if self.y_min > 0:
-        #     y_min_buf = self.y_min - (self.y_min * PLOT_LIMITS_BUFFER)
-        # else:
-        #     y_min_buf = self.y_min + (self.y_min * PLOT_LIMITS_BUFFER)
-        #
-        # if self.y_max > 0:
-        #     y_max_buf = self.y_max + (self.y_max * PLOT_LIMITS_BUFFER)
-        # else:
-        #     y_max_buf = self.y_max - (self.y_max * PLOT_LIMITS_BUFFER)
-
         x_min_buf = self.x_min - (abs(self.x_min) * PLOT_LIMITS_BUFFER)
-
         x_max_buf = self.x_max + (abs(self.x_max) * PLOT_LIMITS_BUFFER)
-
         y_min_buf = self.y_min - (abs(self.y_min) * PLOT_LIMITS_BUFFER)
-
         y_max_buf = self.y_max + (abs(self.y_max) * PLOT_LIMITS_BUFFER)
 
         viewbox.setLimits(
