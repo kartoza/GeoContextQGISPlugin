@@ -42,6 +42,10 @@ from qgis.core import (
     QgsGeometry
 )
 
+import httplib2
+import requests
+from requests import exceptions
+
 from .geocontext_help_dialog import HelpDialog
 from .GeoContextQGISPlugin_plot import PlotDialog
 from .GeoContextQGISPlugin_table import TableDialog
@@ -53,7 +57,8 @@ sys.path.insert(0, parentdir)
 
 from utilities.utilities import (
     get_request_crs,
-    create_vector_file
+    create_vector_file,
+    check_connection
 )
 from bridge_api.api_abstract import ApiClient
 from bridge_api.default import (
@@ -71,8 +76,6 @@ from bridge_api.default import (
     TABLE_LAT,
     COORDINATE_SYSTEM
 )
-
-from requests import exceptions
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'GeoContextQGISPlugin_dockwidget_base.ui'))
@@ -102,10 +105,18 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.tables = []
         self.new_table()
 
-        # Gets the lists of available service, group and collection layers
-        self.list_context = self.retrieve_registry_list(API_DEFAULT_URL, SERVICE['key'])  # Service
-        self.list_group = self.retrieve_registry_list(API_DEFAULT_URL, GROUP['key'])  # Group
-        self.list_collection = self.retrieve_registry_list(API_DEFAULT_URL, COLLECTION['key'])  # Collection
+        available, error_msg = check_connection(API_DEFAULT_URL)
+        if available:
+            # Gets the lists of available service, group and collection layers
+            self.list_context = self.retrieve_registry_list(API_DEFAULT_URL, SERVICE['key'])  # Service
+            self.list_group = self.retrieve_registry_list(API_DEFAULT_URL, GROUP['key'])  # Group
+            self.list_collection = self.retrieve_registry_list(API_DEFAULT_URL, COLLECTION['key'])  # Collection
+        else:
+            # Site is unavailable
+            self.iface.messageBar().pushCritical("Connection error: ", error_msg)
+            self.list_context = []
+            self.list_group = []
+            self.list_collection = []
 
         # If the context list is empty, these steps should be skipped
         if len(self.list_context) > 0:

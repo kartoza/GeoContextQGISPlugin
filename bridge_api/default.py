@@ -20,6 +20,8 @@ COLLECTION = {
 
 COORDINATE_SYSTEM = "EPSG:4326"
 
+CONNECTION_TIMEOUT = 3
+
 # JSON response variables
 VALUE_JSON = 'value'
 KEY_JSON = 'key'
