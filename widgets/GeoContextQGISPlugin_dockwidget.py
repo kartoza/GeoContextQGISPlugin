@@ -74,7 +74,8 @@ from bridge_api.default import (
     TABLE_VALUE,
     TABLE_LONG,
     TABLE_LAT,
-    COORDINATE_SYSTEM
+    COORDINATE_SYSTEM,
+    SITE_URL
 )
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -105,7 +106,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.tables = []
         self.new_table()
 
-        available, error_msg = check_connection(API_DEFAULT_URL)
+        available, error_msg = check_connection(SITE_URL)
         if available:
             # Gets the lists of available service, group and collection layers
             self.list_context = self.retrieve_registry_list(API_DEFAULT_URL, SERVICE['key'])  # Service
@@ -267,21 +268,23 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         registry = self.cbRegistry.currentText()
         key_name = self.cbKey.currentText()
 
-        # Key dict
-        dict_current = self.find_name_info(key_name, registry)
-        key = dict_current['key']
+        if key_name != '':
+            # Only adds a tab if a key is selected
+            # Key list is likely empty when there are no selection
+            dict_current = self.find_name_info(key_name, registry)  # Key dict
+            key = dict_current['key']
 
-        # Creates a new tab
-        list_widget = QtWidgets.QListWidget()
-        i = self.tabResults.addTab(list_widget, key)
-        self.tabResults.setCurrentIndex(i)  # Selects the newly added tab
+            # Creates a new tab
+            list_widget = QtWidgets.QListWidget()
+            i = self.tabResults.addTab(list_widget, key)
+            self.tabResults.setCurrentIndex(i)  # Selects the newly added tab
 
-        # Adds a new item to the combobox
-        self.cbTab.addItem(key)
-        self.cbTab.setCurrentIndex(i)
+            # Adds a new item to the combobox
+            self.cbTab.addItem(key)
+            self.cbTab.setCurrentIndex(i)
 
-        # Adds a table
-        self.new_table()
+            # Adds a table
+            self.new_table()
 
     def remove_btn_click(self):
         """Remove the selected entry from the table
@@ -569,7 +572,13 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         Clear button, or if the user has automatic clearing enabled.
         """
         qlist_widget = self.tabResults.currentWidget()
-        row_cnt = qlist_widget.count()
+
+        try:
+            row_cnt = qlist_widget.count()
+        except Exception as e:
+            # There are no tabs to delete
+            # This will likely happen when the key list is empty
+            return
 
         i = row_cnt - 1
         while i >= 0:

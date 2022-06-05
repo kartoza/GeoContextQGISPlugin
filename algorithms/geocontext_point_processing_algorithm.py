@@ -67,7 +67,8 @@ from bridge_api.default import (
     TOOL_REGISTRY,
     TOOL_KEY,
     TOOL_FIELD_NAME,
-    TOOL_OUTPUT_POINT_LAYER
+    TOOL_OUTPUT_POINT_LAYER,
+    SITE_URL
 )
 
 # Adds the plugin core path to the system path
@@ -110,7 +111,7 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
         with some other properties.
         """
 
-        available, error_msg = check_connection(API_DEFAULT_URL)
+        available, error_msg = check_connection(SITE_URL)
         if available:
             # Gets the lists of available service, group and collection layers
             self.list_service = self.retrieve_registry_list(API_DEFAULT_URL, SERVICE['key'])  # Service
