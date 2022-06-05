@@ -62,10 +62,13 @@ class PlotDialog(QDialog, FORM_CLASS):
 
         self.set_plot_themes()
 
+        # Plots the currently selected tab data
+        # Other tabs are still disabled at this point
         current_table = self.list_of_tables[current_tab]
         r, g, b = self.random_rgb()
         pen = pg.mkPen((r, g, b), width=PLOT_LINE_WIDTH)
         self.create_plot(current_table, pen)
+        self.widgetPlot.addLegend()
 
         self.set_connectors()
 
@@ -92,6 +95,7 @@ class PlotDialog(QDialog, FORM_CLASS):
             r, g, b = self.random_rgb()
             pen = pg.mkPen((r, g, b), width=PLOT_LINE_WIDTH)
             self.create_plot(table, pen)
+        self.widgetPlot.addLegend()
 
     def export_btn_click(self):
         exporter = pg.exporters.ImageExporter(self.widgetPlot.plotItem)
@@ -175,10 +179,11 @@ class PlotDialog(QDialog, FORM_CLASS):
 
     def create_plot(self, table, pen):
         row_cnt = table.rowCount()
-        # Loops through each of the table entries
+        # Loops through each of the table entries/values
         i = 0  # Current ID
         plot_range = []
         plot_values = []
+        key = None
         while i < row_cnt:
             key = table.item(i, 0).text()  # Data source
             value = table.item(i, 1).text()  # Value at the point
@@ -193,7 +198,7 @@ class PlotDialog(QDialog, FORM_CLASS):
             i = i + 1
 
         # Plots the line
-        self.widgetPlot.plot(plot_range, plot_values, pen=pen)
+        plot_item = self.widgetPlot.plot(plot_range, plot_values, pen=pen, name=key)
 
         # View set to new limits
         self.set_view_limits()

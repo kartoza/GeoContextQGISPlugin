@@ -52,8 +52,8 @@
   <widget class="QgsCheckableComboBox" name="cbPlots">
    <property name="geometry">
     <rect>
-     <x>90</x>
-     <y>620</y>
+     <x>10</x>
+     <y>560</y>
      <width>261</width>
      <height>27</height>
     </rect>
@@ -69,12 +69,27 @@
     </property>
    </item>
   </widget>
+  <widget class="QgsColorButton" name="mColorButton">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>640</y>
+     <width>120</width>
+     <height>28</height>
+    </rect>
+   </property>
+  </widget>
  </widget>
  <customwidgets>
   <customwidget>
    <class>QgsCheckableComboBox</class>
    <extends>QComboBox</extends>
    <header>qgscheckablecombobox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsColorButton</class>
+   <extends>QToolButton</extends>
+   <header>qgscolorbutton.h</header>
   </customwidget>
   <customwidget>
    <class>QgsFileWidget</class>
