@@ -21,6 +21,7 @@ from pyqtgraph import PlotWidget, exporters
 import sys  # We need sys so that we can pass argv to QApplication
 import os
 import random
+import math
 
 from bridge_api.default import (
     PLOT_LINE_WIDTH,
@@ -143,25 +144,33 @@ class PlotDialog(QDialog, FORM_CLASS):
 
         # Applies limitation buffers to the x- and y-axis
         # This value can be changed in default
-        if self.x_min > 0:
-            x_min_buf = self.x_min - (self.x_min * PLOT_LIMITS_BUFFER)
-        else:
-            x_min_buf = self.x_min + (self.x_min * PLOT_LIMITS_BUFFER)
+        # if self.x_min > 0:
+        #     x_min_buf = self.x_min - (self.x_min * PLOT_LIMITS_BUFFER)
+        # else:
+        #     x_min_buf = self.x_min + (self.x_min * PLOT_LIMITS_BUFFER)
+        #
+        # if self.x_max > 0:
+        #     x_max_buf = self.x_max + (self.x_max * PLOT_LIMITS_BUFFER)
+        # else:
+        #     x_max_buf = self.x_max - (self.x_max * PLOT_LIMITS_BUFFER)
+        #
+        # if self.y_min > 0:
+        #     y_min_buf = self.y_min - (self.y_min * PLOT_LIMITS_BUFFER)
+        # else:
+        #     y_min_buf = self.y_min + (self.y_min * PLOT_LIMITS_BUFFER)
+        #
+        # if self.y_max > 0:
+        #     y_max_buf = self.y_max + (self.y_max * PLOT_LIMITS_BUFFER)
+        # else:
+        #     y_max_buf = self.y_max - (self.y_max * PLOT_LIMITS_BUFFER)
 
-        if self.x_max > 0:
-            x_max_buf = self.x_max + (self.x_max * PLOT_LIMITS_BUFFER)
-        else:
-            x_max_buf = self.x_max - (self.x_max * PLOT_LIMITS_BUFFER)
+        x_min_buf = self.x_min - (abs(self.x_min) * PLOT_LIMITS_BUFFER)
 
-        if self.y_min > 0:
-            y_min_buf = self.y_min - (self.y_min * PLOT_LIMITS_BUFFER)
-        else:
-            y_min_buf = self.y_min + (self.y_min * PLOT_LIMITS_BUFFER)
+        x_max_buf = self.x_max + (abs(self.x_max) * PLOT_LIMITS_BUFFER)
 
-        if self.y_max > 0:
-            y_max_buf = self.y_max + (self.y_max * PLOT_LIMITS_BUFFER)
-        else:
-            y_max_buf = self.y_max - (self.y_max * PLOT_LIMITS_BUFFER)
+        y_min_buf = self.y_min - (abs(self.y_min) * PLOT_LIMITS_BUFFER)
+
+        y_max_buf = self.y_max + (abs(self.y_max) * PLOT_LIMITS_BUFFER)
 
         viewbox.setLimits(
             xMin=x_min_buf,
