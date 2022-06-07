@@ -3,7 +3,18 @@
   <component name="ChangeListManager">
     <list default="true" id="673030f2-2eed-4138-9053-6e23280e6c45" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/other/polygons_wgs84.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/other/polygons_wgs84.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/other/polyline_lo19.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/other/polyline_lo19.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_albers_broken_geom.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/projected/points_albers_broken_geom.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_albers_empty.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/projected/points_albers_empty.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_lo19.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/projected/points_lo19.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_multipoint_lo19.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/projected/points_multipoint_lo19.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_multipoint_wgs84.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_multipoint_wgs84.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_wgs84.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_broken_geom.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_broken_geom.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_empty.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_empty.gpkg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_plot.py" beforeDir="false" afterPath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_plot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_plot.ui" beforeDir="false" afterPath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_plot.ui" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -21,15 +32,15 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "/home/divan/Coding/GeoContextQGISPlugin",
-    "settings.editor.selected.configurable": "Errors"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/divan/Coding/GeoContextQGISPlugin&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;Errors&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Shell Script.QGIS">
     <configuration name="Debugging" type="CompoundRunConfigurationType">
       <toRun name="Debugging" type="PyRemoteDebugConfigurationType" />
@@ -98,7 +109,8 @@
       <workItem from="1653395856390" duration="3822000" />
       <workItem from="1653477182665" duration="28474000" />
       <workItem from="1654079654967" duration="29626000" />
-      <workItem from="1654449190373" duration="9661000" />
+      <workItem from="1654449190373" duration="11479000" />
+      <workItem from="1654624749212" duration="5537000" />
     </task>
     <servers />
   </component>

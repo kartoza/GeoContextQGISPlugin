@@ -15,6 +15,7 @@ Help dialog implementation.
 import os
 
 from PyQt5.QtWidgets import QDialog
+from PyQt5.QtGui import QColor
 from qgis.PyQt import uic
 import pyqtgraph as pg
 from pyqtgraph import PlotWidget, exporters
@@ -47,12 +48,27 @@ class PlotDialog(QDialog, FORM_CLASS):
         self.y_min = None
         self.y_max = None
 
+        self.dict_colors = self.default_line_colours(self.tab_names)
+        self.cbLines.clear()
+
+        # Colours is used to set current line display colour
+        red = None
+        green = None
+        blue = None
+
         index = 0
         for name in self.tab_names:
             if index == current_tab:
                 # The graph will be plotted with the currently selected tab data
                 # So enable it in the checkable combobox
                 self.cbPlots.addItemWithCheckState(name, 2)
+
+                current_color = self.dict_colors.get(name)
+                red = current_color.get('red')
+                green = current_color.get('green')
+                blue = current_color.get('blue')
+
+                self.cbtnLines.setColor(QColor(red, green, blue))
             else:
                 # All other cases will be disabled, but can be enabled by the user
                 self.cbPlots.addItemWithCheckState(name, 0)
@@ -66,9 +82,9 @@ class PlotDialog(QDialog, FORM_CLASS):
         # Plots the currently selected tab data
         # Other tabs are still disabled at this point
         current_table = self.list_of_tables[current_tab]
-        r, g, b = self.random_rgb()
-        pen = pg.mkPen((r, g, b), width=PLOT_LINE_WIDTH)
-        self.create_plot(current_table, pen)
+        pen = pg.mkPen((red, green, blue), width=PLOT_LINE_WIDTH)
+        name = self.create_plot(current_table, pen)
+        self.cbLines.addItem(name)
         self.widgetPlot.addLegend()
 
         self.set_connectors()
@@ -76,10 +92,28 @@ class PlotDialog(QDialog, FORM_CLASS):
     def set_connectors(self):
         self.btnExport.clicked.connect(self.export_btn_click)
         self.cbPlots.checkedItemsChanged.connect(self.combobox_plots_change)
+        self.cbLines.currentIndexChanged.connect(self.combobox_selection_changes)
+
+    def combobox_selection_changes(self):
+        print('change')
+
+        key = self.cbLines.currentText()
+
+        if key is not None and key != '':
+            print("key2: " + str(key))
+
+            colors = self.dict_colors.get(key)
+            if colors is not None:
+                r = colors.get('red')
+                g = colors.get('green')
+                b = colors.get('blue')
+
+                self.cbtnLines.setColor(QColor(r, g, b))
 
     def combobox_plots_change(self):
         # Clears the plot
         self.widgetPlot.clear()
+        self.cbLines.clear()
 
         # Resets the limitations used for the graph view
         self.x_min = None
@@ -93,9 +127,18 @@ class PlotDialog(QDialog, FORM_CLASS):
             index = self.tab_names.index(item)
             table = self.list_of_tables[index]
 
-            r, g, b = self.random_rgb()
+            color = self.dict_colors.get(item)
+            r = color.get('red')
+            g = color.get('green')
+            b = color.get('blue')
+
             pen = pg.mkPen((r, g, b), width=PLOT_LINE_WIDTH)
-            self.create_plot(table, pen)
+            name = self.create_plot(table, pen)
+
+            self.cbLines.addItem(name)
+
+            self.cbtnLines.setColor(QColor(r, g, b))
+
         self.widgetPlot.addLegend()
 
     def export_btn_click(self):
@@ -163,6 +206,17 @@ class PlotDialog(QDialog, FORM_CLASS):
 
         return r, g, b
 
+    def default_line_colours(self, list_keys):
+        dict_colors = {}
+        for key in list_keys:
+            r, g, b = self.random_rgb()
+            dict_colors[key] = {
+                'red': r,
+                'green': g,
+                'blue': b
+            }
+        return dict_colors
+
     def create_plot(self, table, pen):
         row_cnt = table.rowCount()
         # Loops through each of the table entries/values
@@ -171,7 +225,7 @@ class PlotDialog(QDialog, FORM_CLASS):
         plot_values = []
         key = None
         while i < row_cnt:
-            key = table.item(i, 0).text()  # Data source
+            key = table.item(i, 0).text()  # Data source or name
             value = table.item(i, 1).text()  # Value at the point
             x = float(table.item(i, 2).text())  # Longitude
             y = float(table.item(i, 3).text())  # Latitude
@@ -188,3 +242,5 @@ class PlotDialog(QDialog, FORM_CLASS):
 
         # View set to new limits
         self.set_view_limits()
+
+        return key

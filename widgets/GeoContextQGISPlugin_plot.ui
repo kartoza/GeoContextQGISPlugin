@@ -23,61 +23,178 @@
     </rect>
    </property>
   </widget>
-  <widget class="QWidget" name="horizontalLayoutWidget">
+  <widget class="QGroupBox" name="gbExport">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>770</y>
-     <width>1071</width>
-     <height>31</height>
+     <x>620</x>
+     <y>610</y>
+     <width>461</width>
+     <height>181</height>
     </rect>
    </property>
-   <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="title">
+    <string>Export</string>
+   </property>
+   <widget class="QWidget" name="horizontalLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>100</y>
+      <width>341</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QgsFileWidget" name="plot_file_output">
+       <property name="storageMode">
+        <enum>QgsFileWidget::SaveFile</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnExport">
+       <property name="text">
+        <string>Export</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QRadioButton" name="radioButton">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>40</y>
+      <width>112</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>RadioButton</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radioButton_2">
+    <property name="geometry">
+     <rect>
+      <x>330</x>
+      <y>40</y>
+      <width>112</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>RadioButton</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QGroupBox" name="groupBox">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>580</y>
+     <width>551</width>
+     <height>191</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Display</string>
+   </property>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>40</y>
+      <width>67</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Plots</string>
+    </property>
+   </widget>
+   <widget class="QgsCheckableComboBox" name="cbPlots">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>30</y>
+      <width>261</width>
+      <height>27</height>
+     </rect>
+    </property>
     <item>
-     <widget class="QgsFileWidget" name="plot_file_output">
-      <property name="storageMode">
-       <enum>QgsFileWidget::SaveFile</enum>
-      </property>
-     </widget>
+     <property name="text">
+      <string>test1</string>
+     </property>
     </item>
     <item>
-     <widget class="QPushButton" name="btnExport">
-      <property name="text">
-       <string>Export</string>
-      </property>
-     </widget>
+     <property name="text">
+      <string>test2</string>
+     </property>
     </item>
-   </layout>
-  </widget>
-  <widget class="QgsCheckableComboBox" name="cbPlots">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>560</y>
-     <width>261</width>
-     <height>27</height>
-    </rect>
-   </property>
-   <item>
-    <property name="text">
-     <string>test1</string>
+   </widget>
+   <widget class="QLabel" name="lblColours">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>80</y>
+      <width>91</width>
+      <height>17</height>
+     </rect>
     </property>
-   </item>
-   <item>
     <property name="text">
-     <string>test2</string>
+     <string>Line colours</string>
     </property>
-   </item>
-  </widget>
-  <widget class="QgsColorButton" name="mColorButton">
-   <property name="geometry">
-    <rect>
-     <x>160</x>
-     <y>640</y>
-     <width>120</width>
-     <height>28</height>
-    </rect>
-   </property>
+   </widget>
+   <widget class="QgsColorButton" name="cbtnLines">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>90</y>
+      <width>120</width>
+      <height>28</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="cbLines">
+    <property name="geometry">
+     <rect>
+      <x>110</x>
+      <y>100</y>
+      <width>161</width>
+      <height>25</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="sbLineWidth">
+    <property name="geometry">
+     <rect>
+      <x>110</x>
+      <y>140</y>
+      <width>151</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="maximum">
+     <double>10.000000000000000</double>
+    </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lblWidth">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>140</y>
+      <width>67</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Width</string>
+    </property>
+   </widget>
   </widget>
  </widget>
  <customwidgets>
