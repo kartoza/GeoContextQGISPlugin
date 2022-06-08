@@ -474,12 +474,15 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.iface.messageBar().pushCritical("Output directory does not exist: ", output_dir)
 
     def show_plot(self):
-        # Gets the current tab index
-        index = self.tabResults.currentIndex()
+        total = len(self.tables)
+        # Will only plot if there are a table present
+        if total > 0:
+            # Gets the current tab index
+            index = self.tabResults.currentIndex()
 
-        # Opens the plot dialog
-        plot_dialog = PlotDialog(self.tables, index, self.get_tab_names())
-        plot_dialog.exec_()
+            # Opens the plot dialog
+            plot_dialog = PlotDialog(self.tables, index)
+            plot_dialog.exec_()
 
     def show_help(self):
         """Opens the help dialog. The dialog displays the html documentation.
