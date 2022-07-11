@@ -6,249 +6,30 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1095</width>
-    <height>810</height>
+    <width>1091</width>
+    <height>608</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>GeoContext - Documentation</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_2">
-   <item>
-    <widget class="PlotWidget" name="widgetPlot" native="true">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>5</verstretch>
-      </sizepolicy>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="1" column="0">
+    <widget class="QDialogButtonBox" name="btnOk">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>
-   <item>
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="1">
-      <widget class="QGroupBox" name="groupBox">
-       <property name="title">
-        <string>Line options</string>
-       </property>
-       <layout class="QFormLayout" name="formLayout_2">
-        <item row="0" column="0">
-         <widget class="QLabel" name="lblPlot">
-          <property name="text">
-           <string>Plot</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QComboBox" name="cbLines"/>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="lblColour">
-          <property name="text">
-           <string>Colour</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QgsColorButton" name="cbColourLines"/>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="lblLineStyle">
-          <property name="text">
-           <string>Line style</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QComboBox" name="cbLineStyle"/>
-        </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="lblWidth">
-          <property name="text">
-           <string>Line width</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <widget class="QDoubleSpinBox" name="sbLineWidth">
-          <property name="minimum">
-           <double>0.010000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>10.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.010000000000000</double>
-          </property>
-          <property name="value">
-           <double>2.000000000000000</double>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QGroupBox" name="gbExport">
-       <property name="title">
-        <string>Export</string>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <layout class="QHBoxLayout" name="hlExport">
-          <item>
-           <widget class="QgsFileWidget" name="plot_file_output">
-            <property name="storageMode">
-             <enum>QgsFileWidget::SaveFile</enum>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="btnExport">
-            <property name="text">
-             <string>Export</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item row="0" column="0">
-      <widget class="QGroupBox" name="gbPlotOptions">
-       <property name="title">
-        <string>Graph options</string>
-       </property>
-       <layout class="QFormLayout" name="formLayout">
-        <item row="0" column="0">
-         <widget class="QLabel" name="lblPlots">
-          <property name="text">
-           <string>Plots</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QgsCheckableComboBox" name="cbPlots">
-          <item>
-           <property name="text">
-            <string>test1</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>test2</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="lblTitle">
-          <property name="text">
-           <string>Title</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <layout class="QGridLayout" name="glTitle">
-          <item row="0" column="1">
-           <widget class="QCheckBox" name="cbTitle">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLineEdit" name="lnTitle">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="placeholderText">
-             <string>Title</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="lblXaxis">
-          <property name="text">
-           <string>x-axis</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <layout class="QGridLayout" name="glXaxis">
-          <item row="0" column="1">
-           <widget class="QCheckBox" name="cbXaxis">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLineEdit" name="lnXaxis">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="placeholderText">
-             <string>x-axis</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="lblYaxis">
-          <property name="text">
-           <string>y-axis</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <layout class="QGridLayout" name="glYaxis">
-          <item row="0" column="0">
-           <widget class="QLineEdit" name="lnYaxis">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="placeholderText">
-             <string>y-axis</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QCheckBox" name="cbYaxis">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </widget>
-     </item>
-    </layout>
+   <item row="0" column="0">
+    <widget class="PlotWidget" name="widgetPlot" native="true"/>
    </item>
   </layout>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>QgsCheckableComboBox</class>
-   <extends>QComboBox</extends>
-   <header>qgscheckablecombobox.h</header>
-  </customwidget>
-  <customwidget>
-   <class>QgsColorButton</class>
-   <extends>QToolButton</extends>
-   <header>qgscolorbutton.h</header>
-  </customwidget>
-  <customwidget>
-   <class>QgsFileWidget</class>
-   <extends>QWidget</extends>
-   <header>qgsfilewidget.h</header>
-  </customwidget>
   <customwidget>
    <class>PlotWidget</class>
    <extends>QWidget</extends>
@@ -257,5 +38,38 @@
   </customwidget>
  </customwidgets>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>btnOk</sender>
+   <signal>accepted()</signal>
+   <receiver>GeoContextHelpDialogBase</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btnOk</sender>
+   <signal>rejected()</signal>
+   <receiver>GeoContextHelpDialogBase</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

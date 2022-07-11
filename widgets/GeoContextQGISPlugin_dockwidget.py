@@ -42,13 +42,8 @@ from qgis.core import (
     QgsGeometry
 )
 
-import httplib2
-import requests
-from requests import exceptions
-
 from .geocontext_help_dialog import HelpDialog
 from .GeoContextQGISPlugin_plot import PlotDialog
-from .GeoContextQGISPlugin_table import TableDialog
 
 # Adds the plugin core path to the system path
 cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -57,8 +52,7 @@ sys.path.insert(0, parentdir)
 
 from utilities.utilities import (
     get_request_crs,
-    create_vector_file,
-    check_connection
+    create_vector_file
 )
 from bridge_api.api_abstract import ApiClient
 from bridge_api.default import (
@@ -73,10 +67,10 @@ from bridge_api.default import (
     TABLE_DATA_TYPE,
     TABLE_VALUE,
     TABLE_LONG,
-    TABLE_LAT,
-    COORDINATE_SYSTEM,
-    SITE_URL
+    TABLE_LAT
 )
+
+from requests import exceptions
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'GeoContextQGISPlugin_dockwidget_base.ui'))
@@ -100,24 +94,16 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.canvas = canvas  # QGIS project canvas
         self.point_tool = point_tool  # Canvas point tool - cursor used to selected locations
         self.cursor_active = True  # Sets to True because the point tool is now active
-        self.table_output_file.setFilter("*.gpkg;;*.csv")  # Output format for table exporting set to geopackage
+        self.table_output_file.setFilter("*.gpkg")  # Output format for table exporting set to geopackage
 
         # This variable will store all the tables
         self.tables = []
         self.new_table()
 
-        available, error_msg = check_connection(SITE_URL)
-        if available:
-            # Gets the lists of available service, group and collection layers
-            self.list_context = self.retrieve_registry_list(API_DEFAULT_URL, SERVICE['key'])  # Service
-            self.list_group = self.retrieve_registry_list(API_DEFAULT_URL, GROUP['key'])  # Group
-            self.list_collection = self.retrieve_registry_list(API_DEFAULT_URL, COLLECTION['key'])  # Collection
-        else:
-            # Site is unavailable
-            self.iface.messageBar().pushCritical("Connection error: ", error_msg)
-            self.list_context = []
-            self.list_group = []
-            self.list_collection = []
+        # Gets the lists of available service, group and collection layers
+        self.list_context = self.retrieve_registry_list(API_DEFAULT_URL, SERVICE['key'])  # Service
+        self.list_group = self.retrieve_registry_list(API_DEFAULT_URL, GROUP['key'])  # Group
+        self.list_collection = self.retrieve_registry_list(API_DEFAULT_URL, COLLECTION['key'])  # Collection
 
         # If the context list is empty, these steps should be skipped
         if len(self.list_context) > 0:
@@ -161,7 +147,6 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.cbKey.currentTextChanged.connect(self.key_changed)  # Triggers when the key value changes
 
         self.cbTab.currentIndexChanged.connect(self.tab_combobox_change)
-        self.tabResults.currentChanged.connect(self.tab_changed)
 
         # Button triggers
         self.btnClear.clicked.connect(self.clear_btn_click)
@@ -241,25 +226,9 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             else:  # If the tab already consists of data, create a new one
                 self.add_btn_click()
 
-    def tab_changed(self):
-        tab_index = self.tabResults.currentIndex()
-        cb_index = self.cbTab.currentIndex()
-
-        if tab_index != cb_index:
-            self.cbTab.setCurrentIndex(tab_index)
-        else:
-            # This will happen when the change were a result of the combobox selection
-            return
-
     def tab_combobox_change(self):
-        tab_index = self.tabResults.currentIndex()
-        cb_index = self.cbTab.currentIndex()
-
-        if tab_index != cb_index:
-            self.tabResults.setCurrentIndex(cb_index)
-        else:
-            # This will happen when the change were a result of a tab selection
-            return
+        new_index = self.cbTab.currentIndex()
+        self.tabResults.setCurrentIndex(new_index)
 
     def add_btn_click(self):
         """Adds a new tab to the tabs panel
@@ -268,23 +237,21 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         registry = self.cbRegistry.currentText()
         key_name = self.cbKey.currentText()
 
-        if key_name != '':
-            # Only adds a tab if a key is selected
-            # Key list is likely empty when there are no selection
-            dict_current = self.find_name_info(key_name, registry)  # Key dict
-            key = dict_current['key']
+        # Key dict
+        dict_current = self.find_name_info(key_name, registry)
+        key = dict_current['key']
 
-            # Creates a new tab
-            list_widget = QtWidgets.QListWidget()
-            i = self.tabResults.addTab(list_widget, key)
-            self.tabResults.setCurrentIndex(i)  # Selects the newly added tab
+        # Creates a new tab
+        list_widget = QtWidgets.QListWidget()
+        i = self.tabResults.addTab(list_widget, key)
+        self.tabResults.setCurrentIndex(i)  # Selects the newly added tab
 
-            # Adds a new item to the combobox
-            self.cbTab.addItem(key)
-            self.cbTab.setCurrentIndex(i)
+        # Adds a new item to the combobox
+        self.cbTab.addItem(key)
+        self.cbTab.setCurrentIndex(i)
 
-            # Adds a table
-            self.new_table()
+        # Adds a table
+        self.new_table()
 
     def remove_btn_click(self):
         """Remove the selected entry from the table
@@ -314,9 +281,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.delete_table(index)
 
     def table_btn_click(self):
-        # Opens the table dialog
-        table_dialog = TableDialog(self.tables.copy(), self.get_tab_names())
-        table_dialog.exec_()
+        print("table")
 
     def clear_btn_click(self):
         """This method is called when the clear button is clicked
@@ -468,21 +433,13 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         else:
             # Shows an error message if the folder path does not exist
             if output_dir == "":
-                self.iface.messageBar().pushCritical("Output directory does not exist: ",
-                                                     "The user has not provided an output file!")
+                self.iface.messageBar().pushCritical("Output directory does not exist: ", "The user has not provided an output file!")
             else:
                 self.iface.messageBar().pushCritical("Output directory does not exist: ", output_dir)
 
     def show_plot(self):
-        total = len(self.tables)
-        # Will only plot if there are a table present
-        if total > 0:
-            # Gets the current tab index
-            index = self.tabResults.currentIndex()
-
-            # Opens the plot dialog
-            plot_dialog = PlotDialog(self.tables, index)
-            plot_dialog.exec_()
+        results_dialog = PlotDialog(self.tblResult)
+        results_dialog.exec_()
 
     def show_help(self):
         """Opens the help dialog. The dialog displays the html documentation.
@@ -575,13 +532,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         Clear button, or if the user has automatic clearing enabled.
         """
         qlist_widget = self.tabResults.currentWidget()
-
-        try:
-            row_cnt = qlist_widget.count()
-        except Exception as e:
-            # There are no tabs to delete
-            # This will likely happen when the key list is empty
-            return
+        row_cnt = qlist_widget.count()
 
         i = row_cnt - 1
         while i >= 0:
@@ -654,7 +605,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             i = i - 1
 
-        target_crs = QgsCoordinateReferenceSystem(COORDINATE_SYSTEM)
+        target_crs = QgsCoordinateReferenceSystem("EPSG:4326")  # CHANGE??? ======================================================================
         success, created_layer, msg = create_vector_file(new_layer, output_file, target_crs)
 
         return success, msg
@@ -690,17 +641,6 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     return collection
 
         return None
-
-    def get_tab_names(self):
-        # Gets the list of names for the tabs
-        total = self.tabResults.count()
-        index = 0
-        list_tab_names = []
-        while total > index:
-            list_tab_names.append(self.tabResults.tabText(index))
-            index = index + 1
-
-        return list_tab_names
 
     def update_key_list(self, registry_type="Service"):
         """This method updates the key name list shown in the panel. It will be called when

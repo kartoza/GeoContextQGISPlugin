@@ -3,38 +3,24 @@
 import os
 import sys
 import inspect
-import requests
 
 from qgis.PyQt.QtCore import QVariant
-from qgis.core import (
-    QgsProject,
-    QgsSettings,
-    QgsVectorFileWriter,
-    QgsVectorLayer,
-    QgsField,
-    QgsCoordinateTransform,
-    QgsPointXY,
-    QgsFeature,
-    QgsCoordinateReferenceSystem
-)
+from qgis.core import (QgsProject,
+                       QgsSettings,
+                       QgsVectorFileWriter,
+                       QgsVectorLayer,
+                       QgsField,
+                       QgsCoordinateTransform,
+                       QgsPointXY,
+                       QgsFeature,
+                       QgsCoordinateReferenceSystem)
 
 # Adds the plugin core path to the system path
 cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(cur_dir)
 sys.path.insert(0, parentdir)
 
-from bridge_api.default import (
-    SERVICE,
-    GROUP,
-    COLLECTION,
-    VALUE_JSON,
-    KEY_JSON,
-    NAME_JSON,
-    SERVICE_JSON,
-    GROUP_JSON,
-    COLLECTION_JSON,
-    CONNECTION_TIMEOUT
-)
+from bridge_api.default import SERVICE, GROUP, COLLECTION, VALUE_JSON, KEY_JSON, NAME_JSON, SERVICE_JSON, GROUP_JSON, COLLECTION_JSON
 from bridge_api.api_abstract import ApiClient
 
 
@@ -67,17 +53,6 @@ def get_request_crs():
         return QgsCoordinateReferenceSystem("EPSG:4326")
     else:  # Unknown coordinate system
         return
-
-
-def check_connection(url):
-    try:
-        response = requests.head(url, timeout=CONNECTION_TIMEOUT)
-        if response.status_code == 200:
-            return True, ''
-        else:
-            return False, ''
-    except Exception as e:  # Other possible connection issues
-        return False, str(e)
 
 
 def transform_point_coordinates(point, cur_crs, target_crs):
