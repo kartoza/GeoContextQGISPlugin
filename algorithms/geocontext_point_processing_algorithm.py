@@ -34,6 +34,7 @@ import sys
 import os
 import inspect
 import time
+import httplib2
 
 from qgis.PyQt.QtCore import QCoreApplication, QVariant
 from qgis.PyQt.QtGui import QIcon
@@ -47,6 +48,8 @@ from qgis.core import (QgsProcessing,
                        QgsVectorLayer,
                        QgsField,
                        QgsSettings)
+
+import requests
 from requests import exceptions
 
 # Adds the plugin core path to the system path
@@ -55,31 +58,37 @@ parentdir = os.path.dirname(cur_dir)
 sys.path.insert(0, parentdir)
 
 from bridge_api.api_abstract import ApiClient
-from bridge_api.default import (API_DEFAULT_URL,
-                                SERVICE,
-                                GROUP,
-                                COLLECTION,
-                                TOOL_INPUT_POINT_LAYER,
-                                TOOL_REGISTRY,
-                                TOOL_KEY,
-                                TOOL_FIELD_NAME,
-                                TOOL_OUTPUT_POINT_LAYER)
+from bridge_api.default import (
+    API_DEFAULT_URL,
+    SERVICE,
+    GROUP,
+    COLLECTION,
+    TOOL_INPUT_POINT_LAYER,
+    TOOL_REGISTRY,
+    TOOL_KEY,
+    TOOL_FIELD_NAME,
+    TOOL_OUTPUT_POINT_LAYER,
+    SITE_URL
+)
 
 # Adds the plugin core path to the system path
 cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(cur_dir)
 sys.path.insert(0, parentdir)
 
-from utilities.utilities import (process_point,
-                                 convert_multipart_to_singlepart,
-                                 create_vector_file,
-                                 get_request_crs,
-                                 get_registry_from_index,
-                                 service_data_value,
-                                 group_data_values,
-                                 collection_data_values,
-                                 create_new_field,
-                                 apply_decimal_places_to_float_tool)
+from utilities.utilities import (
+    process_point,
+    convert_multipart_to_singlepart,
+    create_vector_file,
+    get_request_crs,
+    get_registry_from_index,
+    service_data_value,
+    group_data_values,
+    collection_data_values,
+    create_new_field,
+    apply_decimal_places_to_float_tool,
+    check_connection
+)
 
 
 class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
@@ -102,10 +111,18 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
         with some other properties.
         """
 
-        # Gets the lists of available service, group and collection layers
-        self.list_service = self.retrieve_registry_list(API_DEFAULT_URL, SERVICE['key'])  # Service
-        self.list_group = self.retrieve_registry_list(API_DEFAULT_URL, GROUP['key'])  # Group
-        self.list_collection = self.retrieve_registry_list(API_DEFAULT_URL, COLLECTION['key'])  # Collection
+        available, error_msg = check_connection(SITE_URL)
+        if available:
+            # Gets the lists of available service, group and collection layers
+            self.list_service = self.retrieve_registry_list(API_DEFAULT_URL, SERVICE['key'])  # Service
+            self.list_group = self.retrieve_registry_list(API_DEFAULT_URL, GROUP['key'])  # Group
+            self.list_collection = self.retrieve_registry_list(API_DEFAULT_URL, COLLECTION['key'])  # Collection
+        else:
+            # Site is unavailable
+            print(error_msg)
+            self.list_service = []
+            self.list_group = []
+            self.list_collection = []
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
