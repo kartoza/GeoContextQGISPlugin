@@ -59,7 +59,8 @@ from utilities.utilities import (
     get_request_crs,
     create_vector_file,
     check_connection,
-    clone_tablewidget
+    clone_tablewidget,
+    export_table
 )
 from bridge_api.api_abstract import ApiClient
 from bridge_api.default import (
@@ -470,7 +471,7 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # Checks if the folder path exists
         if os.path.exists(output_dir):
             # Exports the table data
-            success, msg = self.export_table(output_file, table)
+            success, msg = export_table(output_file, table)
             if not success:
                 # Prints an error message if the output file could not be created
                 self.iface.messageBar().pushCritical("Cannot create file: ", msg)
@@ -619,57 +620,6 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         while row_count >= 0:
             table_to_clear.removeRow(row_count)
             row_count = row_count - 1
-
-    def export_table(self, output_file, table):
-        """Exports the table contents of the docking widget.
-
-        :param output_file: Directory and output file name (gpkg)
-        :type output_file: str
-
-        :param table: Pointer to the table from which data will be retrieved
-        :type table: QTableWidget
-
-        :returns: success, msg
-        :rtype: boolean, string
-        """
-        new_layer = QgsVectorLayer("Point", "temporary_points", "memory")
-        layer_provider = new_layer.dataProvider()
-
-        # Adds the new attributes fields to the layer
-        new_layer.startEditing()
-        list_attributes = [
-            QgsField(TABLE_DATA_TYPE['file'], QVariant.String),
-            QgsField(TABLE_VALUE['file'], QVariant.String),
-            QgsField(TABLE_LONG['file'], QVariant.Double),
-            QgsField(TABLE_LAT['file'], QVariant.Double)]
-        layer_provider.addAttributes(list_attributes)
-        new_layer.updateFields()
-        new_layer.commitChanges()
-
-        row_cnt = table.rowCount()
-        # Loops through each of the table entries
-        i = table.rowCount() - 1  # Current ID
-        while i >= 0:
-            key = table.item(i, 0).text()  # Data source
-            value = table.item(i, 1).text()  # Value at the point
-            x = float(table.item(i, 2).text())  # Longitude
-            y = float(table.item(i, 3).text())  # Latitude
-
-            # Creates the new feature and updates its attributes
-            new_layer.startEditing()
-            new_point = QgsPointXY(x, y)
-            new_feat = QgsFeature()
-            new_feat.setAttributes([key, value, x, y])
-            new_feat.setGeometry(QgsGeometry.fromPointXY(new_point))
-            layer_provider.addFeatures([new_feat])
-            new_layer.commitChanges()
-
-            i = i - 1
-
-        target_crs = QgsCoordinateReferenceSystem(COORDINATE_SYSTEM)
-        success, created_layer, msg = create_vector_file(new_layer, output_file, target_crs)
-
-        return success, msg
 
     def find_name_info(self, search_name, registry):
         """The method finds the key ID of a provided key name. It checks each case until
