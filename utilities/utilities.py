@@ -15,7 +15,8 @@ from qgis.core import (
     QgsCoordinateTransform,
     QgsPointXY,
     QgsFeature,
-    QgsCoordinateReferenceSystem
+    QgsCoordinateReferenceSystem,
+    QgsGeometry
 )
 from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem
 
@@ -34,7 +35,12 @@ from bridge_api.default import (
     SERVICE_JSON,
     GROUP_JSON,
     COLLECTION_JSON,
-    CONNECTION_TIMEOUT
+    CONNECTION_TIMEOUT,
+    COORDINATE_SYSTEM,
+    TABLE_DATA_TYPE,
+    TABLE_VALUE,
+    TABLE_LAT,
+    TABLE_LONG
 )
 from bridge_api.api_abstract import ApiClient
 
@@ -575,3 +581,112 @@ def create_new_field(input_layer, input_feat, field_name):
         input_layer.commitChanges()
         field_index = input_feat.fieldNameIndex(field_name)
     return field_index
+
+
+def export_table(output_file, table):
+    """Exports the table contents of the docking widget.
+
+    :param output_file: Directory and output file name (gpkg)
+    :type output_file: str
+
+    :param table: Pointer to the table from which data will be retrieved
+    :type table: QTableWidget
+
+    :returns: success
+    :rtype: boolean
+
+    :returns: msg
+    :rtype: str
+    """
+
+    success = False
+    msg = ''
+    if output_file.endswith('.gpkg'):
+        # Geopackage file format
+        new_layer = QgsVectorLayer("Point", "temporary_points", "memory")
+        layer_provider = new_layer.dataProvider()
+
+        # Adds the new attributes fields to the layer
+        new_layer.startEditing()
+        list_attributes = [
+            QgsField(TABLE_DATA_TYPE['file'], QVariant.String),
+            QgsField(TABLE_VALUE['file'], QVariant.String),
+            QgsField(TABLE_LONG['file'], QVariant.Double),
+            QgsField(TABLE_LAT['file'], QVariant.Double)]
+        layer_provider.addAttributes(list_attributes)
+        new_layer.updateFields()
+        new_layer.commitChanges()
+
+        row_cnt = table.rowCount()
+        # Loops through each of the table entries
+        i = table.rowCount() - 1  # Current ID
+        while i >= 0:
+            key = table.item(i, 0).text()  # Data source
+            value = table.item(i, 1).text()  # Value at the point
+            x = float(table.item(i, 2).text())  # Longitude
+            y = float(table.item(i, 3).text())  # Latitude
+
+            # Creates the new feature and updates its attributes
+            new_layer.startEditing()
+            new_point = QgsPointXY(x, y)
+            new_feat = QgsFeature()
+            new_feat.setAttributes([key, value, x, y])
+            new_feat.setGeometry(QgsGeometry.fromPointXY(new_point))
+            layer_provider.addFeatures([new_feat])
+            new_layer.commitChanges()
+
+            target_crs = QgsCoordinateReferenceSystem(COORDINATE_SYSTEM)
+            success, created_layer, msg = create_vector_file(new_layer, output_file, target_crs)
+
+            i = i - 1
+    elif output_file.endswith('.csv'):
+        # CSV format
+        column_count = table.columnCount()
+        row_count = table.rowCount()
+        if row_count and column_count > 0:
+            # Gets the table column labels
+            row_labels = ''
+            i = 0
+            while i < column_count:
+                column = table.horizontalHeaderItem(i)
+                column_label = column.text()
+                if row_labels == '':
+                    row_labels = column_label
+                else:
+                    row_labels = '{},{}'.format(
+                        row_labels,
+                        column_label
+                    )
+
+                i = i + 1
+
+            with open(output_file, 'w') as csv_file:
+                csv_file.write(row_labels)
+                csv_file.write('\n')
+
+                i = 0
+                while i < row_count:
+                    row = ''
+                    j = 0
+                    while j < column_count:
+                        cell_item = table.item(i, j)
+                        value = cell_item.text().replace(',', '')
+                        if row == '':
+                            row = str(value)
+                        else:
+                            row = '{},{}'.format(
+                                row,
+                                str(value)
+                            )
+
+                        j = j + 1
+                    csv_file.write(row)
+                    csv_file.write('\n')
+                    i = i + 1
+                csv_file.close()
+                success = True
+        else:
+            success = False
+            msg = 'Table is empty, could not create: ' + output_file
+
+    return success, msg
