@@ -20,6 +20,9 @@ nohup.out
 nosetests.xml
 *.orig
 *.*.orig
+*.gpkg
+*.gpkg-shm
+*.gpkg-wal
 pep8.log
 .project
 *.pyc
