@@ -20,6 +20,14 @@ nohup.out
 nosetests.xml
 *.orig
 *.*.orig
+__pycache__
+algorithms/__pycache__
+bridge_api/__pycache__
+utilities/__pycache__
+widgets/__pycache__
+*.gpkg
+*.gpkg-shm
+*.gpkg-wal
 pep8.log
 .project
 *.pyc

@@ -17,6 +17,7 @@ from qgis.core import (
     QgsFeature,
     QgsCoordinateReferenceSystem
 )
+from qgis.PyQt.QtWidgets import QTableWidget, QTableWidgetItem
 
 # Adds the plugin core path to the system path
 cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -342,6 +343,15 @@ def request_data(registry, key, x, y):
 
 
 def service_data_value(data_json):
+    """Get the values from the provided JSON data
+
+    :param data_json: Data
+    :type data_json: JSON
+
+    :returns: Extracted data
+    :rtype: JSON
+    """
+
     settings = QgsSettings()
     rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int)
 
@@ -357,6 +367,15 @@ def service_data_value(data_json):
 
 
 def group_data_values(data_json):
+    """Group data value extraction
+
+    :param data_json: Data
+    :type data_json: JSON
+
+    :returns: Group data
+    :rtype: JSON
+    """
+
     settings = QgsSettings()
     rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int)
 
@@ -377,6 +396,15 @@ def group_data_values(data_json):
 
 
 def collection_data_values(data_json):
+    """Collection data value extraction
+
+    :param data_json: Data
+    :type data_json: JSON
+
+    :returns: Collection data
+    :rtype: JSON
+    """
+
     settings = QgsSettings()
     rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int)
 
@@ -396,6 +424,53 @@ def collection_data_values(data_json):
             })
 
     return list_services
+
+
+def clone_tablewidget(table):
+    """Makes a clone of a table and its contents
+
+    :param table: Table which needs to be cloned
+    :type table: QTableWidget
+
+    :returns: Cloned table
+    :rtype: QTableWidget
+    """
+
+    column_count = table.columnCount()
+    row_count = table.rowCount()
+
+    # Gets the table column labels
+    list_labels = []
+    i = 0
+    while i < column_count:
+        column = table.horizontalHeaderItem(i)
+        column_label = column.text()
+        list_labels.append(column_label)
+
+        i = i + 1
+
+    # Creates the clone table
+    clone_table = QTableWidget()
+    clone_table.setColumnCount(column_count)
+    clone_table.setHorizontalHeaderLabels(list_labels)
+
+    # Clones the table contents
+    i = 0
+    while i < row_count:
+        clone_table.insertRow(i)
+
+        j = 0
+        while j < column_count:
+            cell_item = table.item(i, j)
+            value = cell_item.text()
+
+            print(value)
+            clone_table.setItem(i, j, QTableWidgetItem(str(value)))
+
+            j = j + 1
+        i = i + 1
+
+    return clone_table
 
 
 def create_vector_file(input_layer, output_layer, layer_crs):
