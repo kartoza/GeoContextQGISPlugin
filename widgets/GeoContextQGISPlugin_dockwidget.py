@@ -58,7 +58,8 @@ sys.path.insert(0, parentdir)
 from utilities.utilities import (
     get_request_crs,
     create_vector_file,
-    check_connection
+    check_connection,
+    clone_tablewidget
 )
 from bridge_api.api_abstract import ApiClient
 from bridge_api.default import (
@@ -314,8 +315,16 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.delete_table(index)
 
     def table_btn_click(self):
+        """Opens the table dialog to display data
+        """
+        # Makes a clone of the tables which will be displayed
+        list_clone_tables = []
+        for table in self.tables:
+            clone_table = clone_tablewidget(table)
+            list_clone_tables.append(clone_table)
+
         # Opens the table dialog
-        table_dialog = TableDialog(self.tables.copy(), self.get_tab_names())
+        table_dialog = TableDialog(list_clone_tables, self.get_tab_names())
         table_dialog.exec_()
 
     def clear_btn_click(self):
@@ -504,6 +513,9 @@ class GeoContextQGISPluginDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.iface.messageBar().pushCritical("Missing file: ", error_msg)
 
     def new_table(self):
+        """Creates a new table
+        """
+
         column_names = [
             TABLE_DATA_TYPE['table'],
             TABLE_VALUE['table'],

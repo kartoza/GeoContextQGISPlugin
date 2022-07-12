@@ -2,23 +2,42 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="673030f2-2eed-4138-9053-6e23280e6c45" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/GeoContextQGISPlugin.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/GeoContextQGISPlugin.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/icon.png" beforeDir="false" afterPath="$PROJECT_DIR$/icon.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/icons/cursor.png" beforeDir="false" afterPath="$PROJECT_DIR$/resources/icons/cursor.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/icons/delete_node.png" beforeDir="false" afterPath="$PROJECT_DIR$/resources/icons/delete_node.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/icons/delete_row.png" beforeDir="false" afterPath="$PROJECT_DIR$/resources/icons/delete_row.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/icons/delete_table.png" beforeDir="false" afterPath="$PROJECT_DIR$/resources/icons/delete_table.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/icons/delete_view.png" beforeDir="false" afterPath="$PROJECT_DIR$/resources/icons/delete_view.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/icons/edit_table.png" beforeDir="false" afterPath="$PROJECT_DIR$/resources/icons/edit_table.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/icons/gps_location.png" beforeDir="false" afterPath="$PROJECT_DIR$/resources/icons/gps_location.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/icons/graph.png" beforeDir="false" afterPath="$PROJECT_DIR$/resources/icons/graph.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/icons/help.png" beforeDir="false" afterPath="$PROJECT_DIR$/resources/icons/help.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/icons/save.png" beforeDir="false" afterPath="$PROJECT_DIR$/resources/icons/save.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/icons/tab_add.png" beforeDir="false" afterPath="$PROJECT_DIR$/resources/icons/tab_add.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/icons/tab_remove.png" beforeDir="false" afterPath="$PROJECT_DIR$/resources/icons/tab_remove.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/icons/target_cursor.png" beforeDir="false" afterPath="$PROJECT_DIR$/resources/icons/target_cursor.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/other/polygons_wgs84.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/other/polygons_wgs84.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/other/polygons_wgs84.gpkg-shm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/other/polygons_wgs84.gpkg-wal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/other/polyline_lo19.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/other/polyline_lo19.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/other/polyline_lo19.gpkg-shm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/other/polyline_lo19.gpkg-wal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_albers_broken_geom.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/projected/points_albers_broken_geom.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_albers_broken_geom.gpkg-shm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_albers_broken_geom.gpkg-wal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_albers_empty.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/projected/points_albers_empty.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_albers_empty.gpkg-shm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_albers_empty.gpkg-wal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_lo19.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/projected/points_lo19.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_lo19.gpkg-shm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_lo19.gpkg-wal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_multipoint_lo19.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/projected/points_multipoint_lo19.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_multipoint_lo19.gpkg-shm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/projected/points_multipoint_lo19.gpkg-wal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_multipoint_wgs84.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_multipoint_wgs84.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_multipoint_wgs84.gpkg-shm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_multipoint_wgs84.gpkg-wal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_wgs84.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84.gpkg-shm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84.gpkg-wal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_broken_geom.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_broken_geom.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_broken_geom.gpkg-shm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_broken_geom.gpkg-wal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_empty.gpkg" beforeDir="false" afterPath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_empty.gpkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_empty.gpkg-shm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/data/wgs84/points_wgs84_empty.gpkg-wal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/utilities.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_dockwidget.py" beforeDir="false" afterPath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_dockwidget.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_table.ui" beforeDir="false" afterPath="$PROJECT_DIR$/widgets/GeoContextQGISPlugin_table.ui" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,15 +55,15 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/divan/Coding/GeoContextQGISPlugin&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;Errors&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "last_opened_file_path": "/home/divan/Coding/GeoContextQGISPlugin",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="Shell Script.QGIS">
     <configuration name="Debugging" type="CompoundRunConfigurationType">
       <toRun name="Debugging" type="PyRemoteDebugConfigurationType" />
